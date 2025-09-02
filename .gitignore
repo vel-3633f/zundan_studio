@@ -1,0 +1,134 @@
+# 生成された動画・音声ファイル
+outputs/
+temp/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.flac
+*.aac
+*.ogg
+
+# フォントファイル
+fonts/
+*.ttf
+*.ttc
+*.otf
+*.woff
+*.woff2
+
+# 画像ファイル（大きなアセット画像を除外）
+assets/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.webp
+
+# Claude設定ファイル
+.claude/
+
+# Python関連
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Poetry（大きなファイルのため除外）
+poetry.lock
+
+# 仮想環境
+venv/
+env/
+ENV/
+.venv
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker関連
+.dockerignore
+
+# ログファイル
+*.log
+logs/
+
+# 設定ファイル（機密情報を含む可能性）
+.env.local
+.env.production
+config.local.json
+
+# 一時ファイル
+tmp/
+*.tmp
+*.cache
+
+# データベースファイル
+*.db
+*.sqlite
+*.sqlite3
+
+# バックアップファイル
+*.bak
+*.backup
+*.old
+
+# 圧縮ファイル
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# 大容量データファイル
+*.csv
+*.json
+data/
+dataset/
+models/
+checkpoints/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# キャッシュディレクトリ
+.cache/
+.pytest_cache/

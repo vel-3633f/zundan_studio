@@ -1,0 +1,43 @@
+services:
+  streamlit-app:
+    build: .
+    ports:
+      - "8505:8501"
+    volumes:
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
+      - ./assets:/app/assets
+      - ./src:/app/src
+      - ./main.py:/app/main.py
+      - ./config.py:/app/config.py
+    depends_on:
+      - voicevox
+    environment:
+      - VOICEVOX_API_URL=http://voicevox:50021
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - DEBUG_MODE=true
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  voicevox:
+    image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
+    ports:
+      - "50021:50021"
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:50021/speakers"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  outputs:
+  temp:
