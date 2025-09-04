@@ -4,12 +4,12 @@ from typing import List, Dict, Optional
 from moviepy import VideoFileClip
 
 from config import Paths
-from src.audio_processor import AudioProcessor
-from src.video_processor import VideoProcessor
-from src.resource_manager import ResourceManager
-from src.audio_combiner import AudioCombiner
-from src.subtitle_generator import SubtitleGenerator
-from src.frame_generator import FrameGenerator
+from src.core.audio_processor import AudioProcessor
+from src.core.video_processor import VideoProcessor
+from src.services.resource_manager import ResourceManager
+from src.services.audio_combiner import AudioCombiner
+from src.services.subtitle_generator import SubtitleGenerator
+from src.services.frame_generator import FrameGenerator
 
 logger = logging.getLogger(__name__)
 

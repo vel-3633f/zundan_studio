@@ -1,7 +1,7 @@
 import cv2
 import logging
 from typing import List, Dict, Optional, Tuple
-from src.video_models import AudioSegmentInfo, SubtitleData, ActiveSpeakerInfo
+from src.models.video_models import AudioSegmentInfo, SubtitleData, ActiveSpeakerInfo
 
 logger = logging.getLogger(__name__)
 
