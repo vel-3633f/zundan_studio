@@ -74,8 +74,8 @@ class Characters:
         speaker_id=3,
         position="right",
         subtitle_color=(34, 139, 34),  # 緑
-        size_ratio=2.2,
-        x_offset_ratio=0.75,
+        size_ratio=1.5,
+        x_offset_ratio=0.78,
         y_offset_ratio=0.05,
         display_name="ずんだもん",
         emoji="🟢",
@@ -87,7 +87,7 @@ class Characters:
         speaker_id=2,
         position="left",
         subtitle_color=(255, 105, 180),  # ピンク
-        size_ratio=2.2,
+        size_ratio=1.5,
         x_offset_ratio=0.25,
         y_offset_ratio=0.2,
         display_name="四国めたん",
@@ -100,7 +100,7 @@ class Characters:
         speaker_id=8,
         position="left",
         subtitle_color=(255, 215, 0),  # 黄色
-        size_ratio=2.2,
+        size_ratio=1.5,
         x_offset_ratio=0.25,
         y_offset_ratio=0.2,
         display_name="春日部つむぎ",
