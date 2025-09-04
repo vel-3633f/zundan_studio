@@ -391,8 +391,9 @@ class VideoProcessor:
             bg_h, bg_w = background.shape[:2]
             char_h, char_w = mouth_img.shape[:2]
 
-            # 統一サイズ計算
-            unified_size_ratio = 1.0
+            # キャラクター設定からサイズ比率を取得
+            char_config = self.characters.get(char_name, Characters.ZUNDAMON)
+            unified_size_ratio = char_config.size_ratio
             target_height = int(bg_h * unified_size_ratio)
             target_width = int(char_w * target_height / char_h)
 
@@ -423,16 +424,10 @@ class VideoProcessor:
                 )
                 x = int(bg_w * x_offset_ratio - target_width // 2)
             else:
-                # 単体キャラクター時：キャラクターの標準位置を使用
-                # ずんだもんは右側、その他は左側に配置
-                if char_name == "zundamon":
-                    x_offset_ratio = 0.75  # 右側（デュオモード時と同じ）
-                else:
-                    x_offset_ratio = 0.25  # 左側（ゲストキャラクター位置）
+                x_offset_ratio = char_config.x_offset_ratio
                 x = int(bg_w * x_offset_ratio - target_width // 2)
 
-            # Y位置は全キャラクター統一
-            y = int(bg_h * 0.15)
+            y = int(bg_h * char_config.y_offset_ratio)
 
             # サイズ制限
             if target_width > bg_w * 0.8:
@@ -453,10 +448,8 @@ class VideoProcessor:
 
     def get_japanese_font(self) -> Optional[ImageFont.FreeTypeFont]:
         """日本語フォントを取得"""
-        # プロジェクト内のフォントフォルダパス
         local_fonts_dir = Paths.get_fonts_dir()
 
-        # ローカルフォントを検索
         local_font_paths = []
         if os.path.exists(local_fonts_dir):
             for font_file in os.listdir(local_fonts_dir):
