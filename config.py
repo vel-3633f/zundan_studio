@@ -75,7 +75,7 @@ class Characters:
         position="right",
         subtitle_color=(34, 139, 34),  # 緑
         size_ratio=1.5,
-        x_offset_ratio=0.75,
+        x_offset_ratio=0.78,
         y_offset_ratio=0.05,
         display_name="ずんだもん",
         emoji="🟢",

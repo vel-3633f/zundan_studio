@@ -397,35 +397,9 @@ class VideoProcessor:
             target_height = int(bg_h * unified_size_ratio)
             target_width = int(char_w * target_height / char_h)
 
-            # 統一位置計算
-            if len(sorted_chars) > 1:
-                # 複数キャラクター時：キャラクター番号に基づく配置
-                char_index = next(
-                    (
-                        i
-                        for i, (name, _) in enumerate(sorted_chars)
-                        if name == char_name
-                    ),
-                    0,
-                )
-
-                # 左右に配置
-                if len(sorted_chars) == 2:
-                    x_positions = [0.25, 0.75]  # 左側、右側
-                else:
-                    # 3キャラクター以上の場合は均等配置
-                    x_positions = [
-                        i / (len(sorted_chars) - 1) * 0.6 + 0.2
-                        for i in range(len(sorted_chars))
-                    ]
-
-                x_offset_ratio = (
-                    x_positions[char_index] if char_index < len(x_positions) else 0.5
-                )
-                x = int(bg_w * x_offset_ratio - target_width // 2)
-            else:
-                x_offset_ratio = char_config.x_offset_ratio
-                x = int(bg_w * x_offset_ratio - target_width // 2)
+            # 位置計算：常にconfig.pyの設定を使用
+            x_offset_ratio = char_config.x_offset_ratio
+            x = int(bg_w * x_offset_ratio - target_width // 2)
 
             y = int(bg_h * char_config.y_offset_ratio)
 
