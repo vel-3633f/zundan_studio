@@ -2,7 +2,7 @@ import os
 import logging
 from typing import List, Optional
 from moviepy import AudioFileClip, concatenate_audioclips
-from src.video_models import AudioSegmentInfo
+from src.models.video_models import AudioSegmentInfo
 
 logger = logging.getLogger(__name__)
 

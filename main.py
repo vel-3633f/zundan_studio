@@ -3,9 +3,9 @@ import os
 import logging
 from typing import List, Dict, Optional
 
-from src.voice_generator import VoiceGenerator
+from src.core.voice_generator import VoiceGenerator
 from src.video_generator import VideoGenerator
-from src.utils import (
+from src.utils.utils import (
     setup_logging,
     generate_unique_filename,
     cleanup_temp_files,

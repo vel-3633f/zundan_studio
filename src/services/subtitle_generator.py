@@ -2,7 +2,7 @@ import os
 import logging
 from typing import List, Dict
 from moviepy import AudioFileClip
-from src.video_models import SubtitleData
+from src.models.video_models import SubtitleData
 
 logger = logging.getLogger(__name__)
 
