@@ -108,10 +108,28 @@ class Characters:
         display_position="left",
     )
 
+    NARRATOR = CharacterConfig(
+        name="narrator",
+        speaker_id=13,  # VOICEVOXナレーション用
+        position="narrator",  # ナレーター専用ポジション
+        subtitle_color=(100, 100, 100),  # ダークグレー
+        size_ratio=0.0,  # キャラクター画像は表示しない
+        x_offset_ratio=0.5,
+        y_offset_ratio=0.5,
+        display_name="ナレーター",
+        emoji="🎙️",
+        display_position="ナレーション",
+    )
+
     @classmethod
     def get_all(cls) -> Dict[str, CharacterConfig]:
         """全キャラクター設定を取得"""
-        return {"zundamon": cls.ZUNDAMON, "metan": cls.METAN, "tsumugi": cls.TSUMUGI}
+        return {
+            "zundamon": cls.ZUNDAMON,
+            "metan": cls.METAN,
+            "tsumugi": cls.TSUMUGI,
+            "narrator": cls.NARRATOR,
+        }
 
     @classmethod
     def get_display_options(cls) -> List[Tuple[str, str]]:
@@ -128,6 +146,10 @@ class Characters:
             (
                 "tsumugi",
                 f"{cls.TSUMUGI.emoji} {cls.TSUMUGI.display_name} ({cls.TSUMUGI.display_position})",
+            ),
+            (
+                "narrator",
+                f"{cls.NARRATOR.emoji} {cls.NARRATOR.display_name} ({cls.NARRATOR.display_position})",
             ),
         ]
 
