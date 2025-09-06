@@ -515,9 +515,9 @@ class ItemConfig:
         if self.positions is None:
             # デフォルト位置（キャラクターの手元あたり）
             self.positions = {
-                "zundamon": (0.65, 0.45),  # 右手
-                "metan": (0.35, 0.45),     # 左手
-                "tsumugi": (0.35, 0.45),   # 左手
+                "zundamon": (0.1, 0.35),  # 右手
+                "metan": (0.9, 0.35),  # 左手
+                "tsumugi": (0.9, 0.35),  # 左手
             }
         if self.sizes is None:
             # デフォルトサイズ（キャラクター別の微調整）
@@ -526,7 +526,7 @@ class ItemConfig:
                 "metan": 1.0,
                 "tsumugi": 1.0,
             }
-            
+
     def get_size_for_character(self, character_name: str) -> float:
         """キャラクター用の最終サイズを取得"""
         char_multiplier = self.sizes.get(character_name, 1.0)
@@ -638,8 +638,7 @@ class Items:
         """カテゴリ別でアイテムを取得"""
         all_items = cls.get_all()
         return {
-            name: item for name, item in all_items.items()
-            if item.category == category
+            name: item for name, item in all_items.items() if item.category == category
         }
 
     @classmethod

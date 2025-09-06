@@ -391,26 +391,6 @@ def render_sidebar() -> tuple:
         pitch = st.slider("音高", *pitch_range, help="声の高さを調整")
         intonation = st.slider("抑揚", *intonation_range, help="抑揚の強さを調整")
 
-        st.markdown("---")
-        st.header("会話モード")
-        conversation_mode = st.selectbox(
-            "キャラクター表示設定",
-            options=["duo", "solo"],
-            index=0,
-            format_func=lambda x: {
-                "duo": "🎭 デュオ会話（常に2人表示）",
-                "solo": "🎤 ソロ発表（話している人のみ表示）",
-            }[x],
-            help="デュオ: ずんだもんと1人のゲストが常に表示されます\nソロ: 話している人だけが表示されます",
-        )
-
-        st.markdown("---")
-        st.header("字幕設定")
-        enable_subtitles = st.checkbox(
-            "字幕を表示",
-            value=APP_CONFIG.default_subtitles,
-            help="動画に字幕を埋め込みます",
-        )
 
         st.markdown("---")
         st.header("ファイル管理")
@@ -441,6 +421,10 @@ def render_sidebar() -> tuple:
                 else:
                     st.info("削除するファイルがありませんでした")
 
+    # 削除されたUI要素のデフォルト値を設定
+    enable_subtitles = APP_CONFIG.default_subtitles
+    conversation_mode = "duo"  # デフォルトはデュオモード
+    
     return speed, pitch, intonation, enable_subtitles, conversation_mode
 
 
