@@ -54,6 +54,11 @@ class PathManager:
             os.path.join(base_dir, Constants.OUTPUTS_DIR),
             os.path.join(base_dir, Constants.ASSETS_DIR, Constants.ZUNDAMON_DIR),
             os.path.join(base_dir, Constants.ASSETS_DIR, Constants.BACKGROUNDS_DIR),
+            os.path.join(base_dir, Constants.ASSETS_DIR, "items"),
+            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "drinks"),
+            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "books"),
+            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "tools"),
+            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "weapons"),
         ]
 
 

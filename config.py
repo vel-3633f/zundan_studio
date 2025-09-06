@@ -356,6 +356,21 @@ class Paths:
         """出力ディレクトリを取得"""
         return os.path.join(Paths.get_project_root(), "outputs")
 
+    @staticmethod
+    def get_items_dir() -> str:
+        """アイテム画像ディレクトリを取得"""
+        return os.path.join(Paths.get_assets_dir(), "items")
+
+    @staticmethod
+    def get_item_category_dir(category: str) -> str:
+        """カテゴリ別アイテムディレクトリを取得"""
+        return os.path.join(Paths.get_items_dir(), category)
+
+    @staticmethod
+    def get_item_file_path(category: str, item_name: str) -> str:
+        """アイテム画像ファイルパスを取得"""
+        return os.path.join(Paths.get_item_category_dir(category), f"{item_name}.png")
+
 
 # ============================
 # デフォルト会話データ
@@ -462,11 +477,183 @@ class UIConfig:
         3,
         1,
         1,
+        1,
         2,
         1,
-    ]  # 話者、テキスト、背景、表情、表示キャラ、削除
+    ]  # 話者、テキスト、背景、表情、アイテム、表示キャラ、削除
     button_columns: List[int] = [1, 1, 1]
     generate_columns: List[int] = [1, 2, 1]
+
+
+# ============================
+# アイテム設定
+# ============================
+
+
+@dataclass
+class ItemConfig:
+    """アイテム設定"""
+
+    name: str
+    display_name: str
+    category: str
+    emoji: str = "📦"
+    # キャラクターごとの位置調整（キャラクター名をキー）
+    positions: Dict[str, Tuple[float, float]] = None  # (x_ratio, y_ratio)
+    # キャラクターごとのサイズ調整
+    sizes: Dict[str, float] = None  # size_ratio
+    # アイテム固有のサイズ比率（キャラクター共通）
+    base_size: float = 0.15
+    # アスペクト比を維持するか
+    maintain_aspect_ratio: bool = True
+    # 最大幅・高さ制限（背景サイズの比率）
+    max_width_ratio: float = 0.3
+    max_height_ratio: float = 0.3
+    description: str = ""
+
+    def __post_init__(self):
+        if self.positions is None:
+            # デフォルト位置（キャラクターの手元あたり）
+            self.positions = {
+                "zundamon": (0.65, 0.45),  # 右手
+                "metan": (0.35, 0.45),     # 左手
+                "tsumugi": (0.35, 0.45),   # 左手
+            }
+        if self.sizes is None:
+            # デフォルトサイズ（キャラクター別の微調整）
+            self.sizes = {
+                "zundamon": 1.0,  # base_sizeに対する倍率
+                "metan": 1.0,
+                "tsumugi": 1.0,
+            }
+            
+    def get_size_for_character(self, character_name: str) -> float:
+        """キャラクター用の最終サイズを取得"""
+        char_multiplier = self.sizes.get(character_name, 1.0)
+        return self.base_size * char_multiplier
+
+
+class Items:
+    """アイテム設定管理クラス"""
+
+    # 飲み物カテゴリ
+    COFFEE = ItemConfig(
+        name="coffee",
+        display_name="コーヒー",
+        category="drinks",
+        emoji="☕",
+        base_size=0.5,  # 小さめのカップ
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.15,
+        max_height_ratio=0.2,
+        description="温かいコーヒー",
+    )
+
+    TEA = ItemConfig(
+        name="tea",
+        display_name="お茶",
+        category="drinks",
+        emoji="🍵",
+        base_size=0.1,  # 和風カップは小さめ
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.12,
+        max_height_ratio=0.15,
+        description="緑茶",
+    )
+
+    JUICE = ItemConfig(
+        name="juice",
+        display_name="ジュース",
+        category="drinks",
+        emoji="🥤",
+        base_size=0.15,  # ストロー付きで少し縦長
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.12,
+        max_height_ratio=0.25,
+        description="フルーツジュース",
+    )
+
+    # 本カテゴリ
+    BOOK = ItemConfig(
+        name="book",
+        display_name="本",
+        category="books",
+        emoji="📖",
+        base_size=0.18,  # 本は大きめ
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.15,
+        max_height_ratio=0.25,
+        description="読書用の本",
+    )
+
+    NOTEBOOK = ItemConfig(
+        name="notebook",
+        display_name="ノート",
+        category="books",
+        emoji="📓",
+        base_size=0.16,  # ノートは本より少し小さめ
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.13,
+        max_height_ratio=0.20,
+        description="書き込み用ノート",
+    )
+
+    # 道具カテゴリ
+    PEN = ItemConfig(
+        name="pen",
+        display_name="ペン",
+        category="tools",
+        emoji="✏️",
+        base_size=0.08,  # ペンは細くて小さい
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.05,
+        max_height_ratio=0.15,
+        description="書き込み用ペン",
+    )
+
+    PHONE = ItemConfig(
+        name="phone",
+        display_name="スマホ",
+        category="tools",
+        emoji="📱",
+        base_size=0.13,  # スマホは縦長の長方形
+        maintain_aspect_ratio=True,
+        max_width_ratio=0.08,
+        max_height_ratio=0.18,
+        description="スマートフォン",
+    )
+
+    @classmethod
+    def get_all(cls) -> Dict[str, ItemConfig]:
+        """すべてのアイテム設定を取得"""
+        items = {}
+        for attr_name in dir(cls):
+            attr_value = getattr(cls, attr_name)
+            if isinstance(attr_value, ItemConfig):
+                items[attr_value.name] = attr_value
+        return items
+
+    @classmethod
+    def get_by_category(cls, category: str) -> Dict[str, ItemConfig]:
+        """カテゴリ別でアイテムを取得"""
+        all_items = cls.get_all()
+        return {
+            name: item for name, item in all_items.items()
+            if item.category == category
+        }
+
+    @classmethod
+    def get_categories(cls) -> List[str]:
+        """利用可能なカテゴリリストを取得"""
+        all_items = cls.get_all()
+        categories = list(set(item.category for item in all_items.values()))
+        return sorted(categories)
+
+    @classmethod
+    def get_item(cls, name: str) -> ItemConfig:
+        """特定のアイテム設定を取得"""
+        all_items = cls.get_all()
+        return all_items.get(name, None)
 
 
 # ============================
