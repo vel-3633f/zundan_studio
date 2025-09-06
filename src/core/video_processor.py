@@ -25,9 +25,10 @@ class VideoProcessor:
         self.resolution = APP_CONFIG.resolution
         self.characters = Characters.get_all()
         self.subtitle_config = SUBTITLE_CONFIG
-        
+
         # ItemManagerをimportして初期化（遅延import）
         from src.services.item_manager import ItemManager
+
         self.item_manager = ItemManager()
 
         # 瞬き設定
@@ -348,8 +349,6 @@ class VideoProcessor:
                 if intensity > 0.1:  # 実際に話している場合のみ
                     sorted_chars.append((char_name, speaker_data))
         else:
-            # デュオモード：visible_charactersに基づき全キャラクター表示
-            # 安定したソート（ずんだもんを右側に配置するためx_offset_ratioでソート）
             sorted_chars = sorted(
                 active_speakers.items(),
                 key=lambda x: self.characters.get(
@@ -416,24 +415,29 @@ class VideoProcessor:
 
             mouth_img = cv2.resize(mouth_img, (target_width, target_height))
 
-            # 境界内に調整（キャラクターが画面外に出ないよう調整、ただし一部はみ出し許可）
             margin = 10
             x = max(-target_width // 3, min(x, bg_w - target_width // 3 * 2))
             y = max(margin, min(y, bg_h - target_height - margin))
 
             # キャラクター合成
             result = self.composite_frame(result, mouth_img, (x, y))
-            
+
             # アイテム合成
             if character_items and char_name in character_items:
                 item_name = character_items[char_name]
                 if item_name and item_name != "none":
                     try:
                         result = self.item_manager.composite_item_on_frame(
-                            result, item_name, char_name, (x, y), (target_width, target_height)
+                            result,
+                            item_name,
+                            char_name,
+                            (x, y),
+                            (target_width, target_height),
                         )
                     except Exception as e:
-                        logger.error(f"Failed to composite item {item_name} for {char_name}: {e}")
+                        logger.error(
+                            f"Failed to composite item {item_name} for {char_name}: {e}"
+                        )
 
         return result
 
@@ -441,24 +445,57 @@ class VideoProcessor:
         """日本語フォントを取得"""
         local_fonts_dir = Paths.get_fonts_dir()
 
+        # 優先順位付きフォントリスト
+        priority_fonts = [
+            "NotoSansJP-Black.ttf",
+        ]
+
         local_font_paths = []
+
         if os.path.exists(local_fonts_dir):
-            for font_file in os.listdir(local_fonts_dir):
-                if font_file.lower().endswith((".ttf", ".otf", ".ttc")):
-                    local_font_paths.append(os.path.join(local_fonts_dir, font_file))
+            for priority_font in priority_fonts:
+                priority_path = os.path.join(local_fonts_dir, priority_font)
+                if os.path.exists(priority_path):
+                    local_font_paths.append(priority_path)
 
         font_paths = local_font_paths
 
         for font_path in font_paths:
             if os.path.exists(font_path):
                 try:
-                    font = ImageFont.truetype(font_path, self.subtitle_config.font_size)
-                    return font
-                except Exception:
+                    if font_path.lower().endswith(".ttc"):
+                        for index in range(15):
+                            try:
+                                font = ImageFont.truetype(
+                                    font_path,
+                                    self.subtitle_config.font_size,
+                                    index=index,
+                                )
+                            except (OSError, IOError, ValueError):
+                                continue
+                    else:
+                        # TTF/OTFファイルの場合
+                        font = ImageFont.truetype(
+                            font_path, self.subtitle_config.font_size
+                        )
+                        # 日本語文字でテスト
+                        try:
+                            logger.info(f"Successfully loaded font: {font_path}")
+                            return font
+                        except Exception:
+                            continue
+                except Exception as e:
+                    logger.warning(f"Failed to load font {font_path}: {e}")
                     continue
 
+        logger.warning("No suitable Japanese font found, using default font")
         try:
-            return ImageFont.load_default()
+            default_font = ImageFont.load_default()
+            try:
+                return default_font
+            except Exception:
+                logger.warning("Default font does not support Japanese characters")
+                return default_font  # それでもデフォルトフォントを返す
         except Exception as e:
             logger.error(f"Failed to load default font: {e}")
             return None
@@ -501,13 +538,6 @@ class VideoProcessor:
             # 位置計算
             bg_x = (self.resolution[0] - bg_width) // 2
             bg_y = self.resolution[1] - self.subtitle_config.margin_bottom - bg_height
-
-            bg_rect = [
-                max(0, bg_x - border_width),
-                max(0, bg_y - border_width),
-                min(self.resolution[0], bg_x + bg_width + border_width),
-                min(self.resolution[1], bg_y + bg_height + border_width),
-            ]
 
             text_x = bg_x + padding_x
             text_y = bg_y + padding_top

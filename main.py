@@ -75,9 +75,7 @@ def main():
     _, col_gen, _ = st.columns(UI_CONFIG.generate_columns)
     with col_gen:
         valid_lines = [
-            line
-            for line in st.session_state.conversation_lines
-            if line["text"].strip()
+            line for line in st.session_state.conversation_lines if line["text"].strip()
         ]
         has_valid_text = bool(valid_lines)
 
@@ -117,12 +115,6 @@ def main():
 
             finally:
                 st.session_state.generation_in_progress = False
-
-    # Generation status section
-    if not st.session_state.generation_in_progress:
-        st.header("生成状況")
-        st.progress(0)
-        st.text("待機中...")
 
     # Results
     render_results()
