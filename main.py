@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import logging
+import json
 
 from src.utils.utils import (
     setup_logging,
@@ -29,9 +30,54 @@ setup_logging(debug=os.getenv("DEBUG_MODE", "false").lower() == "true")
 logger = logging.getLogger(__name__)
 ensure_directories()
 
-# Page config
+
+def load_user_config():
+    """ユーザー設定を読み込み"""
+    config_file = "temp/user_config.json"
+    try:
+        if os.path.exists(config_file):
+            with open(config_file, "r", encoding="utf-8") as f:
+                user_config = json.load(f)
+
+            # セッションにユーザー設定を保存
+            if "user_config" not in st.session_state:
+                st.session_state.user_config = user_config
+                logger.info("ユーザー設定を読み込みました")
+
+    except Exception as e:
+        logger.warning(f"ユーザー設定の読み込みに失敗: {e}")
+
+
+def get_effective_config(config_key, default_value, config_path=None):
+    """有効な設定値を取得（ユーザー設定優先）"""
+    if hasattr(st.session_state, "user_config") and st.session_state.user_config:
+        try:
+            if config_path:
+                value = st.session_state.user_config
+                for key in config_path:
+                    value = value[key]
+                return value
+            else:
+                # 単純な設定
+                return st.session_state.user_config.get(config_key, default_value)
+        except (KeyError, TypeError):
+            pass
+
+    return default_value
+
+
+# ユーザー設定を読み込み
+load_user_config()
+
+# Page config - ユーザー設定があれば適用
+page_title = (
+    get_effective_config("title", APP_CONFIG.title, ["app", "title"])
+    if hasattr(st.session_state, "user_config") and st.session_state.user_config
+    else APP_CONFIG.title
+)
+
 st.set_page_config(
-    page_title=APP_CONFIG.title,
+    page_title=f"🏠 {APP_CONFIG.title}",  # メインページであることを明示
     page_icon=APP_CONFIG.page_icon,
     layout=APP_CONFIG.layout,
     initial_sidebar_state="expanded",
@@ -43,8 +89,13 @@ def main():
     init_session_state()
 
     # Header
-    st.title(APP_CONFIG.title)
+    st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
+
+    # ページナビゲーションヒント
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**📄 その他のページ**")
+    st.sidebar.markdown("- ⚙️ Config Editor: 設定値の編集")
 
     # Check VOICEVOX connection
     if not check_voicevox_connection():
