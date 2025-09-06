@@ -398,16 +398,16 @@ def render_sidebar() -> tuple:
             use_container_width=True,
         ):
             if file_info["total_count"] > 0:
-                cleanup_all_generated_files()
-                cleanup_temp_files()
-                st.success(f"全ファイル({file_info['total_count']}個)を削除しました")
+                deleted_count = cleanup_all_generated_files()
+                st.success(f"全ファイル({deleted_count}個)を削除しました")
                 st.session_state.generated_video_path = None
                 st.rerun()
             else:
-                cleanup_temp_files()
-                st.info(
-                    "削除するファイルがありませんでした（一時ファイルのクリーンアップを実行）"
-                )
+                deleted_count = cleanup_temp_files()
+                if deleted_count > 0:
+                    st.success(f"一時ファイル({deleted_count}個)を削除しました")
+                else:
+                    st.info("削除するファイルがありませんでした")
 
     return speed, pitch, intonation, enable_subtitles, conversation_mode
 
