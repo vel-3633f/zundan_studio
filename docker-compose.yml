@@ -9,7 +9,7 @@ services:
       - ./assets:/app/assets
       - ./src:/app/src
       - ./main.py:/app/main.py
-      - ./config.py:/app/config.py
+      - ./config:/app/config
     depends_on:
       - voicevox
     environment:
