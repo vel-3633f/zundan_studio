@@ -176,12 +176,20 @@ def render_conversation_input(
 
             # Text input
             with cols[1]:
+                # ナレーターの場合のラベルとプレースホルダーを変更
+                if line["speaker"] == "narrator":
+                    label_text = f"{char_config.emoji} {char_config.display_name}のナレーション"
+                    placeholder_text = "ナレーション内容を入力してください..."
+                else:
+                    label_text = f"{char_config.emoji} {char_config.display_name} ({char_config.display_position}) のセリフ"
+                    placeholder_text = f"{char_config.display_name}が話す内容を入力してください..."
+                
                 line["text"] = st.text_area(
-                    f"{char_config.emoji} {char_config.display_name} ({char_config.display_position}) のセリフ",
+                    label_text,
                     value=line["text"],
                     height=UI_CONFIG.text_area_height,
                     key=f"text_{i}",
-                    placeholder=f"{char_config.display_name}が話す内容を入力してください...",
+                    placeholder=placeholder_text,
                 )
 
             # Background selection
@@ -223,11 +231,21 @@ def render_conversation_input(
             # Visible characters selection
             with cols[4]:
                 st.write("表示キャラクター")
-                char_names = [opt[0] for opt in Characters.get_display_options()]
+                # ナレーター以外のキャラクターのみを表示選択肢に含める
+                char_options = [opt for opt in Characters.get_display_options() if opt[0] != "narrator"]
+                char_names = [opt[0] for opt in char_options]
                 char_display_names = {
                     opt[0]: opt[1].split(" ")[1]
-                    for opt in Characters.get_display_options()
+                    for opt in char_options
                 }
+
+                # ナレーターの場合、話者を自動追加しない
+                if line["speaker"] == "narrator":
+                    # visible_charactersからnarratorを除外
+                    line["visible_characters"] = [char for char in line["visible_characters"] if char != "narrator"]
+                    help_text = "ナレーション中に表示するキャラクターを選択"
+                else:
+                    help_text = "このセリフの間に表示するキャラクターを選択"
 
                 line["visible_characters"] = st.multiselect(
                     "表示キャラクター選択",
@@ -236,11 +254,11 @@ def render_conversation_input(
                     key=f"visible_chars_{i}",
                     format_func=lambda x: char_display_names.get(x, x),
                     label_visibility="collapsed",
-                    help="このセリフの間に表示するキャラクターを選択",
+                    help=help_text,
                 )
 
-                # 話者が含まれていない場合は自動で追加
-                if line["speaker"] not in line["visible_characters"]:
+                # 話者がナレーター以外で、含まれていない場合は自動で追加
+                if line["speaker"] != "narrator" and line["speaker"] not in line["visible_characters"]:
                     line["visible_characters"].append(line["speaker"])
 
             # Delete button
@@ -302,6 +320,25 @@ def render_control_buttons() -> None:
             st.rerun()
 
     with col3:
+        if st.button(
+            f"➕ {Characters.NARRATOR.display_name}を追加",
+            use_container_width=True,
+            type="secondary",
+        ):
+            st.session_state.conversation_lines.append(
+                {
+                    "speaker": "narrator",
+                    "text": "",
+                    "background": "default",
+                    "expression": "normal",
+                    "visible_characters": ["zundamon"],  # デフォルトでずんだもんを表示
+                }
+            )
+            st.rerun()
+
+    # リセットボタンを別の行に配置
+    col_reset = st.columns(1)[0]
+    with col_reset:
         if st.button("🔄 会話をリセット", use_container_width=True):
             st.session_state.conversation_lines = (
                 DefaultConversations.get_reset_conversation()
@@ -361,16 +398,16 @@ def render_sidebar() -> tuple:
             use_container_width=True,
         ):
             if file_info["total_count"] > 0:
-                cleanup_all_generated_files()
-                cleanup_temp_files()
-                st.success(f"全ファイル({file_info['total_count']}個)を削除しました")
+                deleted_count = cleanup_all_generated_files()
+                st.success(f"全ファイル({deleted_count}個)を削除しました")
                 st.session_state.generated_video_path = None
                 st.rerun()
             else:
-                cleanup_temp_files()
-                st.info(
-                    "削除するファイルがありませんでした（一時ファイルのクリーンアップを実行）"
-                )
+                deleted_count = cleanup_temp_files()
+                if deleted_count > 0:
+                    st.success(f"一時ファイル({deleted_count}個)を削除しました")
+                else:
+                    st.info("削除するファイルがありませんでした")
 
     return speed, pitch, intonation, enable_subtitles, conversation_mode
 

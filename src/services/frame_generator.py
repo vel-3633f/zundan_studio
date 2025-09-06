@@ -126,20 +126,31 @@ class FrameGenerator:
             visible_chars = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
-            visible_chars = list(set(visible_chars + [speaker]))
-
-            for char_name in visible_chars:
-                if char_name in self.video_processor.characters:
-                    if char_name == speaker:
+            
+            # ナレーターの場合、話者自体は表示しない
+            if speaker == "narrator":
+                # visible_charactersに指定されたキャラクターのみ表示
+                for char_name in visible_chars:
+                    if char_name in self.video_processor.characters and char_name != "narrator":
                         active_speakers[char_name] = {
-                            "intensity": intensity,
-                            "expression": expression,
-                        }
-                    else:
-                        active_speakers[char_name] = {
-                            "intensity": 0,
+                            "intensity": 0,  # ナレーション中なので動きなし
                             "expression": "normal",
                         }
+            else:
+                # 通常のキャラクター会話の場合
+                visible_chars = list(set(visible_chars + [speaker]))
+                for char_name in visible_chars:
+                    if char_name in self.video_processor.characters and char_name != "narrator":
+                        if char_name == speaker:
+                            active_speakers[char_name] = {
+                                "intensity": intensity,
+                                "expression": expression,
+                            }
+                        else:
+                            active_speakers[char_name] = {
+                                "intensity": 0,
+                                "expression": "normal",
+                            }
         else:
             active_speakers = {"zundamon": {"intensity": 0, "expression": "normal"}}
 
