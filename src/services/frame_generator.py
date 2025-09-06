@@ -45,7 +45,7 @@ class FrameGenerator:
                 current_time = frame_idx / self.fps
 
                 # 現在のフレーム情報を取得
-                active_speakers, current_background = self._get_frame_info(
+                active_speakers, current_background, character_items = self._get_frame_info(
                     current_time,
                     conversations,
                     audio_file_list,
@@ -61,6 +61,7 @@ class FrameGenerator:
                     conversation_mode,
                     current_time,
                     blink_timings,
+                    character_items,
                 )
 
                 # 字幕追加
@@ -83,11 +84,12 @@ class FrameGenerator:
         audio_file_list: List[str],
         segment_audio_intensities: List[AudioSegmentInfo],
         backgrounds: Dict,
-    ) -> Tuple[Dict, any]:
+    ) -> Tuple[Dict, any, Dict[str, str]]:
         """現在のフレーム情報を取得"""
         active_speakers = {}
         current_background = backgrounds["default"]
         current_conversation = None
+        character_items = {}
 
         # 現在の話者と強度、背景、表情を特定
         for i, (conv, audio_path) in enumerate(zip(conversations, audio_file_list)):
@@ -118,6 +120,11 @@ class FrameGenerator:
                     if background_name in backgrounds:
                         current_background = backgrounds[background_name]
 
+                    # 現在のセリフのアイテム情報を取得
+                    item_name = conv.get("item", "none")
+                    if item_name and item_name != "none":
+                        character_items[speaker] = item_name
+
                     break
 
         # 表示するキャラクターを決定
@@ -126,24 +133,35 @@ class FrameGenerator:
             visible_chars = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
-            visible_chars = list(set(visible_chars + [speaker]))
-
-            for char_name in visible_chars:
-                if char_name in self.video_processor.characters:
-                    if char_name == speaker:
+            
+            # ナレーターの場合、話者自体は表示しない
+            if speaker == "narrator":
+                # visible_charactersに指定されたキャラクターのみ表示
+                for char_name in visible_chars:
+                    if char_name in self.video_processor.characters and char_name != "narrator":
                         active_speakers[char_name] = {
-                            "intensity": intensity,
-                            "expression": expression,
-                        }
-                    else:
-                        active_speakers[char_name] = {
-                            "intensity": 0,
+                            "intensity": 0,  # ナレーション中なので動きなし
                             "expression": "normal",
                         }
+            else:
+                # 通常のキャラクター会話の場合
+                visible_chars = list(set(visible_chars + [speaker]))
+                for char_name in visible_chars:
+                    if char_name in self.video_processor.characters and char_name != "narrator":
+                        if char_name == speaker:
+                            active_speakers[char_name] = {
+                                "intensity": intensity,
+                                "expression": expression,
+                            }
+                        else:
+                            active_speakers[char_name] = {
+                                "intensity": 0,
+                                "expression": "normal",
+                            }
         else:
             active_speakers = {"zundamon": {"intensity": 0, "expression": "normal"}}
 
-        return active_speakers, current_background
+        return active_speakers, current_background, character_items
 
     def _add_subtitle_to_frame(
         self, frame, subtitle_lines: List[SubtitleData], current_time: float
