@@ -49,8 +49,7 @@ def render_sidebar() -> tuple:
                 else:
                     st.info("削除するファイルがありませんでした")
 
-    # 削除されたUI要素のデフォルト値を設定
     enable_subtitles = APP_CONFIG.default_subtitles
-    conversation_mode = "duo"  # デフォルトはデュオモード
+    conversation_mode = "duo"
 
     return speed, pitch, intonation, enable_subtitles, conversation_mode

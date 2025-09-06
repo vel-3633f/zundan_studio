@@ -18,7 +18,6 @@ def render_conversation_input(
     st.subheader("会話内容")
 
     for i, line in enumerate(st.session_state.conversation_lines):
-        # Ensure all keys exist
         if "background" not in line:
             line["background"] = "default"
         if "expression" not in line:
@@ -60,7 +59,6 @@ def render_conversation_input(
 
             # Text input
             with cols[1]:
-                # ナレーターの場合のラベルとプレースホルダーを変更
                 if line["speaker"] == "narrator":
                     label_text = (
                         f"{char_config.emoji} {char_config.display_name}のナレーション"
@@ -80,7 +78,6 @@ def render_conversation_input(
                     placeholder=placeholder_text,
                 )
 
-            # Background selection
             with cols[2]:
                 st.write("背景")
                 current_bg_index = (
@@ -188,7 +185,7 @@ def render_conversation_input(
             # Delete button
             with cols[6]:
                 st.write("")
-                st.write("")  # Spacing
+                st.write("")
                 if st.button(
                     "🗑️",
                     key=f"delete_{i}",

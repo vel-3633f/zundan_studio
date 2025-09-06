@@ -62,12 +62,11 @@ def render_control_buttons() -> None:
                     "background": "default",
                     "expression": "normal",
                     "item": "none",
-                    "visible_characters": ["zundamon"],  # デフォルトでずんだもんを表示
+                    "visible_characters": ["zundamon"],
                 }
             )
             st.rerun()
 
-    # リセットボタンを別の行に配置
     col_reset = st.columns(1)[0]
     with col_reset:
         if st.button("🔄 会話をリセット", use_container_width=True):
