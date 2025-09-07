@@ -21,6 +21,7 @@ from config import (
     Expressions,
     DefaultConversations,
     Paths,
+    Items,
 )
 
 # Setup
@@ -130,7 +131,7 @@ def generate_conversation_video(
 
 
 def render_conversation_input(
-    background_options: List[str], expression_options: List[str]
+    background_options: List[str], expression_options: List[str], item_options: List[str]
 ) -> None:
     """Render conversation input interface"""
     st.subheader("会話内容")
@@ -143,6 +144,8 @@ def render_conversation_input(
             line["expression"] = "normal"
         if "visible_characters" not in line:
             line["visible_characters"] = ["zundamon", line.get("speaker", "zundamon")]
+        if "item" not in line:
+            line["item"] = "none"
 
         # Get character info from config
         characters = Characters.get_all()
@@ -228,8 +231,34 @@ def render_conversation_input(
                     label_visibility="collapsed",
                 )
 
-            # Visible characters selection
+            # Item selection
             with cols[4]:
+                st.write("アイテム")
+                current_item_index = (
+                    item_options.index(line["item"])
+                    if line["item"] in item_options
+                    else 0
+                )
+                
+                def format_item_display(item_name):
+                    if item_name == "none":
+                        return "なし"
+                    item_config = Items.get_item(item_name)
+                    if item_config:
+                        return f"{item_config.emoji} {item_config.display_name}"
+                    return item_name
+
+                line["item"] = st.selectbox(
+                    "アイテム選択",
+                    options=item_options,
+                    key=f"item_{i}",
+                    index=current_item_index,
+                    format_func=format_item_display,
+                    label_visibility="collapsed",
+                )
+
+            # Visible characters selection
+            with cols[5]:
                 st.write("表示キャラクター")
                 # ナレーター以外のキャラクターのみを表示選択肢に含める
                 char_options = [opt for opt in Characters.get_display_options() if opt[0] != "narrator"]
@@ -262,7 +291,7 @@ def render_conversation_input(
                     line["visible_characters"].append(line["speaker"])
 
             # Delete button
-            with cols[5]:
+            with cols[6]:
                 st.write("")
                 st.write("")  # Spacing
                 if st.button(
@@ -297,6 +326,7 @@ def render_control_buttons() -> None:
                     "text": "",
                     "background": "default",
                     "expression": "normal",
+                    "item": "none",
                     "visible_characters": ["zundamon"],
                 }
             )
@@ -314,6 +344,7 @@ def render_control_buttons() -> None:
                     "text": "",
                     "background": "default",
                     "expression": "normal",
+                    "item": "none",
                     "visible_characters": ["zundamon", "metan"],
                 }
             )
@@ -331,6 +362,7 @@ def render_control_buttons() -> None:
                     "text": "",
                     "background": "default",
                     "expression": "normal",
+                    "item": "none",
                     "visible_characters": ["zundamon"],  # デフォルトでずんだもんを表示
                 }
             )
@@ -359,26 +391,6 @@ def render_sidebar() -> tuple:
         pitch = st.slider("音高", *pitch_range, help="声の高さを調整")
         intonation = st.slider("抑揚", *intonation_range, help="抑揚の強さを調整")
 
-        st.markdown("---")
-        st.header("会話モード")
-        conversation_mode = st.selectbox(
-            "キャラクター表示設定",
-            options=["duo", "solo"],
-            index=0,
-            format_func=lambda x: {
-                "duo": "🎭 デュオ会話（常に2人表示）",
-                "solo": "🎤 ソロ発表（話している人のみ表示）",
-            }[x],
-            help="デュオ: ずんだもんと1人のゲストが常に表示されます\nソロ: 話している人だけが表示されます",
-        )
-
-        st.markdown("---")
-        st.header("字幕設定")
-        enable_subtitles = st.checkbox(
-            "字幕を表示",
-            value=APP_CONFIG.default_subtitles,
-            help="動画に字幕を埋め込みます",
-        )
 
         st.markdown("---")
         st.header("ファイル管理")
@@ -409,6 +421,10 @@ def render_sidebar() -> tuple:
                 else:
                     st.info("削除するファイルがありませんでした")
 
+    # 削除されたUI要素のデフォルト値を設定
+    enable_subtitles = APP_CONFIG.default_subtitles
+    conversation_mode = "duo"  # デフォルトはデュオモード
+    
     return speed, pitch, intonation, enable_subtitles, conversation_mode
 
 
@@ -459,12 +475,13 @@ def main():
     col1, col2 = st.columns(UI_CONFIG.main_columns)
 
     with col1:
-        # Get available backgrounds and expressions
+        # Get available backgrounds, expressions, and items
         background_options = ["default"] + VideoGenerator().video_processor.get_background_names()
         expression_options = Expressions.get_available_names()
+        item_options = ["none"] + list(Items.get_all().keys())
 
         # Conversation input
-        render_conversation_input(background_options, expression_options)
+        render_conversation_input(background_options, expression_options, item_options)
         render_control_buttons()
 
         st.markdown("---")
