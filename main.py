@@ -53,12 +53,16 @@ def main():
     init_session_state()
 
     # ページ選択
-    page = st.sidebar.selectbox("📄 ページ選択", options=["🏠 ホーム", "設定"], index=0)
+    page = st.sidebar.selectbox("📄 ページ選択", options=["🏠 ホーム", "📚 記事紹介", "設定"], index=0)
 
     if page == "🏠 ホーム":
         from src.ui.pages.home_page import render_home_page
 
         render_home_page()
+    elif page == "📚 記事紹介":
+        from src.ui.pages.article_introduction_page import render_article_introduction_page
+
+        render_article_introduction_page()
     elif page == "設定":
         from src.ui.pages.config_page import render_config_page
 
