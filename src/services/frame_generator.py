@@ -120,7 +120,12 @@ class FrameGenerator:
                     if background_name in backgrounds:
                         current_background = backgrounds[background_name]
 
-                    # 現在のセリフのアイテム情報を取得
+                    # 現在のセリフのキャラクター別アイテム情報を取得
+                    char_items = conv.get("character_items", {})
+                    if char_items:
+                        character_items.update(char_items)
+                    
+                    # 後方互換性のため、古い形式のitemも処理
                     item_name = conv.get("item", "none")
                     if item_name and item_name != "none":
                         character_items[speaker] = item_name
