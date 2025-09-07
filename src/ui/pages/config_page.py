@@ -519,5 +519,6 @@ def render_character_settings(config: Dict[str, Any]):
         )
 
 
-# Streamlitマルチページでは直接実行される
-render_config_editor()
+def render_config_page():
+    """Config Editor ページをレンダリング"""
+    render_config_editor()
