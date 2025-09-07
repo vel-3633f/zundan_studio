@@ -12,14 +12,6 @@ temp/
 *.aac
 *.ogg
 
-# フォントファイル
-fonts/
-*.ttf
-*.ttc
-*.otf
-*.woff
-*.woff2
-
 # 画像ファイル（大きなアセット画像を除外）
 assets/
 *.png
