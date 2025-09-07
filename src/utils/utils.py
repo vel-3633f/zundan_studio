@@ -252,7 +252,6 @@ class LoggingConfig:
             logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
-# 後方互換性のための関数エイリアス
 def setup_logging(debug: bool = False):
     """Setup logging configuration"""
     LoggingConfig.setup_logging(debug)
