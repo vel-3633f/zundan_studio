@@ -504,7 +504,7 @@ class VideoProcessor:
             except Exception:
                 logger.warning("Default font does not support Japanese characters")
                 self._cached_font = default_font
-                return default_font  # それでもデフォルトフォントを返す
+                return default_font
         except Exception as e:
             logger.error(f"Failed to load default font: {e}")
             return None
