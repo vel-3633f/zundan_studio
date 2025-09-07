@@ -31,6 +31,9 @@ class VideoProcessor:
 
         self.item_manager = ItemManager()
 
+        # フォントキャッシュ
+        self._cached_font = None
+
         # 瞬き設定
         self.blink_config = {
             "min_interval": 2.0,  # 最小瞬き間隔（秒）
@@ -442,7 +445,10 @@ class VideoProcessor:
         return result
 
     def get_japanese_font(self) -> Optional[ImageFont.FreeTypeFont]:
-        """日本語フォントを取得"""
+        """日本語フォントを取得（キャッシュ機能付き）"""
+        if self._cached_font is not None:
+            return self._cached_font
+
         local_fonts_dir = Paths.get_fonts_dir()
 
         # 優先順位付きフォントリスト
@@ -480,6 +486,7 @@ class VideoProcessor:
                         )
                         # 日本語文字でテスト
                         try:
+                            self._cached_font = font
                             logger.info(f"Successfully loaded font: {font_path}")
                             return font
                         except Exception:
@@ -492,9 +499,11 @@ class VideoProcessor:
         try:
             default_font = ImageFont.load_default()
             try:
+                self._cached_font = default_font
                 return default_font
             except Exception:
                 logger.warning("Default font does not support Japanese characters")
+                self._cached_font = default_font
                 return default_font  # それでもデフォルトフォントを返す
         except Exception as e:
             logger.error(f"Failed to load default font: {e}")
