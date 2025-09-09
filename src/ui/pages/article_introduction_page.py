@@ -1,52 +1,77 @@
 import streamlit as st
 import os
-import json
-import re
-from typing import Dict, Optional
+
+import traceback
+from typing import Dict, Optional, List, Any, Union
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_openai import OpenAI
-from langchain.prompts import PromptTemplate
-from langchain.document_loaders import WebBaseLoader
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.exceptions import OutputParserException
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_text_splitters import CharacterTextSplitter
+from pydantic import BaseModel, Field
 
 from config import Characters, Expressions, Items, Backgrounds
 
 
-class ArticleIntroductionGenerator:
-    """記事紹介生成器"""
+class ConversationSegment(BaseModel):
+    """会話セグメントのモデル"""
 
-    def __init__(self):
+    speaker: str = Field(description="話者名")
+    text: str = Field(description="セリフ内容")
+    expression: str = Field(description="表情名")
+    background: str = Field(description="背景名")
+    visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
+    character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
+
+
+class ArticleIntroduction(BaseModel):
+    """記事紹介のモデル"""
+
+    title: str = Field(description="記事タイトル")
+    segments: List[ConversationSegment] = Field(description="会話セグメントのリスト")
+
+
+def generate_zundamon_introduction(
+    article_content: str, model: str = "gpt-4.1", temperature: float = 0.8
+) -> Union[ArticleIntroduction, Dict[str, Any]]:
+    """
+    ずんだもんによる記事紹介を生成する
+
+    Args:
+        article_content (str): 記事の内容
+        model (str): 使用するLLMのモデル名
+        temperature (float): 生成の温度パラメータ
+
+    Returns:
+        Union[ArticleIntroduction, Dict[str, Any]]:
+            成功した場合: 記事紹介データを持つPydanticモデル
+            失敗した場合: エラー情報を含む辞書
+    """
+    try:
+        # OpenAI APIキーの確認
         openai_api_key = os.getenv("OPENAI_API_KEY")
-
         if not openai_api_key:
-            st.error("OPENAI_API_KEY が .env ファイルに設定されていません。")
-            self.llm = None
-            return
+            return {
+                "error": "API Key Error",
+                "details": "OPENAI_API_KEY が設定されていません",
+            }
 
-        try:
-            self.llm = OpenAI(
-                temperature=0.8,
-                api_key=openai_api_key,
-                model="gpt-4.1",
-            )
-        except Exception as e:
-            st.error(f"OpenAI初期化エラー: {e}")
-            self.llm = None
+        # --- 初期化処理 ---
+        llm = ChatOpenAI(model=model, temperature=temperature, api_key=openai_api_key)
+        parser = PydanticOutputParser(pydantic_object=ArticleIntroduction)
 
-    @property
-    def available(self) -> bool:
-        """利用可能かどうかを判定"""
-        return self.llm is not None
+        # システムメッセージとユーザーメッセージの定義
+        system_template = (
+            "あなたは「ずんだもん」という東北地方の妖精キャラクターです。"
+            "語尾に「〜のだ」「〜なのだ」をつけて話し、親しみやすく面白おかしく記事を紹介してください。"
+        )
 
-    def create_zundamon_introduction_prompt(self) -> PromptTemplate:
-        """ずんだもんによる記事紹介用プロンプトを作成"""
-        template = """
-あなたは「ずんだもん」という東北地方の妖精キャラクターです。
-語尾に「〜のだ」「〜なのだ」をつけて話し、親しみやすく面白おかしく記事を紹介してください。
-
+        user_template = """
 記事内容:
 {article_content}
 
@@ -57,47 +82,67 @@ class ArticleIntroductionGenerator:
 4. 面白い例え話やダジャレを織り交ぜる
 5. 読者が興味を持つような工夫をする
 
-出力形式:
-以下のJSON形式で出力してください:
-
-{{
-   "title": "記事タイトル",
-   "segments": [
-       {{
-           "speaker": "zundamon",
-           "text": "セリフ内容",
-           "expression": "表情名",
-           "background": "背景名",
-           "visible_characters": ["zundamon"],
-           "character_items": {{
-               "zundamon": "アイテム名"
-           }}
-       }}
-   ]
-}}
-
 利用可能な表情: normal, happy, sad, angry, surprised, thinking
 利用可能な背景: default, blue_sky, sunset, night, forest, ocean, sakura, snow
 利用可能なアイテム: none, coffee, tea, juice, book, notebook, pen, phone
+
+{format_instructions}
 """
-        return PromptTemplate(input_variables=["article_content"], template=template)
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_template),
+                ("user", user_template),
+            ]
+        ).partial(format_instructions=parser.get_format_instructions())
+
+        # --- LangChainのチェーンを定義 ---
+        chain = prompt | llm | parser
+
+        # --- 実行 ---
+        print("🚀 ずんだもんが記事を読んでいる...")
+        response_object = chain.invoke({"article_content": article_content})
+        print("🎉 記事紹介の生成に成功しました！")
+        return response_object
+
+    except OutputParserException as e:
+        print(f"❌ パースエラー: LLMの出力形式が不正です。")
+        print(f"--- LLM Raw Output ---\n{e.llm_output}\n---")
+        return {"error": "Pydantic Parse Error", "details": str(e)}
+    except Exception as e:
+        print(f"❌ 予期せぬエラーが発生しました: {e}")
+        traceback.print_exc()
+        return {"error": "Unexpected Error", "details": str(e)}
+
+
+class ArticleIntroductionGenerator:
+    """記事紹介生成器（レガシー互換性維持用）"""
+
+    def __init__(self):
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        self._available = bool(openai_api_key)
+
+        if not openai_api_key:
+            st.error("OPENAI_API_KEY が .env ファイルに設定されていません。")
+
+    @property
+    def available(self) -> bool:
+        """利用可能かどうかを判定"""
+        return self._available
 
     def generate_introduction(self, article_content: str) -> Optional[Dict]:
-        """記事紹介を生成"""
+        """記事紹介を生成（レガシー互換性用）"""
         if not self.available:
             return None
 
-        try:
-            prompt = self.create_zundamon_introduction_prompt()
-            chain = prompt | self.llm
-            response = chain.invoke({"article_content": article_content})
+        result = generate_zundamon_introduction(article_content)
 
-            json_match = re.search(r"\{.*\}", response, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-            return None
-        except Exception as e:
-            st.error(f"記事紹介生成エラー: {e}")
+        if isinstance(result, ArticleIntroduction):
+            # Pydanticモデルを辞書に変換
+            return result.model_dump()
+        else:
+            # エラーの場合
+            st.error(f"記事紹介生成エラー: {result.get('details', '不明なエラー')}")
             return None
 
 
@@ -113,6 +158,8 @@ def load_article_from_url(url: str) -> Optional[str]:
         content = "\n\n".join([doc.page_content for doc in texts[:3]])
         return content
     except Exception as e:
+        print(f"❌ URL読み込みエラー: {e}")
+        traceback.print_exc()
         st.error(f"URL読み込みエラー: {e}")
         return None
 
@@ -204,7 +251,7 @@ def add_conversation_to_session(conversation_data: Dict):
         )
 
     st.success(
-        f"{len(conversation_data['segments'])}個のセリフを会話リストに追加しました！"
+        f"🎉 {len(conversation_data['segments'])}個のセリフを会話リストに追加しました！"
     )
     st.info("ホームページの会話入力セクションで確認できます。")
 
@@ -243,10 +290,10 @@ def render_article_introduction_page():
         )
 
         if url and st.button("記事を読み込む"):
-            with st.spinner("記事を読み込み中..."):
+            with st.spinner("📖 記事を読み込み中..."):
                 article_content = load_article_from_url(url)
                 if article_content:
-                    st.success("記事を読み込みました！")
+                    st.success("🎉 記事を読み込みました！")
                     with st.expander("読み込んだ記事内容"):
                         st.text(
                             article_content[:1000] + "..."
@@ -269,17 +316,17 @@ def render_article_introduction_page():
         generator = ArticleIntroductionGenerator()
 
         if generator.available:
-            with st.spinner("ずんだもんが記事を読んでいる..."):
+            with st.spinner("🤖 ずんだもんが記事を読んでいる..."):
                 conversation_data = generator.generate_introduction(article_content)
 
                 if conversation_data:
-                    st.success("記事紹介が完成したのだ〜！")
+                    st.success("🎉 記事紹介が完成したのだ〜！")
                     display_conversation_preview(conversation_data)
 
                     if st.button("会話リストに追加する"):
                         add_conversation_to_session(conversation_data)
                 else:
-                    st.error("記事紹介の生成に失敗しました...")
+                    st.error("❌ 記事紹介の生成に失敗しました...")
 
 
 if __name__ == "__main__":
