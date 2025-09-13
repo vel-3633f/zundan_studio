@@ -11,7 +11,7 @@ import os
 class AppConfig:
     """アプリケーション基本設定"""
 
-    title: str = "🎭 ずんだもん会話動画生成アプリ"
+    title: str = "ずんだもん会話動画生成アプリ"
     description: str = (
         "ずんだもん（右側・緑枠）とゲストキャラクター（左側）の会話動画を作成できます"
     )

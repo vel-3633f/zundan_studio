@@ -233,7 +233,7 @@ class LoggingConfig:
     @staticmethod
     def setup_logging(debug: bool = False):
         """Setup logging configuration"""
-        level = logging.DEBUG if debug else logging.INFO
+        level = logging.DEBUG if debug else logging.WARNING
         logging.basicConfig(
             level=level,
             format=Constants.LOG_FORMAT,
@@ -252,7 +252,6 @@ class LoggingConfig:
             logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
-# 後方互換性のための関数エイリアス
 def setup_logging(debug: bool = False):
     """Setup logging configuration"""
     LoggingConfig.setup_logging(debug)

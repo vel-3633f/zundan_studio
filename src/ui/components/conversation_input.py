@@ -26,6 +26,9 @@ def render_conversation_input(
             line["visible_characters"] = ["zundamon", line.get("speaker", "zundamon")]
         if "item" not in line:
             line["item"] = "none"
+        # キャラクターごとのアイテム設定を追加
+        if "character_items" not in line:
+            line["character_items"] = {}
 
         # Get character info from config
         characters = Characters.get_all()
@@ -113,15 +116,15 @@ def render_conversation_input(
                     label_visibility="collapsed",
                 )
 
-            # Item selection
+            # Character-specific item selection
             with cols[4]:
-                st.write("アイテム")
-                current_item_index = (
-                    item_options.index(line["item"])
-                    if line["item"] in item_options
-                    else 0
-                )
-
+                st.write("キャラクターアイテム")
+                
+                # 表示されるキャラクターごとにアイテム選択UIを表示
+                visible_chars = line.get("visible_characters", [])
+                if line["speaker"] != "narrator" and line["speaker"] not in visible_chars:
+                    visible_chars.append(line["speaker"])
+                
                 def format_item_display(item_name):
                     if item_name == "none":
                         return "なし"
@@ -130,14 +133,31 @@ def render_conversation_input(
                         return f"{item_config.emoji} {item_config.display_name}"
                     return item_name
 
-                line["item"] = st.selectbox(
-                    "アイテム選択",
-                    options=item_options,
-                    key=f"item_{i}",
-                    index=current_item_index,
-                    format_func=format_item_display,
-                    label_visibility="collapsed",
-                )
+                # 各キャラクターのアイテム選択
+                for char_name in visible_chars:
+                    if char_name == "narrator":
+                        continue
+                    
+                    char_config = characters.get(char_name)
+                    if not char_config:
+                        continue
+                        
+                    current_item = line["character_items"].get(char_name, "none")
+                    current_item_index = (
+                        item_options.index(current_item)
+                        if current_item in item_options
+                        else 0
+                    )
+                    
+                    selected_item = st.selectbox(
+                        f"{char_config.emoji} {char_config.display_name}",
+                        options=item_options,
+                        key=f"char_item_{char_name}_{i}",
+                        index=current_item_index,
+                        format_func=format_item_display,
+                    )
+                    
+                    line["character_items"][char_name] = selected_item
 
             # Visible characters selection
             with cols[5]:
