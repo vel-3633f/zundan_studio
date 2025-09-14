@@ -2,10 +2,11 @@ import streamlit as st
 import os
 import json
 import re
+import logging
 from pathlib import Path
+from typing import Dict, Optional, List, Any, Union
 
 import traceback
-from typing import Dict, Optional, List, Any, Union
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,6 +16,25 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 from pydantic import BaseModel, Field
+
+
+# =============================================================================
+# ロガー設定
+# =============================================================================
+
+# ログレベルの環境変数からの取得（デフォルト: INFO）
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# モジュール専用ロガーの設定
+logger = logging.getLogger(__name__)
+logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
+
+# ハンドラーが既に追加されていない場合のみ追加
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    logger.addHandler(handler)
 
 
 # =============================================================================
@@ -184,6 +204,7 @@ _prompt_cache = {}
 def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
     """プロンプトファイルを読み込む（キャッシュ機能付き）"""
     if cache_key and cache_key in _prompt_cache:
+        logger.debug(f"プロンプトキャッシュからロード: {cache_key}")
         return _prompt_cache[cache_key]
 
     try:
@@ -195,17 +216,21 @@ def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
 
         if cache_key:
             _prompt_cache[cache_key] = content
+            logger.debug(f"プロンプトファイルをキャッシュに保存: {cache_key}")
 
+        logger.info(f"プロンプトファイル読み込み成功: {file_path}")
         return content
 
     except Exception as e:
         error_msg = f"プロンプトファイル読み込みエラー ({file_path}): {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error(error_msg)
 
         # フォールバック用のデフォルトプロンプト
         if "system" in str(file_path).lower():
+            logger.info("デフォルトシステムプロンプトを使用")
             return get_default_system_prompt()
         else:
+            logger.info("デフォルトユーザープロンプトを使用")
             return get_default_user_prompt()
 
 
@@ -256,6 +281,7 @@ def split_long_text(text: str, max_length: int = 30) -> List[str]:
     if current:
         result.append(current)
 
+    logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
     return result
 
 
@@ -264,6 +290,7 @@ def process_conversation_segments(
 ) -> List[ConversationSegment]:
     """会話セグメントの文字数チェックと分割処理"""
     processed_segments = []
+    original_count = len(segments)
 
     for segment in segments:
         text_parts = split_long_text(segment.text, 30)
@@ -279,6 +306,9 @@ def process_conversation_segments(
             )
             processed_segments.append(new_segment)
 
+    logger.info(
+        f"会話セグメント処理完了: {original_count} → {len(processed_segments)}個"
+    )
     return processed_segments
 
 
@@ -291,12 +321,18 @@ def generate_food_overconsumption_script(
     food_name: str, model: str = "gpt-4.1", temperature: float = 0.8
 ) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
     """食べ物摂取過多動画脚本を生成する"""
+    logger.info(
+        f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
+    )
+
     try:
         openai_api_key = os.getenv("OPENAI_API_KEY")
         if not openai_api_key:
+            error_msg = "OPENAI_API_KEY が設定されていません"
+            logger.error(error_msg)
             return {
                 "error": "API Key Error",
-                "details": "OPENAI_API_KEY が設定されていません",
+                "details": error_msg,
             }
 
         # プロンプトファイルから読み込み
@@ -315,13 +351,15 @@ def generate_food_overconsumption_script(
 
         chain = prompt | llm | parser
 
-        print(f"🚀 {food_name}の摂取過多動画脚本を作成中...")
+        logger.info(f"{food_name}の摂取過多動画脚本をLLMで生成中...")
         response_object = chain.invoke({"food_name": food_name})
 
         # all_segmentsを作成
         all_segments = []
         for section in response_object.sections:
             all_segments.extend(section.segments)
+
+        logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
 
         # 文字数チェックと分割処理
         processed_segments = process_conversation_segments(all_segments)
@@ -337,7 +375,7 @@ def generate_food_overconsumption_script(
                     segment_index += 1
             section.segments = section_segments
 
-        print("🎉 食べ物摂取過多動画脚本の生成に成功しました！")
+        logger.info("食べ物摂取過多動画脚本の生成に成功")
 
         st.session_state.last_generated_json = response_object
         st.session_state.last_llm_output = "パース成功: 構造化データに変換済み"
@@ -345,8 +383,8 @@ def generate_food_overconsumption_script(
         return response_object
 
     except OutputParserException as e:
-        print(f"❌ パースエラー: LLMの出力形式が不正です。")
-        print(f"--- LLM Raw Output ---\n{e.llm_output}\n---")
+        error_msg = "パースエラー: LLMの出力形式が不正です"
+        logger.error(f"{error_msg}. LLM出力: {e.llm_output}")
 
         st.session_state.last_llm_output = e.llm_output
         st.session_state.last_generated_json = None
@@ -357,8 +395,8 @@ def generate_food_overconsumption_script(
             "raw_output": e.llm_output,
         }
     except Exception as e:
-        print(f"❌ 予期せぬエラーが発生しました: {e}")
-        traceback.print_exc()
+        error_msg = f"予期せぬエラーが発生しました: {e}"
+        logger.error(error_msg, exc_info=True)
 
         st.session_state.last_llm_output = f"予期せぬエラー: {str(e)}"
         st.session_state.last_generated_json = None
@@ -383,6 +421,7 @@ def display_json_debug(data: Any, title: str = "JSON Debug"):
                 json_str = json.dumps(data, indent=2, ensure_ascii=False)
                 st.code(json_str, language="json")
             except Exception as e:
+                logger.error(f"JSON変換エラー: {e}")
                 st.text(f"JSON変換エラー: {e}")
                 st.text(str(data))
 
@@ -399,7 +438,9 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     total_seconds = total_chars * 0.5
     minutes = int(total_seconds // 60)
     seconds = int(total_seconds % 60)
-    return f"約{minutes}分{seconds:02d}秒"
+    duration = f"約{minutes}分{seconds:02d}秒"
+    logger.debug(f"動画時間推定: {total_chars}文字 → {duration}")
+    return duration
 
 
 def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Dict]):
@@ -410,6 +451,7 @@ def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Di
         data = script_data
 
     if not data or "all_segments" not in data:
+        logger.warning("表示するスクリプトデータが不正です")
         return
 
     st.subheader("🍽️ 食べ物摂取過多動画脚本プレビュー")
@@ -478,6 +520,8 @@ def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Di
                     if j < len(section["segments"]) - 1:
                         st.markdown("---")
 
+    logger.info("脚本プレビュー表示完了")
+
 
 def display_prompt_file_status():
     """プロンプトファイルの状態を表示"""
@@ -490,8 +534,12 @@ def display_prompt_file_status():
                 st.success(f"✅ {SYSTEM_PROMPT_FILE}")
                 file_size = SYSTEM_PROMPT_FILE.stat().st_size
                 st.caption(f"ファイルサイズ: {file_size} bytes")
+                logger.debug(f"システムプロンプトファイル存在確認: {file_size} bytes")
             else:
                 st.error(f"❌ ファイルが見つかりません: {SYSTEM_PROMPT_FILE}")
+                logger.warning(
+                    f"システムプロンプトファイルが見つかりません: {SYSTEM_PROMPT_FILE}"
+                )
 
         with col2:
             st.write("**ユーザープロンプト**")
@@ -499,8 +547,12 @@ def display_prompt_file_status():
                 st.success(f"✅ {USER_PROMPT_FILE}")
                 file_size = USER_PROMPT_FILE.stat().st_size
                 st.caption(f"ファイルサイズ: {file_size} bytes")
+                logger.debug(f"ユーザープロンプトファイル存在確認: {file_size} bytes")
             else:
                 st.error(f"❌ ファイルが見つかりません: {USER_PROMPT_FILE}")
+                logger.warning(
+                    f"ユーザープロンプトファイルが見つかりません: {USER_PROMPT_FILE}"
+                )
 
         st.info("💡 プロンプトファイルを編集することで、AIの動作をカスタマイズできます")
 
@@ -515,6 +567,8 @@ def display_debug_section():
         debug_mode = st.checkbox("デバッグモードを有効にする", value=False)
 
         if debug_mode:
+            logger.debug("デバッグモードが有効化されました")
+
             # プロンプトファイル状態表示
             display_prompt_file_status()
 
@@ -551,6 +605,7 @@ def add_conversation_to_session(conversation_data: Dict):
             }
         )
 
+    logger.info(f"会話リストに{len(segments)}個のセリフを追加")
     st.success(f"🎉 {len(segments)}個のセリフを会話リストに追加しました！")
     st.info("ホームページの会話入力セクションで確認できます。")
 
@@ -562,6 +617,8 @@ def add_conversation_to_session(conversation_data: Dict):
 
 def render_food_overconsumption_page():
     """食べ物摂取過多解説動画生成ページを表示"""
+    logger.info("食べ物摂取過多解説動画生成ページを表示開始")
+
     st.title("🍽️ 食べ物摂取過多解説動画ジェネレーター")
     st.markdown(
         "食べ物を食べすぎるとどうなるのか？をテーマに、ずんだもんたちが面白く解説する動画脚本を作成するのだ〜！"
@@ -603,6 +660,8 @@ def render_food_overconsumption_page():
 
     # 生成ボタン
     if food_name and st.button("🎬 食べ物摂取過多解説動画を作成！", type="primary"):
+        logger.info(f"動画生成ボタンがクリックされました: 食べ物={food_name}")
+
         with st.spinner(
             f"🤖 {food_name}の摂取過多解説動画を作成中...（30秒〜1分程度お待ちください）"
         ):
@@ -611,6 +670,7 @@ def render_food_overconsumption_page():
             )
 
             if isinstance(result, FoodOverconsumptionScript):
+                logger.info("脚本生成成功、プレビューを表示")
                 st.success("🎉 食べ物摂取過多解説動画脚本が完成したのだ〜！")
                 display_food_script_preview(result)
 
@@ -621,6 +681,7 @@ def render_food_overconsumption_page():
                 if st.button("📝 会話リストに追加する", type="secondary"):
                     add_conversation_to_session(result.model_dump())
             else:
+                logger.error(f"脚本生成失敗: {result}")
                 st.error(f"❌ 食べ物摂取過多脚本の生成に失敗しました")
 
                 error_details = result.get("details", "不明なエラー")
@@ -628,11 +689,3 @@ def render_food_overconsumption_page():
 
     # デバッグセクション
     display_debug_section()
-
-
-# =============================================================================
-# メイン実行
-# =============================================================================
-
-if __name__ == "__main__":
-    render_food_overconsumption_page()
