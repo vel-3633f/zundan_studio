@@ -42,8 +42,8 @@ if not logger.handlers:
 
 # プロンプトファイルの設定
 PROMPTS_DIR = Path("src/prompts")
-SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.txt"
-USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.txt"
+SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.md"
+USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.md"
 
 
 class CharacterInfo:
