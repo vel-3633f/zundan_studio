@@ -1,12 +1,12 @@
 import streamlit as st
 import os
 import json
-import re
 import logging
 from pathlib import Path
 from typing import Dict, Optional, List, Any, Union
+from src.models.food_over import FoodOverconsumptionScript
+from src.utils.utils import process_conversation_segments
 
-import traceback
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +15,6 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
-from pydantic import BaseModel, Field
 
 
 # =============================================================================
@@ -42,7 +41,7 @@ if not logger.handlers:
 # =============================================================================
 
 # プロンプトファイルの設定
-PROMPTS_DIR = Path("prompts")
+PROMPTS_DIR = Path("src/prompts")
 SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.txt"
 USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.txt"
 
@@ -155,49 +154,6 @@ class Items:
         return cls._items.get(name)
 
 
-# =============================================================================
-# Pydanticモデル
-# =============================================================================
-
-
-class ConversationSegment(BaseModel):
-    """会話セグメントのモデル"""
-
-    speaker: str = Field(description="話者名")
-    text: str = Field(description="セリフ内容")
-    expression: str = Field(description="表情名")
-    background: str = Field(description="背景名")
-    visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
-    character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
-
-
-class VideoSection(BaseModel):
-    """動画セクションのモデル"""
-
-    section_name: str = Field(description="セクション名")
-    purpose: str = Field(description="セクションの目的")
-    segments: List[ConversationSegment] = Field(
-        description="このセクションの会話セグメント"
-    )
-
-
-class FoodOverconsumptionScript(BaseModel):
-    """食べ物摂取過多動画脚本のモデル"""
-
-    title: str = Field(description="YouTubeタイトル（注目を引く形式）")
-    food_name: str = Field(description="対象の食べ物名")
-    estimated_duration: str = Field(description="推定動画時間")
-    theme: str = Field(description="動画のテーマ")
-    sections: List[VideoSection] = Field(description="動画セクションのリスト")
-    all_segments: List[ConversationSegment] = Field(
-        description="全会話セグメントの統合リスト"
-    )
-
-
-# =============================================================================
-# プロンプト読み込み関数
-# =============================================================================
-
 _prompt_cache = {}
 
 
@@ -224,92 +180,6 @@ def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
     except Exception as e:
         error_msg = f"プロンプトファイル読み込みエラー ({file_path}): {str(e)}"
         logger.error(error_msg)
-
-        # フォールバック用のデフォルトプロンプト
-        if "system" in str(file_path).lower():
-            logger.info("デフォルトシステムプロンプトを使用")
-            return get_default_system_prompt()
-        else:
-            logger.info("デフォルトユーザープロンプトを使用")
-            return get_default_user_prompt()
-
-
-def get_default_system_prompt() -> str:
-    """デフォルトシステムプロンプト（フォールバック用）"""
-    return """あなたは食べ物の摂取過多について解説するYouTube動画の脚本を作成するAIです。
-ずんだもん、四国めたん、春日部つむぎ、ナレーターのキャラクターを使って、
-教育的で面白い動画脚本を作成してください。"""
-
-
-def get_default_user_prompt() -> str:
-    """デフォルトユーザープロンプト（フォールバック用）"""
-    return """{food_name}を食べすぎるとどうなるかについて、
-ずんだもんたちが解説する動画脚本を作成してください。
-
-{format_instructions}"""
-
-
-# =============================================================================
-# ユーティリティ関数
-# =============================================================================
-
-
-def split_long_text(text: str, max_length: int = 30) -> List[str]:
-    """長いテキストを指定文字数以内に分割"""
-    if len(text) <= max_length:
-        return [text]
-
-    sentences = re.split(r"([。！？])", text)
-    result = []
-    current = ""
-
-    for i in range(0, len(sentences) - 1, 2):
-        sentence = sentences[i] + (sentences[i + 1] if i + 1 < len(sentences) else "")
-
-        if len(current + sentence) <= max_length:
-            current += sentence
-        else:
-            if current:
-                result.append(current)
-                current = sentence
-            else:
-                while len(sentence) > max_length:
-                    result.append(sentence[:max_length])
-                    sentence = sentence[max_length:]
-                current = sentence
-
-    if current:
-        result.append(current)
-
-    logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
-    return result
-
-
-def process_conversation_segments(
-    segments: List[ConversationSegment],
-) -> List[ConversationSegment]:
-    """会話セグメントの文字数チェックと分割処理"""
-    processed_segments = []
-    original_count = len(segments)
-
-    for segment in segments:
-        text_parts = split_long_text(segment.text, 30)
-
-        for i, text_part in enumerate(text_parts):
-            new_segment = ConversationSegment(
-                speaker=segment.speaker,
-                text=text_part,
-                expression=segment.expression,
-                background=segment.background,
-                visible_characters=segment.visible_characters,
-                character_items=segment.character_items,
-            )
-            processed_segments.append(new_segment)
-
-    logger.info(
-        f"会話セグメント処理完了: {original_count} → {len(processed_segments)}個"
-    )
-    return processed_segments
 
 
 # =============================================================================
@@ -686,6 +556,13 @@ def render_food_overconsumption_page():
 
                 error_details = result.get("details", "不明なエラー")
                 st.error(f"詳細: {error_details}")
+
+                # プロンプトファイルエラーの場合は設定方法を案内
+                if result.get("error") == "Prompt File Error":
+                    st.info("💡 以下のプロンプトファイルが必要です:")
+                    st.code(f"- {SYSTEM_PROMPT_FILE}")
+                    st.code(f"- {USER_PROMPT_FILE}")
+                    st.info("これらのファイルを作成してから再度お試しください。")
 
     # デバッグセクション
     display_debug_section()
