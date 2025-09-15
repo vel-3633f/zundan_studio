@@ -212,7 +212,7 @@ def search_food_information(food_name: str) -> Dict[str, List[str]]:
         for i, query in enumerate(search_queries):
             logger.info(f"検索実行: {query}")
             try:
-                docs = retriever.get_relevant_documents(query)
+                docs = retriever.invoke(query)
                 content_list = []
                 for doc in docs:
                     if hasattr(doc, "page_content") and doc.page_content:
