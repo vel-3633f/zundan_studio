@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import json
 import logging
-from pathlib import Path
 from typing import Dict, Optional, List, Any
 from src.models.food_over import FoodOverconsumptionScript
 from src.core.generate_food_over import generate_food_overconsumption_script
@@ -147,6 +146,72 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     return duration
 
 
+def display_background_and_items_info(data: Dict):
+    """背景とアイテム情報を表示する"""
+    st.markdown("### 🎨 背景・アイテム情報")
+
+    # 全セグメントから背景とアイテム情報を収集
+    all_segments = data.get("all_segments", [])
+    if not all_segments:
+        st.info("背景・アイテム情報が見つかりませんでした")
+        return
+
+    # 背景情報の表示
+    backgrounds = set()
+    character_items_all = {}
+
+    for segment in all_segments:
+        if "background" in segment:
+            backgrounds.add(segment["background"])
+
+        if "character_items" in segment and segment["character_items"]:
+            for char, item in segment["character_items"].items():
+                if char not in character_items_all:
+                    character_items_all[char] = set()
+                character_items_all[char].add(item)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("🖼️ 使用される背景")
+        if backgrounds:
+            for bg in sorted(backgrounds):
+                st.write(f"• {bg}")
+        else:
+            st.info("背景情報が見つかりませんでした")
+
+    with col2:
+        st.subheader("🎯 キャラクター別アイテム")
+        if character_items_all:
+            for char, items in character_items_all.items():
+                char_display = Characters.get_display_name(char)
+                st.write(f"**{char_display}**:")
+                for item in sorted(items):
+                    st.write(f"  • {item}")
+        else:
+            st.info("アイテム情報が見つかりませんでした")
+
+    # 詳細なJSON表示
+    with st.expander("🔍 背景・アイテム詳細情報（JSON）", expanded=False):
+        background_items_data = {
+            "backgrounds": list(backgrounds),
+            "character_items": {
+                char: list(items) for char, items in character_items_all.items()
+            },
+            "segment_details": [
+                {
+                    "segment_index": i,
+                    "speaker": segment.get("speaker", "unknown"),
+                    "background": segment.get("background", ""),
+                    "character_items": segment.get("character_items", {}),
+                }
+                for i, segment in enumerate(all_segments)
+                if segment.get("background") or segment.get("character_items")
+            ],
+        }
+        st.json(background_items_data)
+
+
 def display_food_script_preview(script_data: FoodOverconsumptionScript):
     """食べ物摂取過多動画脚本プレビューを表示"""
     data = script_data.model_dump()
@@ -157,23 +222,26 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
 
     st.subheader("🍽️ 食べ物摂取過多動画脚本プレビュー")
 
+    st.metric("YouTubeタイトル", data.get("title", "未設定"))
+
     # 動画情報表示
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("YouTubeタイトル", data.get("title", "未設定"))
-    with col2:
         st.metric("対象食品", data.get("food_name", "未設定"))
-    with col3:
+    with col2:
         duration = data.get(
             "estimated_duration", estimate_video_duration(data["all_segments"])
         )
         st.metric("推定時間", duration)
-    with col4:
+    with col3:
         st.metric("総セリフ数", len(data["all_segments"]))
 
     # テーマ表示
     if "theme" in data:
         st.info(f"🎯 動画テーマ: {data['theme']}")
+
+    # 背景・アイテム情報表示
+    display_background_and_items_info(data)
 
     # セクション別表示
     if "sections" in data:
@@ -200,6 +268,20 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
                         f"**{j+1}. {speaker_name}** {expression_name} {length_color}({text_length}文字)"
                     )
                     st.write(f"💬 {segment['text']}")
+
+                    # 背景情報表示
+                    if segment.get("background"):
+                        st.caption(f"🖼️ 背景: {segment['background']}")
+
+                    # アイテム情報表示
+                    if segment.get("character_items"):
+                        items_text = ", ".join(
+                            [
+                                f"{Characters.get_display_name(char)}: {item}"
+                                for char, item in segment["character_items"].items()
+                            ]
+                        )
+                        st.caption(f"🎯 アイテム: {items_text}")
 
                     if j < len(section["segments"]) - 1:
                         st.markdown("---")
@@ -287,7 +369,9 @@ def add_conversation_to_session(conversation_data: Dict):
                 "speaker": segment["speaker"],
                 "text": segment["text"],
                 "expression": segment["expression"],
+                "background": segment.get("background", ""),
                 "visible_characters": segment["visible_characters"],
+                "character_items": segment.get("character_items", {}),
             }
         )
 
