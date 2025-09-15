@@ -15,6 +15,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
+from langchain_community.retrievers import TavilySearchAPIRetriever
 
 
 # =============================================================================
@@ -44,6 +45,9 @@ if not logger.handlers:
 PROMPTS_DIR = Path("src/prompts")
 SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.md"
 USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.md"
+
+# Tavily検索設定
+TAVILY_SEARCH_RESULTS_COUNT = 3
 
 
 class CharacterInfo:
@@ -182,6 +186,74 @@ def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
         logger.error(error_msg)
 
 
+def search_food_information(food_name: str) -> Dict[str, List[str]]:
+    """TavilyAPIを使用して食べ物の情報を検索する"""
+    logger.info(f"食べ物情報検索開始: {food_name}")
+
+    try:
+        tavily_api_key = os.getenv("TAVILY_API_KEY")
+        if not tavily_api_key:
+            error_msg = "TAVILY_API_KEY が設定されていません"
+            logger.error(error_msg)
+            return {"overeating": [], "benefits": [], "disadvantages": []}
+
+        retriever = TavilySearchAPIRetriever(k=TAVILY_SEARCH_RESULTS_COUNT)
+
+        search_queries = [
+            f"{food_name} 食べ過ぎ",
+            f"{food_name} メリット",
+            f"{food_name} デメリット",
+        ]
+
+        search_results = {"overeating": [], "benefits": [], "disadvantages": []}
+
+        result_keys = ["overeating", "benefits", "disadvantages"]
+
+        for i, query in enumerate(search_queries):
+            logger.info(f"検索実行: {query}")
+            try:
+                docs = retriever.get_relevant_documents(query)
+                content_list = []
+                for doc in docs:
+                    if hasattr(doc, "page_content") and doc.page_content:
+                        content_list.append(doc.page_content.strip())
+
+                search_results[result_keys[i]] = content_list
+                logger.info(f"検索結果取得: {query} - {len(content_list)}件")
+
+            except Exception as e:
+                logger.error(f"検索エラー: {query} - {str(e)}")
+                search_results[result_keys[i]] = []
+
+        return search_results
+
+    except Exception as e:
+        error_msg = f"Tavily検索で予期せぬエラー: {str(e)}"
+        logger.error(error_msg)
+        return {"overeating": [], "benefits": [], "disadvantages": []}
+
+
+def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> str:
+    """検索結果をプロンプト用にフォーマットする"""
+    formatted_text = "## 参考情報\n\n"
+
+    sections = [
+        ("overeating", "食べ過ぎに関する情報"),
+        ("benefits", "メリットに関する情報"),
+        ("disadvantages", "デメリットに関する情報"),
+    ]
+
+    for key, title in sections:
+        formatted_text += f"### {title}\n"
+        if search_results[key]:
+            for i, content in enumerate(search_results[key], 1):
+                formatted_text += f"{i}. {content}\n\n"
+        else:
+            formatted_text += "情報が見つかりませんでした。\n\n"
+
+    return formatted_text
+
+
 # =============================================================================
 # 脚本生成関数
 # =============================================================================
@@ -205,6 +277,11 @@ def generate_food_overconsumption_script(
                 "details": error_msg,
             }
 
+        search_results = search_food_information(food_name)
+        reference_information = format_search_results_for_prompt(search_results)
+
+        st.session_state.last_search_results = search_results
+
         # プロンプトファイルから読み込み
         system_template = load_prompt_from_file(SYSTEM_PROMPT_FILE, "system")
         user_template = load_prompt_from_file(USER_PROMPT_FILE, "user")
@@ -222,7 +299,9 @@ def generate_food_overconsumption_script(
         chain = prompt | llm | parser
 
         logger.info(f"{food_name}の摂取過多動画脚本をLLMで生成中...")
-        response_object = chain.invoke({"food_name": food_name})
+        response_object = chain.invoke(
+            {"food_name": food_name, "reference_information": reference_information}
+        )
 
         # all_segmentsを作成
         all_segments = []
@@ -300,6 +379,24 @@ def display_raw_llm_output(output: str, title: str = "LLM Raw Output"):
     """LLMの生出力を表示する"""
     with st.expander(f"🤖 {title}", expanded=False):
         st.code(output, language="json")
+
+
+def display_search_results_debug(search_results: Dict[str, List[str]]):
+    """検索結果をデバッグ用に表示する"""
+    with st.expander("🔍 Tavily検索結果", expanded=False):
+        sections = [
+            ("overeating", "食べ過ぎに関する検索結果"),
+            ("benefits", "メリットに関する検索結果"),
+            ("disadvantages", "デメリットに関する検索結果"),
+        ]
+
+        for key, title in sections:
+            st.subheader(title)
+            if search_results.get(key):
+                for i, content in enumerate(search_results[key], 1):
+                    st.text_area(f"結果 {i}", content, height=100, key=f"{key}_{i}")
+            else:
+                st.info("検索結果が見つかりませんでした")
 
 
 def estimate_video_duration(segments: List[Dict]) -> str:
@@ -429,8 +526,10 @@ def display_prompt_file_status():
 
 def display_debug_section():
     """デバッグ情報セクションを表示"""
-    if hasattr(st.session_state, "last_generated_json") or hasattr(
-        st.session_state, "last_llm_output"
+    if (
+        hasattr(st.session_state, "last_generated_json")
+        or hasattr(st.session_state, "last_llm_output")
+        or hasattr(st.session_state, "last_search_results")
     ):
         st.subheader("🔧 デバッグ情報")
 
@@ -440,6 +539,9 @@ def display_debug_section():
             logger.debug("デバッグモードが有効化されました")
 
             display_prompt_file_status()
+
+            if hasattr(st.session_state, "last_search_results"):
+                display_search_results_debug(st.session_state.last_search_results)
 
             if (
                 hasattr(st.session_state, "last_generated_json")
@@ -532,7 +634,7 @@ def render_food_overconsumption_page():
         logger.info(f"動画生成ボタンがクリックされました: 食べ物={food_name}")
 
         with st.spinner(
-            f"🤖 {food_name}の摂取過多解説動画を作成中...（30秒〜1分程度お待ちください）"
+            f"🔍 {food_name}の情報を検索中...（検索→脚本生成で1-2分程度お待ちください）"
         ):
             result = generate_food_overconsumption_script(
                 food_name, model=model, temperature=temperature

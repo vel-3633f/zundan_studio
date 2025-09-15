@@ -78,3 +78,7 @@
 各セクションでは上記のペアリング通りにキャラクターを使用し、visible_characters に表示する 2 人のキャラクターを指定してください。
 
 {format_instructions}
+
+## 参考情報
+
+{reference_information}
