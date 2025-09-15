@@ -439,7 +439,6 @@ def display_debug_section():
         if debug_mode:
             logger.debug("デバッグモードが有効化されました")
 
-            # プロンプトファイル状態表示
             display_prompt_file_status()
 
             if (
