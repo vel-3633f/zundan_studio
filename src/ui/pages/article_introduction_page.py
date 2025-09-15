@@ -3,7 +3,7 @@ import os
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, Optional, List, Any
 from src.models.food_over import FoodOverconsumptionScript
 from src.utils.utils import process_conversation_segments
 
@@ -63,19 +63,6 @@ class ExpressionInfo:
         self.display_name = display_name
 
 
-class BackgroundInfo:
-    def __init__(self, name: str, display_name: str):
-        self.name = name
-        self.display_name = display_name
-
-
-class ItemInfo:
-    def __init__(self, name: str, display_name: str, emoji: str):
-        self.name = name
-        self.display_name = display_name
-        self.emoji = emoji
-
-
 class Characters:
     _characters = {
         "zundamon": CharacterInfo(
@@ -115,47 +102,6 @@ class Expressions:
     def get_display_name(cls, name: str) -> str:
         expr = cls._expressions.get(name)
         return expr.display_name if expr else name
-
-
-class Backgrounds:
-    _backgrounds = {
-        "default": BackgroundInfo("default", "デフォルト"),
-        "blue_sky": BackgroundInfo("blue_sky", "青空"),
-        "sunset": BackgroundInfo("sunset", "夕焼け"),
-        "night": BackgroundInfo("night", "夜"),
-        "forest": BackgroundInfo("forest", "森"),
-        "ocean": BackgroundInfo("ocean", "海"),
-        "sakura": BackgroundInfo("sakura", "桜"),
-        "snow": BackgroundInfo("snow", "雪"),
-        "kitchen": BackgroundInfo("kitchen", "キッチン"),
-        "hospital": BackgroundInfo("hospital", "病院"),
-        "laboratory": BackgroundInfo("laboratory", "研究室"),
-    }
-
-    @classmethod
-    def get_display_name(cls, name: str) -> str:
-        bg = cls._backgrounds.get(name)
-        return bg.display_name if bg else name
-
-
-class Items:
-    _items = {
-        "none": ItemInfo("none", "なし", ""),
-        "coffee": ItemInfo("coffee", "コーヒー", "☕"),
-        "tea": ItemInfo("tea", "お茶", "🍵"),
-        "juice": ItemInfo("juice", "ジュース", "🥤"),
-        "book": ItemInfo("book", "本", "📚"),
-        "notebook": ItemInfo("notebook", "ノート", "📝"),
-        "pen": ItemInfo("pen", "ペン", "✒️"),
-        "phone": ItemInfo("phone", "スマホ", "📱"),
-        "food": ItemInfo("food", "食べ物", "🍽️"),
-        "medicine": ItemInfo("medicine", "薬", "💊"),
-        "magnifying_glass": ItemInfo("magnifying_glass", "虫眼鏡", "🔍"),
-    }
-
-    @classmethod
-    def get_item(cls, name: str) -> Optional[ItemInfo]:
-        return cls._items.get(name)
 
 
 _prompt_cache = {}
@@ -277,9 +223,11 @@ def generate_food_overconsumption_script(
                 "details": error_msg,
             }
 
+        # Tavily検索を実行
         search_results = search_food_information(food_name)
         reference_information = format_search_results_for_prompt(search_results)
 
+        # 検索結果をセッション状態に保存（デバッグ用）
         st.session_state.last_search_results = search_results
 
         # プロンプトファイルから読み込み
@@ -401,8 +349,12 @@ def display_search_results_debug(search_results: Dict[str, List[str]]):
 
 def estimate_video_duration(segments: List[Dict]) -> str:
     """動画の推定時間を計算"""
-    total_chars = sum(len(segment["text"]) for segment in segments)
-    total_seconds = total_chars * 0.5
+    if not segments:
+        return "約0分00秒"
+
+    total_chars = sum(len(segment.get("text", "")) for segment in segments)
+    # 日本語の読み上げ速度を考慮した計算（1文字あたり0.4秒）
+    total_seconds = total_chars * 0.4
     minutes = int(total_seconds // 60)
     seconds = int(total_seconds % 60)
     duration = f"約{minutes}分{seconds:02d}秒"
@@ -410,12 +362,9 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     return duration
 
 
-def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Dict]):
+def display_food_script_preview(script_data: FoodOverconsumptionScript):
     """食べ物摂取過多動画脚本プレビューを表示"""
-    if isinstance(script_data, FoodOverconsumptionScript):
-        data = script_data.model_dump()
-    else:
-        data = script_data
+    data = script_data.model_dump()
 
     if not data or "all_segments" not in data:
         logger.warning("表示するスクリプトデータが不正です")
@@ -466,23 +415,6 @@ def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Di
                         f"**{j+1}. {speaker_name}** {expression_name} {length_color}({text_length}文字)"
                     )
                     st.write(f"💬 {segment['text']}")
-
-                    # アイテムと背景情報
-                    col_a, col_b = st.columns(2)
-                    with col_a:
-                        items = segment.get("character_items", {})
-                        for char, item in items.items():
-                            if item != "none":
-                                item_info = Items.get_item(item)
-                                if item_info:
-                                    st.write(
-                                        f"📦 {item_info.emoji} {item_info.display_name}"
-                                    )
-
-                    with col_b:
-                        bg_name = segment.get("background", "default")
-                        bg_display = Backgrounds.get_display_name(bg_name)
-                        st.write(f"🖼️ {bg_display}")
 
                     if j < len(section["segments"]) - 1:
                         st.markdown("---")
@@ -570,9 +502,7 @@ def add_conversation_to_session(conversation_data: Dict):
                 "speaker": segment["speaker"],
                 "text": segment["text"],
                 "expression": segment["expression"],
-                "background": segment["background"],
                 "visible_characters": segment["visible_characters"],
-                "character_items": segment.get("character_items", {}),
             }
         )
 

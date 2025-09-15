@@ -94,13 +94,13 @@
 
 - **話者名**: zundamon, metan, tsumugi, narrator
 - **表情**: normal, happy, sad, angry, surprised, thinking, worried, excited, sick
-- **背景**: default, blue_sky, sunset, night, forest, ocean, sakura, snow, kitchen, hospital, laboratory
-- **アイテム**: none, coffee, tea, juice, book, notebook, pen, phone, food, medicine, magnifying_glass
+- **背景**: シーンの内容に応じて適切な英語の背景を選択。
+- **アイテム**: シーンの内容で必要な場合、適切な英語のアイテムを選択。必要な場合適切なアイテムがない場合は none を使用（基本持たせなくてもいい）
 
-各セクションでは上記のペアリング通りにキャラクターを使用し、visible_characters に表示する 2 人のキャラクターを指定してください。
+各セクションでは上記のペアリング通りにキャラクターを使用し、visible_characters に表示する 2 人のキャラクターを指定し、シーンに最も適した背景とアイテムを英語で選択してください。
 
 {format_instructions}
 
-## 参考資料
+##参考情報
 
 {reference_information}
