@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
+import pykakasi
 
 from src.utils.logger import get_logger
 
@@ -25,6 +26,30 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     return duration
 
 
+def _convert_japanese_to_romaji(food_name: str) -> str:
+    """日本語の食べ物名をローマ字に変換する"""
+    try:
+        # pykakasiインスタンスを作成
+        kks = pykakasi.kakasi()
+
+        # 日本語をローマ字に変換
+        result = kks.convert(food_name)
+
+        # 変換結果を結合してアルファベットのみにする
+        romaji_text = "".join([item['hepburn'] for item in result])
+
+        # アルファベットと数字のみを抽出して小文字に変換
+        clean_text = "".join(c for c in romaji_text if c.isalnum()).lower()
+
+        return clean_text if clean_text else "unknown_food"
+
+    except Exception as e:
+        logger.warning(f"日本語→ローマ字変換エラー: {e}")
+        # フォールバック: アルファベットと数字のみを抽出
+        result = "".join(c for c in food_name if c.isascii() and c.isalnum()).lower()
+        return result if result else "unknown_food"
+
+
 def save_json_to_outputs(data: Dict, food_name: str) -> Optional[str]:
     """JSONデータをoutputsフォルダに保存する"""
     try:
@@ -33,11 +58,9 @@ def save_json_to_outputs(data: Dict, food_name: str) -> Optional[str]:
 
         # ファイル名を生成（食べ物名_日付時刻.json）
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # 食べ物名をファイル名に使用できるよう処理
-        safe_food_name = "".join(
-            c for c in food_name if c.isalnum() or c in "-_"
-        ).rstrip()
-        filename = f"{safe_food_name}_{timestamp}.json"
+        # 食べ物名をローマ字に変換してファイル名に使用
+        romaji_food_name = _convert_japanese_to_romaji(food_name)
+        filename = f"{romaji_food_name}_{timestamp}.json"
         file_path = outputs_dir / filename
 
         # JSONファイルとして保存
