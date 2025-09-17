@@ -422,9 +422,7 @@ def render_food_overconsumption_page():
         with col1:
             # モデル選択肢を動的に生成
             model_options = [model["name"] for model in AVAILABLE_MODELS]
-            model_descriptions = {
-                model["name"]: model["description"] for model in AVAILABLE_MODELS
-            }
+
             model_id_map = {model["name"]: model["id"] for model in AVAILABLE_MODELS}
 
             # 推奨モデルをデフォルトに設定
@@ -443,7 +441,6 @@ def render_food_overconsumption_page():
             )
             model = model_id_map[selected_model_name]
         with col2:
-            # 選択されたモデルの設定を取得
             selected_model_config = get_model_config(model)
             temp_range = selected_model_config["temperature_range"]
             default_temp = selected_model_config["default_temperature"]
@@ -492,7 +489,6 @@ def render_food_overconsumption_page():
                 error_details = result.get("details", "不明なエラー")
                 st.error(f"詳細: {error_details}")
 
-                # プロンプトファイルエラーの場合は設定方法を案内
                 if result.get("error") == "Prompt File Error":
                     st.info("💡 以下のプロンプトファイルが必要です:")
                     st.code(f"- {SYSTEM_PROMPT_FILE}")
