@@ -5,7 +5,11 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-from src.models.food_over import FoodOverconsumptionScript, ConversationSegment, VideoSection
+from src.models.food_over import (
+    FoodOverconsumptionScript,
+    ConversationSegment,
+    VideoSection,
+)
 from config.characters import Characters, Expressions
 from src.utils.logger import get_logger
 
@@ -56,13 +60,16 @@ def validate_json_data(data: Dict[str, Any]) -> tuple[bool, str]:
         return False, f"バリデーションエラー: {str(e)}"
 
 
-def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_name: str) -> Dict[str, Any]:
+def render_segment_editor(
+    segment: Dict[str, Any], segment_index: int, section_name: str
+) -> Dict[str, Any]:
     """単一セグメントの編集UI"""
-    st.write(f"**セグメント {segment_index + 1}**")
 
     # キャラクター設定
     characters = Characters.get_all()
-    character_options = [(name, config.display_name) for name, config in characters.items()]
+    character_options = [
+        (name, config.display_name) for name, config in characters.items()
+    ]
 
     # 話者とセリフを横並びで表示
     speaker_col, text_col = st.columns([1, 3])
@@ -78,7 +85,7 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
             options=[name for name, _ in character_options],
             format_func=lambda x: dict(character_options)[x],
             index=speaker_index,
-            key=f"speaker_{section_name}_{segment_index}"
+            key=f"speaker_{section_name}_{segment_index}",
         )
 
     with text_col:
@@ -87,7 +94,7 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
             "セリフ",
             value=segment.get("text", ""),
             key=f"text_{section_name}_{segment_index}",
-            height=60
+            height=60,
         )
 
     # 表情・表示キャラクター・アイテムを横並びで表示
@@ -96,7 +103,9 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
     with col1:
         # 表情選択
         expressions = Expressions.get_all()
-        expression_options = [(name, config.display_name) for name, config in expressions.items()]
+        expression_options = [
+            (name, config.display_name) for name, config in expressions.items()
+        ]
 
         expression_index = 0
         if segment.get("expression") in expressions:
@@ -107,7 +116,7 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
             options=[name for name, _ in expression_options],
             format_func=lambda x: dict(expression_options)[x],
             index=expression_index,
-            key=f"expression_{section_name}_{segment_index}"
+            key=f"expression_{section_name}_{segment_index}",
         )
 
     with col2:
@@ -117,7 +126,7 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
             options=[name for name, _ in character_options],
             default=segment.get("visible_characters", []),
             format_func=lambda x: dict(character_options)[x],
-            key=f"visible_{section_name}_{segment_index}"
+            key=f"visible_{section_name}_{segment_index}",
         )
 
     with col3:
@@ -127,7 +136,7 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
             zundamon_item = st.text_input(
                 "ずんだもんアイテム",
                 value=segment.get("character_items", {}).get("zundamon", "none"),
-                key=f"item_zundamon_{section_name}_{segment_index}"
+                key=f"item_zundamon_{section_name}_{segment_index}",
             )
 
     # キャラクターアイテム辞書を構築（ずんだもん以外は自動でnone）
@@ -143,25 +152,30 @@ def render_segment_editor(segment: Dict[str, Any], segment_index: int, section_n
         "text": text,
         "expression": expression,
         "visible_characters": visible_characters,
-        "character_items": character_items
+        "character_items": character_items,
     }
 
 
-def render_section_editor(section: Dict[str, Any], section_index: int) -> Dict[str, Any]:
+def render_section_editor(
+    section: Dict[str, Any], section_index: int
+) -> Dict[str, Any]:
     """セクション編集UI"""
-    with st.expander(f"📁 セクション {section_index + 1}: {section.get('section_name', 'Unknown')}", expanded=True):
+    with st.expander(
+        f"📁 セクション {section_index + 1}: {section.get('section_name', 'Unknown')}",
+        expanded=True,
+    ):
         # セクション名
         section_name = st.text_input(
             "セクション名",
             value=section.get("section_name", ""),
-            key=f"section_name_{section_index}"
+            key=f"section_name_{section_index}",
         )
 
         # 背景シーン
         scene_background = st.text_input(
             "背景シーン",
             value=section.get("scene_background", ""),
-            key=f"scene_background_{section_index}"
+            key=f"scene_background_{section_index}",
         )
 
         # セグメント編集
@@ -172,12 +186,19 @@ def render_section_editor(section: Dict[str, Any], section_index: int) -> Dict[s
 
         for seg_index, segment in enumerate(segments):
             with st.container():
-                edited_segment = render_segment_editor(segment, seg_index, f"sec{section_index}")
+                edited_segment = render_segment_editor(
+                    segment, seg_index, f"sec{section_index}"
+                )
                 edited_segments.append(edited_segment)
 
                 # セグメント削除ボタン
-                if st.button(f"🗑️ セグメント {seg_index + 1} を削除", key=f"del_segment_{section_index}_{seg_index}"):
-                    st.session_state[f"delete_segment_{section_index}_{seg_index}"] = True
+                if st.button(
+                    f"🗑️ セグメント {seg_index + 1} を削除",
+                    key=f"del_segment_{section_index}_{seg_index}",
+                ):
+                    st.session_state[f"delete_segment_{section_index}_{seg_index}"] = (
+                        True
+                    )
                     st.rerun()
 
                 st.divider()
@@ -189,7 +210,7 @@ def render_section_editor(section: Dict[str, Any], section_index: int) -> Dict[s
                 "text": "",
                 "expression": "normal",
                 "visible_characters": ["zundamon"],
-                "character_items": {"zundamon": "none"}
+                "character_items": {"zundamon": "none"},
             }
             segments.append(new_segment)
             st.rerun()
@@ -197,7 +218,7 @@ def render_section_editor(section: Dict[str, Any], section_index: int) -> Dict[s
         return {
             "section_name": section_name,
             "scene_background": scene_background,
-            "segments": edited_segments
+            "segments": edited_segments,
         }
 
 
@@ -219,7 +240,7 @@ def render_json_editor():
     selected_file_name = st.selectbox(
         "編集するJSONファイルを選択",
         options=[name for name, _ in file_options],
-        index=0
+        index=0,
     )
 
     selected_file = dict(file_options)[selected_file_name]
@@ -243,7 +264,9 @@ def render_json_editor():
     food_name = st.text_input("食べ物名", value=json_data.get("food_name", ""))
 
     # 推定時間編集
-    estimated_duration = st.text_input("推定時間", value=json_data.get("estimated_duration", ""))
+    estimated_duration = st.text_input(
+        "推定時間", value=json_data.get("estimated_duration", "")
+    )
 
     # セクション編集
     st.markdown("---")
@@ -261,7 +284,7 @@ def render_json_editor():
         new_section = {
             "section_name": "新しいセクション",
             "scene_background": "default",
-            "segments": []
+            "segments": [],
         }
         sections.append(new_section)
         st.rerun()
@@ -278,7 +301,7 @@ def render_json_editor():
                 "food_name": food_name,
                 "estimated_duration": estimated_duration,
                 "sections": edited_sections,
-                "all_segments": []  # セクションから自動生成
+                "all_segments": [],  # セクションから自動生成
             }
 
             # all_segments生成
@@ -306,7 +329,7 @@ def render_json_editor():
                 "food_name": food_name,
                 "estimated_duration": estimated_duration,
                 "sections": edited_sections,
-                "all_segments": []
+                "all_segments": [],
             }
 
             # all_segments生成
@@ -330,7 +353,7 @@ def render_json_editor():
                 "food_name": food_name,
                 "estimated_duration": estimated_duration,
                 "sections": edited_sections,
-                "all_segments": []
+                "all_segments": [],
             }
 
             # all_segments生成
@@ -345,7 +368,7 @@ def render_json_editor():
                 data=json_str,
                 file_name=f"edited_{selected_file_name}",
                 mime="application/json",
-                use_container_width=True
+                use_container_width=True,
             )
 
 
