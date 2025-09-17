@@ -16,21 +16,6 @@ logger = logging.getLogger(__name__)
 ensure_directories()
 
 
-def get_effective_config(config_key, default_value, config_path=None):
-    """有効な設定値を取得（ユーザー設定優先）"""
-    if hasattr(st.session_state, "user_config") and st.session_state.user_config:
-        try:
-            if config_path:
-                value = st.session_state.user_config
-                for key in config_path:
-                    value = value[key]
-                return value
-            else:
-                return st.session_state.user_config.get(config_key, default_value)
-        except (KeyError, TypeError):
-            pass
-
-    return default_value
 
 
 st.set_page_config(
@@ -58,10 +43,6 @@ def main():
         "📝 JSON編集": {
             "module": "src.ui.pages.json_editor_page",
             "function": "render_json_editor_page",
-        },
-        "⚙️ 設定": {
-            "module": "src.ui.pages.config_page",
-            "function": "render_config_page",
         },
     }
 

@@ -2,7 +2,6 @@
 render_home_page
 render_food_overconsumption_page
 render_json_editor_page
-render_config_page
 
 # Pydanticバリデーター（実際に使用される）
 validate_character_items
