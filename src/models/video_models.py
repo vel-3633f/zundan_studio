@@ -23,9 +23,3 @@ class AudioSegmentInfo:
     duration: float
 
 
-@dataclass
-class ActiveSpeakerInfo:
-    """アクティブスピーカー情報"""
-
-    intensity: float
-    expression: str

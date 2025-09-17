@@ -58,13 +58,3 @@ class SubtitleGenerator:
 
         return subtitle_lines
 
-    def find_current_subtitle(
-        self, subtitle_lines: List[SubtitleData], current_time: float
-    ) -> tuple:
-        """現在時刻の字幕を検索"""
-        for subtitle in subtitle_lines:
-            if subtitle.start_time <= current_time <= subtitle.end_time:
-                line_progress = (current_time - subtitle.start_time) / subtitle.duration
-                line_progress = min(1.0, max(0.0, line_progress))
-                return subtitle, line_progress
-        return None, 0

@@ -43,9 +43,6 @@ class Characters:
         "narrator": CharacterInfo("narrator", "ナレーター", "客観的で落ち着いた解説役"),
     }
 
-    @classmethod
-    def get_character(cls, name: str) -> Optional[CharacterInfo]:
-        return cls._characters.get(name)
 
     @classmethod
     def get_display_name(cls, name: str) -> str:

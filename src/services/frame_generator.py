@@ -1,7 +1,7 @@
 import cv2
 import logging
 from typing import List, Dict, Optional, Tuple
-from src.models.video_models import AudioSegmentInfo, SubtitleData, ActiveSpeakerInfo
+from src.models.video_models import AudioSegmentInfo, SubtitleData
 
 logger = logging.getLogger(__name__)
 
@@ -45,12 +45,14 @@ class FrameGenerator:
                 current_time = frame_idx / self.fps
 
                 # 現在のフレーム情報を取得
-                active_speakers, current_background, character_items = self._get_frame_info(
-                    current_time,
-                    conversations,
-                    audio_file_list,
-                    segment_audio_intensities,
-                    backgrounds,
+                active_speakers, current_background, character_items = (
+                    self._get_frame_info(
+                        current_time,
+                        conversations,
+                        audio_file_list,
+                        segment_audio_intensities,
+                        backgrounds,
+                    )
                 )
 
                 # フレーム合成
@@ -124,7 +126,7 @@ class FrameGenerator:
                     char_items = conv.get("character_items", {})
                     if char_items:
                         character_items.update(char_items)
-                    
+
                     # 後方互換性のため、古い形式のitemも処理
                     item_name = conv.get("item", "none")
                     if item_name and item_name != "none":
@@ -138,12 +140,15 @@ class FrameGenerator:
             visible_chars = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
-            
+
             # ナレーターの場合、話者自体は表示しない
             if speaker == "narrator":
                 # visible_charactersに指定されたキャラクターのみ表示
                 for char_name in visible_chars:
-                    if char_name in self.video_processor.characters and char_name != "narrator":
+                    if (
+                        char_name in self.video_processor.characters
+                        and char_name != "narrator"
+                    ):
                         active_speakers[char_name] = {
                             "intensity": 0,  # ナレーション中なので動きなし
                             "expression": "normal",
@@ -152,7 +157,10 @@ class FrameGenerator:
                 # 通常のキャラクター会話の場合
                 visible_chars = list(set(visible_chars + [speaker]))
                 for char_name in visible_chars:
-                    if char_name in self.video_processor.characters and char_name != "narrator":
+                    if (
+                        char_name in self.video_processor.characters
+                        and char_name != "narrator"
+                    ):
                         if char_name == speaker:
                             active_speakers[char_name] = {
                                 "intensity": intensity,

@@ -22,7 +22,6 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
 
 # デフォルトモデル設定
 DEFAULT_MODEL_ID = "gpt-4.1-mini"
-DEFAULT_TEMPERATURE = 0.8
 
 
 # モデル設定を取得する関数
@@ -39,14 +38,8 @@ def get_default_model_config() -> Dict[str, Any]:
     return get_model_config(DEFAULT_MODEL_ID)
 
 
-def get_model_ids() -> List[str]:
-    """利用可能なモデルIDのリストを取得する"""
-    return [model["id"] for model in AVAILABLE_MODELS]
 
 
-def get_model_names() -> List[str]:
-    """利用可能なモデル名のリストを取得する"""
-    return [model["name"] for model in AVAILABLE_MODELS]
 
 
 def get_recommended_model_id() -> str:

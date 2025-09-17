@@ -183,13 +183,3 @@ class VoiceGenerator:
 
         return audio_paths
 
-    def get_speakers(self) -> Optional[list]:
-        """Get available speakers"""
-        try:
-            response = requests.get(f"{self.api_url}/speakers", timeout=10)
-            if response.status_code == 200:
-                return response.json()
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to get speakers: {e}")
-            return None

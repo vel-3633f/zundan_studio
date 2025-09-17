@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import logging
-import json
 
 from src.utils.utils import (
     setup_logging,
@@ -33,12 +32,6 @@ def get_effective_config(config_key, default_value, config_path=None):
 
     return default_value
 
-
-page_title = (
-    get_effective_config("title", APP_CONFIG.title, ["app", "title"])
-    if hasattr(st.session_state, "user_config") and st.session_state.user_config
-    else APP_CONFIG.title
-)
 
 st.set_page_config(
     page_title=f"{APP_CONFIG.title}",

@@ -94,7 +94,6 @@ class UIConfig:
     text_area_height: int = 80
 
     # カラム設定
-    main_columns: List[int] = [3, 1]
     input_columns: List[int] = [
         1,
         3,
