@@ -20,6 +20,7 @@ langchain = "^0.3.27"
 langchain-openai = "^0.3.32"
 langchain-community = "^0.3.29"
 tavily-python = "^0.7.12"
+pykakasi = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
