@@ -351,7 +351,6 @@ def process_conversation_segments(
                 speaker=segment.speaker,
                 text=text_part,
                 expression=segment.expression,
-                background=segment.background,
                 visible_characters=segment.visible_characters,
                 character_items=segment.character_items,
             )
