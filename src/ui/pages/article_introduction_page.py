@@ -137,7 +137,6 @@ def estimate_video_duration(segments: List[Dict]) -> str:
         return "約0分00秒"
 
     total_chars = sum(len(segment.get("text", "")) for segment in segments)
-    # 日本語の読み上げ速度を考慮した計算（1文字あたり0.4秒）
     total_seconds = total_chars * 0.4
     minutes = int(total_seconds // 60)
     seconds = int(total_seconds % 60)
@@ -150,13 +149,11 @@ def display_background_and_items_info(data: Dict):
     """背景とアイテム情報を表示する"""
     st.markdown("### 🎨 背景・アイテム情報")
 
-    # 全セグメントから背景とアイテム情報を収集
     all_segments = data.get("all_segments", [])
     if not all_segments:
         st.info("背景・アイテム情報が見つかりませんでした")
         return
 
-    # 背景情報の表示
     backgrounds = set()
     character_items_all = {}
 
