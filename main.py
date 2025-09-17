@@ -52,29 +52,38 @@ def main():
     """Main application"""
     init_session_state()
 
-    # ページ選択
-    page = st.sidebar.selectbox(
-        "📄 ページ選択", options=["🏠 ホーム", "📚 記事紹介", "📝 JSON編集", "設定"], index=0
+    # ページ設定
+    pages = {
+        "🏠 ホーム": {
+            "module": "src.ui.pages.home_page",
+            "function": "render_home_page",
+        },
+        "📚 記事紹介": {
+            "module": "src.ui.pages.article_introduction_page",
+            "function": "render_food_overconsumption_page",
+        },
+        "📝 JSON編集": {
+            "module": "src.ui.pages.json_editor_page",
+            "function": "render_json_editor_page",
+        },
+        "⚙️ 設定": {
+            "module": "src.ui.pages.config_page",
+            "function": "render_config_page",
+        },
+    }
+
+    page = st.sidebar.radio(
+        "📄 ページ選択",
+        options=list(pages.keys()),
+        index=0,
     )
 
-    if page == "🏠 ホーム":
-        from src.ui.pages.home_page import render_home_page
-
-        render_home_page()
-    elif page == "📚 記事紹介":
-        from src.ui.pages.article_introduction_page import (
-            render_food_overconsumption_page,
-        )
-
-        render_food_overconsumption_page()
-    elif page == "📝 JSON編集":
-        from src.ui.pages.json_editor_page import render_json_editor_page
-
-        render_json_editor_page()
-    elif page == "設定":
-        from src.ui.pages.config_page import render_config_page
-
-        render_config_page()
+    # 選択されたページを動的にインポートして実行
+    if page in pages:
+        page_config = pages[page]
+        module = __import__(page_config["module"], fromlist=[page_config["function"]])
+        render_function = getattr(module, page_config["function"])
+        render_function()
 
 
 if __name__ == "__main__":
