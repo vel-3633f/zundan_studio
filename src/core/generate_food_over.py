@@ -17,7 +17,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 from langchain_community.retrievers import TavilySearchAPIRetriever
-from src.models.food_over import FoodOverconsumptionScript
 
 _prompt_cache = {}
 

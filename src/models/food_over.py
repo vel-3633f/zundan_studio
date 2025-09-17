@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, Optional, List, Any, Union
 
 
@@ -10,6 +10,18 @@ class ConversationSegment(BaseModel):
     expression: str = Field(description="表情名")
     visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
     character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
+
+    @field_validator('character_items')
+    @classmethod
+    def validate_character_items(cls, v: Dict[str, str]) -> Dict[str, str]:
+        """ずんだもん以外のキャラクターのアイテムをnoneに設定"""
+        validated_items = {}
+        for character, item in v.items():
+            if character == "zundamon":
+                validated_items[character] = item
+            else:
+                validated_items[character] = "none"
+        return validated_items
 
 
 class VideoSection(BaseModel):
