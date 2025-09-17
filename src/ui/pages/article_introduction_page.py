@@ -8,15 +8,12 @@ from typing import Dict, Optional, List, Any
 from src.models.food_over import FoodOverconsumptionScript
 from src.core.generate_food_over import generate_food_overconsumption_script
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE
+from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_config
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# =============================================================================
-# ロガー設定
-# =============================================================================
 
 # ログレベルの環境変数からの取得（デフォルト: INFO）
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -435,18 +432,39 @@ def render_food_overconsumption_page():
     with st.expander("⚙️ 生成設定（詳細設定）"):
         col1, col2 = st.columns(2)
         with col1:
-            model = st.selectbox(
+            # モデル選択肢を動的に生成
+            model_options = [model["name"] for model in AVAILABLE_MODELS]
+            model_descriptions = {
+                model["name"]: model["description"] for model in AVAILABLE_MODELS
+            }
+            model_id_map = {model["name"]: model["id"] for model in AVAILABLE_MODELS}
+
+            # 推奨モデルをデフォルトに設定
+            recommended_model_id = get_recommended_model_id()
+            default_index = 0
+            for i, model in enumerate(AVAILABLE_MODELS):
+                if model["id"] == recommended_model_id:
+                    default_index = i
+                    break
+
+            selected_model_name = st.selectbox(
                 "使用するAIモデル",
-                ["gpt-4.1", "gpt-4", "gpt-3.5-turbo"],
-                index=0,
-                help="gpt-4.1が最も高品質ですが、処理に時間がかかります",
+                model_options,
+                index=default_index,
+                help="推奨モデルが最も高品質ですが、処理に時間がかかる場合があります",
             )
+            model = model_id_map[selected_model_name]
         with col2:
+            # 選択されたモデルの設定を取得
+            selected_model_config = get_model_config(model)
+            temp_range = selected_model_config["temperature_range"]
+            default_temp = selected_model_config["default_temperature"]
+
             temperature = st.slider(
                 "創造性レベル",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.8,
+                min_value=temp_range[0],
+                max_value=temp_range[1],
+                value=default_temp,
                 step=0.1,
                 help="高いほど創造的だが、一貫性が下がる可能性があります",
             )

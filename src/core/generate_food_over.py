@@ -5,6 +5,7 @@ from typing import Dict, List, Any, Union
 from src.models.food_over import FoodOverconsumptionScript
 from src.utils.utils import process_conversation_segments
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
+from config.models import get_model_config, get_default_model_config
 
 from dotenv import load_dotenv
 
@@ -128,9 +129,20 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
 
 
 def generate_food_overconsumption_script(
-    food_name: str, model: str = "gpt-4.1", temperature: float = 0.8
+    food_name: str, model: str = None, temperature: float = None
 ) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
     """食べ物摂取過多動画脚本を生成する"""
+
+    # モデル設定をconfigから取得
+    if model is None:
+        model_config = get_default_model_config()
+        model = model_config["id"]
+    else:
+        model_config = get_model_config(model)
+
+    if temperature is None:
+        temperature = model_config["default_temperature"]
+
     logger.info(
         f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
     )
