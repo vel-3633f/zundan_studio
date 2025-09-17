@@ -139,13 +139,6 @@ def generate_food_overconsumption_script(
 
     try:
         openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            error_msg = "OPENAI_API_KEY が設定されていません"
-            logger.error(error_msg)
-            return {
-                "error": "API Key Error",
-                "details": error_msg,
-            }
 
         # Tavily検索を実行
         search_results = search_food_information(food_name)

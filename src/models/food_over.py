@@ -8,7 +8,6 @@ class ConversationSegment(BaseModel):
     speaker: str = Field(description="話者名")
     text: str = Field(description="セリフ内容")
     expression: str = Field(description="表情名")
-    background: str = Field(description="背景名")
     visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
     character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
 
@@ -17,6 +16,7 @@ class VideoSection(BaseModel):
     """動画セクションのモデル"""
 
     section_name: str = Field(description="セクション名")
+    scene_background: str = Field(description="このセクションで使用する背景シーン")
     segments: List[ConversationSegment] = Field(
         description="このセクションの会話セグメント"
     )

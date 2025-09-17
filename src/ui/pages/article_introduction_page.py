@@ -132,37 +132,41 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     return duration
 
 
-def display_background_and_items_info(data: Dict):
-    """背景とアイテム情報を表示する"""
-    st.markdown("### 🎨 背景・アイテム情報")
+def display_scene_and_items_info(data: Dict):
+    """シーンとアイテム情報を表示する"""
+    st.markdown("### 🎨 シーン・アイテム情報")
 
-    all_segments = data.get("all_segments", [])
-    if not all_segments:
-        st.info("背景・アイテム情報が見つかりませんでした")
+    sections = data.get("sections", [])
+    if not sections:
+        st.info("シーン・アイテム情報が見つかりませんでした")
         return
 
-    backgrounds = set()
+    # セクション別のシーン情報を取得
+    section_scenes = {}
     character_items_all = {}
 
-    for segment in all_segments:
-        if "background" in segment:
-            backgrounds.add(segment["background"])
+    for section in sections:
+        section_name = section.get("section_name", "Unknown")
+        scene_background = section.get("scene_background", "")
+        section_scenes[section_name] = scene_background
 
-        if "character_items" in segment and segment["character_items"]:
-            for char, item in segment["character_items"].items():
-                if char not in character_items_all:
-                    character_items_all[char] = set()
-                character_items_all[char].add(item)
+        # セクション内のアイテム情報を収集
+        for segment in section.get("segments", []):
+            if "character_items" in segment and segment["character_items"]:
+                for char, item in segment["character_items"].items():
+                    if char not in character_items_all:
+                        character_items_all[char] = set()
+                    character_items_all[char].add(item)
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🖼️ 使用される背景")
-        if backgrounds:
-            for bg in sorted(backgrounds):
-                st.write(f"• {bg}")
+        st.subheader("🎬 セクション別シーン")
+        if section_scenes:
+            for section_name, scene in section_scenes.items():
+                st.write(f"**{section_name}**: {scene}")
         else:
-            st.info("背景情報が見つかりませんでした")
+            st.info("シーン情報が見つかりませんでした")
 
     with col2:
         st.subheader("🎯 キャラクター別アイテム")
@@ -176,24 +180,22 @@ def display_background_and_items_info(data: Dict):
             st.info("アイテム情報が見つかりませんでした")
 
     # 詳細なJSON表示
-    with st.expander("🔍 背景・アイテム詳細情報（JSON）", expanded=False):
-        background_items_data = {
-            "backgrounds": list(backgrounds),
+    with st.expander("🔍 シーン・アイテム詳細情報（JSON）", expanded=False):
+        scene_items_data = {
+            "section_scenes": section_scenes,
             "character_items": {
                 char: list(items) for char, items in character_items_all.items()
             },
-            "segment_details": [
+            "section_details": [
                 {
-                    "segment_index": i,
-                    "speaker": segment.get("speaker", "unknown"),
-                    "background": segment.get("background", ""),
-                    "character_items": segment.get("character_items", {}),
+                    "section_name": section.get("section_name", "Unknown"),
+                    "scene_background": section.get("scene_background", ""),
+                    "segment_count": len(section.get("segments", [])),
                 }
-                for i, segment in enumerate(all_segments)
-                if segment.get("background") or segment.get("character_items")
+                for section in sections
             ],
         }
-        st.json(background_items_data)
+        st.json(scene_items_data)
 
 
 def display_food_script_preview(script_data: FoodOverconsumptionScript):
@@ -222,17 +224,19 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
 
     # テーマ表示を削除
 
-    # 背景・アイテム情報表示
-    display_background_and_items_info(data)
+    # シーン・アイテム情報表示
+    display_scene_and_items_info(data)
 
     # セクション別表示
     if "sections" in data:
         st.markdown("### 📋 セクション構成")
         for i, section in enumerate(data["sections"]):
+            scene_background = section.get('scene_background', '未設定')
             with st.expander(
-                f"**{i+1}. {section['section_name']}** ({len(section['segments'])}セリフ)",
+                f"**{i+1}. {section['section_name']}** ({len(section['segments'])}セリフ) - 🎬 {scene_background}",
                 expanded=True,
             ):
+                st.info(f"🎬 シーン: {scene_background}")
 
                 for j, segment in enumerate(section["segments"]):
                     text_length = len(segment["text"])
