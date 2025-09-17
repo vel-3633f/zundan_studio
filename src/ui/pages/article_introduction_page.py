@@ -235,9 +235,7 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
     with col3:
         st.metric("総セリフ数", len(data["all_segments"]))
 
-    # テーマ表示
-    if "theme" in data:
-        st.info(f"🎯 動画テーマ: {data['theme']}")
+    # テーマ表示を削除
 
     # 背景・アイテム情報表示
     display_background_and_items_info(data)
@@ -250,7 +248,6 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
                 f"**{i+1}. {section['section_name']}** ({len(section['segments'])}セリフ)",
                 expanded=True,
             ):
-                st.write(f"**目的**: {section['purpose']}")
 
                 for j, segment in enumerate(section["segments"]):
                     text_length = len(segment["text"])

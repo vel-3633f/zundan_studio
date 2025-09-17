@@ -17,7 +17,6 @@ class VideoSection(BaseModel):
     """動画セクションのモデル"""
 
     section_name: str = Field(description="セクション名")
-    purpose: str = Field(description="セクションの目的")
     segments: List[ConversationSegment] = Field(
         description="このセクションの会話セグメント"
     )
@@ -29,7 +28,6 @@ class FoodOverconsumptionScript(BaseModel):
     title: str = Field(description="YouTubeタイトル（注目を引く形式）")
     food_name: str = Field(description="対象の食べ物名")
     estimated_duration: str = Field(description="推定動画時間")
-    theme: str = Field(description="動画のテーマ")
     sections: List[VideoSection] = Field(description="動画セクションのリスト")
     all_segments: List[ConversationSegment] = Field(
         description="全会話セグメントの統合リスト"
