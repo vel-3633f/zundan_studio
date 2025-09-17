@@ -6,11 +6,11 @@ from src.models.food_over import FoodOverconsumptionScript
 from src.utils.utils import process_conversation_segments
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
 from config.models import get_model_config, get_default_model_config
+from src.utils.logger import get_logger
 
 from dotenv import load_dotenv
 
 load_dotenv()
-import logging
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -21,18 +21,8 @@ from src.models.food_over import FoodOverconsumptionScript
 
 _prompt_cache = {}
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# モジュール専用ロガーの設定
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
-
-# ハンドラーが既に追加されていない場合のみ追加
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(handler)
+# ロガーの設定
+logger = get_logger(__name__)
 
 
 def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:

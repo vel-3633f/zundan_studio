@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import json
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, List, Any
@@ -9,25 +8,14 @@ from src.models.food_over import FoodOverconsumptionScript
 from src.core.generate_food_over import generate_food_overconsumption_script
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE
 from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_config
+from src.utils.logger import get_logger
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# ログレベルの環境変数からの取得（デフォルト: INFO）
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# モジュール専用ロガーの設定
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
-
-# ハンドラーが既に追加されていない場合のみ追加
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(handler)
+# ロガーの設定
+logger = get_logger(__name__)
 
 
 class CharacterInfo:
