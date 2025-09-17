@@ -2,6 +2,8 @@ import streamlit as st
 import os
 import json
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, Optional, List, Any
 from src.models.food_over import FoodOverconsumptionScript
 from src.core.generate_food_over import generate_food_overconsumption_script
@@ -352,6 +354,33 @@ def display_debug_section():
                 display_raw_llm_output(st.session_state.last_llm_output, "LLMの生出力")
 
 
+def save_json_to_outputs(data: Dict, food_name: str) -> Optional[str]:
+    """JSONデータをoutputsフォルダに保存する"""
+    try:
+        # outputsフォルダのパスを作成
+        outputs_dir = Path("outputs/json")
+
+        # ファイル名を生成（食べ物名_日付時刻.json）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # 食べ物名をファイル名に使用できるよう処理
+        safe_food_name = "".join(
+            c for c in food_name if c.isalnum() or c in "-_"
+        ).rstrip()
+        filename = f"{safe_food_name}_{timestamp}.json"
+        file_path = outputs_dir / filename
+
+        # JSONファイルとして保存
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        logger.info(f"JSONファイルを保存: {file_path}")
+        return str(file_path)
+
+    except Exception as e:
+        logger.error(f"JSONファイル保存エラー: {e}")
+        return None
+
+
 def add_conversation_to_session(conversation_data: Dict):
     """会話データをセッションに追加"""
     if "conversation_lines" not in st.session_state:
@@ -440,6 +469,12 @@ def render_food_overconsumption_page():
                 logger.info("脚本生成成功、プレビューを表示")
                 st.success("🎉 食べ物摂取過多解説動画脚本が完成したのだ〜！")
                 display_food_script_preview(result)
+
+                saved_file_path = save_json_to_outputs(result.model_dump(), food_name)
+                if saved_file_path:
+                    st.success(f"💾 JSONファイルを保存しました: {saved_file_path}")
+                else:
+                    st.warning("⚠️ JSONファイルの保存に失敗しました")
 
                 # JSON表示
                 display_json_debug(result, "生成された食べ物摂取過多脚本データ")
