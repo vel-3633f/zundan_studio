@@ -54,7 +54,7 @@ def main():
 
     # ページ選択
     page = st.sidebar.selectbox(
-        "📄 ページ選択", options=["🏠 ホーム", "📚 記事紹介", "設定"], index=0
+        "📄 ページ選択", options=["🏠 ホーム", "📚 記事紹介", "📝 JSON編集", "設定"], index=0
     )
 
     if page == "🏠 ホーム":
@@ -67,6 +67,10 @@ def main():
         )
 
         render_food_overconsumption_page()
+    elif page == "📝 JSON編集":
+        from src.ui.pages.json_editor_page import render_json_editor_page
+
+        render_json_editor_page()
     elif page == "設定":
         from src.ui.pages.config_page import render_config_page
 
