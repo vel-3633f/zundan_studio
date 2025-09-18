@@ -54,6 +54,26 @@ class Backgrounds:
         name="snow", display_name="雪", emoji="❄️", description="雪の背景"
     )
 
+    HOSPITAL_ROOM = BackgroundConfig(
+        name="hospital_room", display_name="病室", emoji="🏥", description="病院の病室"
+    )
+
+    SUPERMARKET_AISLE = BackgroundConfig(
+        name="supermarket_aisle", display_name="スーパー", emoji="🛒", description="スーパーマーケットの通路"
+    )
+
+    LIVING_ROOM = BackgroundConfig(
+        name="living_room", display_name="リビング", emoji="🛋️", description="リビングルーム"
+    )
+
+    BEDROOM = BackgroundConfig(
+        name="bedroom", display_name="寝室", emoji="🛏️", description="ベッドルーム"
+    )
+
+    LABORATORY = BackgroundConfig(
+        name="laboratory", display_name="研究室", emoji="🧪", description="実験室・研究室"
+    )
+
     @classmethod
     def get_all(cls) -> Dict[str, BackgroundConfig]:
         """全背景設定を取得"""
@@ -66,6 +86,11 @@ class Backgrounds:
             "ocean": cls.OCEAN,
             "sakura": cls.SAKURA,
             "snow": cls.SNOW,
+            "hospital_room": cls.HOSPITAL_ROOM,
+            "supermarket_aisle": cls.SUPERMARKET_AISLE,
+            "living_room": cls.LIVING_ROOM,
+            "bedroom": cls.BEDROOM,
+            "laboratory": cls.LABORATORY,
         }
 
     @classmethod
@@ -128,6 +153,21 @@ class ItemConfig:
 
 class Items:
     """アイテム設定管理クラス"""
+
+    # 食べ物カテゴリのアイテム
+    CHOCOLATE_BAR = ItemConfig(
+        name="chocolate_bar",
+        display_name="チョコレートバー",
+        category="food",
+        emoji="🍫",
+        description="チョコレートバー",
+        positions={
+            "zundamon": (0.1, 0.35),  # 右手
+            "metan": (0.9, 0.35),  # 左手
+            "tsumugi": (0.9, 0.35),  # 左手
+        },
+        base_size=0.12
+    )
 
     @classmethod
     def get_all(cls) -> Dict[str, ItemConfig]:

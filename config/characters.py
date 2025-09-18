@@ -147,6 +147,22 @@ class Expressions:
         name="thinking", display_name="考え中", emoji="🤔", description="考えている表情"
     )
 
+    WORRIED = ExpressionConfig(
+        name="worried", display_name="心配", emoji="😟", description="心配している表情"
+    )
+
+    EXCITED = ExpressionConfig(
+        name="excited", display_name="興奮", emoji="🤩", description="興奮している表情"
+    )
+
+    SICK = ExpressionConfig(
+        name="sick", display_name="体調不良", emoji="🤢", description="具合が悪い表情"
+    )
+
+    SERIOUS = ExpressionConfig(
+        name="serious", display_name="真剣", emoji="😤", description="真剣な表情"
+    )
+
     @classmethod
     def get_all(cls) -> Dict[str, ExpressionConfig]:
         """全表情設定を取得"""
@@ -157,6 +173,10 @@ class Expressions:
             "angry": cls.ANGRY,
             "surprised": cls.SURPRISED,
             "thinking": cls.THINKING,
+            "worried": cls.WORRIED,
+            "excited": cls.EXCITED,
+            "sick": cls.SICK,
+            "serious": cls.SERIOUS,
         }
 
     @classmethod

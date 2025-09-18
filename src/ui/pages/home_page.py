@@ -9,6 +9,7 @@ from src.ui.components.control_buttons import render_control_buttons
 from src.ui.components.sidebar import render_sidebar
 from src.ui.components.results import render_results
 from src.ui.components.video_generation import generate_conversation_video
+from src.ui.components.json_loader import render_json_selector
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,11 @@ def render_home_page():
     ] + VideoGenerator().video_processor.get_background_names()
     expression_options = Expressions.get_available_names()
     item_options = ["none"] + list(Items.get_all().keys())
+
+    # JSON selector section - pass available options for validation
+    from config import Characters
+    available_characters = list(Characters.get_all().keys())
+    render_json_selector(available_characters, background_options, expression_options)
 
     render_conversation_input(background_options, expression_options, item_options)
     render_control_buttons()
