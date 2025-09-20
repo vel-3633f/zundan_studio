@@ -31,7 +31,9 @@ class FrameGenerator:
     ) -> bool:
         """動画フレームの生成"""
         # タイミング整合性の検証
-        if not self._validate_timing_consistency(segment_audio_intensities, audio_file_list):
+        if not self._validate_timing_consistency(
+            segment_audio_intensities, audio_file_list
+        ):
             logger.warning("Timing inconsistency detected, but continuing...")
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -114,7 +116,9 @@ class FrameGenerator:
                     if segment.intensities and segment.duration > 0:
                         # 相対的な進行度を計算
                         frame_progress = local_time / segment.duration
-                        exact_frame_index = frame_progress * (len(segment.intensities) - 1)
+                        exact_frame_index = frame_progress * (
+                            len(segment.intensities) - 1
+                        )
 
                         # 線形補間でintensityを計算
                         lower_idx = max(0, int(exact_frame_index))
@@ -125,12 +129,15 @@ class FrameGenerator:
                         else:
                             interpolation_factor = exact_frame_index - lower_idx
                             intensity = (
-                                segment.intensities[lower_idx] * (1 - interpolation_factor) +
-                                segment.intensities[upper_idx] * interpolation_factor
+                                segment.intensities[lower_idx]
+                                * (1 - interpolation_factor)
+                                + segment.intensities[upper_idx] * interpolation_factor
                             )
 
                         current_frame_idx = int(current_time * self.fps)
-                        logger.debug(f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}")
+                        logger.debug(
+                            f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}"
+                        )
                     else:
                         intensity = 0
 
@@ -214,7 +221,9 @@ class FrameGenerator:
 
         return frame
 
-    def _validate_timing_consistency(self, segments: List[AudioSegmentInfo], audio_files: List[str]) -> bool:
+    def _validate_timing_consistency(
+        self, segments: List[AudioSegmentInfo], audio_files: List[str]
+    ) -> bool:
         """タイミングの整合性をチェック"""
         try:
             # セグメント時間の合計を計算
@@ -232,10 +241,14 @@ class FrameGenerator:
             tolerance = 1.0
             time_diff = abs(total_segment_duration - total_actual_duration)
 
-            logger.info(f"Timing validation: segment_total={total_segment_duration:.3f}s, actual_total={total_actual_duration:.3f}s, diff={time_diff:.3f}s")
+            logger.info(
+                f"Timing validation: segment_total={total_segment_duration:.3f}s, actual_total={total_actual_duration:.3f}s, diff={time_diff:.3f}s"
+            )
 
             if time_diff > tolerance:
-                logger.warning(f"Large timing difference detected: {time_diff:.3f}s > {tolerance}s")
+                logger.warning(
+                    f"Large timing difference detected: {time_diff:.3f}s > {tolerance}s"
+                )
                 return False
 
             return True
