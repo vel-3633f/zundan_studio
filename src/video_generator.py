@@ -77,7 +77,7 @@ class VideoGenerator:
             )
 
             # 瞬きタイミング生成
-            blink_timings = self.resource_manager.generate_blink_timings(total_duration)
+            blink_timings = self.resource_manager.generate_blink_timings(actual_total_duration)
 
             # 動画書き出し
             temp_video_path = output_path.replace(".mp4", "_temp.mp4")
