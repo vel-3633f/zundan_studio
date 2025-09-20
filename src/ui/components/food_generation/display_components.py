@@ -14,20 +14,91 @@ logger = get_logger(__name__)
 
 
 def display_json_debug(data: Any, title: str = "JSON Debug"):
-    """JSONデータをデバッグ用に表示する"""
+    """JSONデータをデバッグ用に表示する（大きなJSONに対応）"""
     with st.expander(f"🔍 {title}", expanded=False):
+        # データの準備
         if isinstance(data, (dict, list)):
-            st.json(data)
+            json_data = data
         elif hasattr(data, "model_dump"):
-            st.json(data.model_dump())
+            json_data = data.model_dump()
         else:
-            try:
-                json_str = json.dumps(data, indent=2, ensure_ascii=False)
-                st.code(json_str, language="json")
-            except Exception as e:
-                logger.error(f"JSON変換エラー: {e}")
-                st.text(f"JSON変換エラー: {e}")
-                st.text(str(data))
+            json_data = data
+
+        try:
+            json_str = json.dumps(json_data, indent=2, ensure_ascii=False)
+            json_size = len(json_str.encode('utf-8'))
+
+            # サイズ情報を表示
+            size_mb = json_size / (1024 * 1024)
+            if size_mb > 1:
+                st.info(f"📊 JSONサイズ: {size_mb:.2f} MB ({json_size:,} bytes)")
+            else:
+                size_kb = json_size / 1024
+                st.info(f"📊 JSONサイズ: {size_kb:.1f} KB ({json_size:,} bytes)")
+
+            # 大きなJSONの場合の表示オプション
+            if json_size > 50000:  # 50KB以上の場合
+                st.warning("⚠️ 大きなJSONファイルです。表示方法を選択してください。")
+
+                # 表示オプション
+                display_option = st.radio(
+                    "表示方法を選択:",
+                    ["要約表示", "セクション別表示", "完全表示", "ダウンロードのみ"],
+                    key=f"json_display_option_{hash(str(json_data))}"
+                )
+
+                if display_option == "要約表示":
+                    # 基本情報のみ表示
+                    summary = {}
+                    if isinstance(json_data, dict):
+                        for key, value in json_data.items():
+                            if isinstance(value, list):
+                                summary[key] = f"[{len(value)} items]"
+                            elif isinstance(value, dict):
+                                summary[key] = f"{{dict with {len(value)} keys}}"
+                            else:
+                                summary[key] = value
+                    st.json(summary)
+
+                elif display_option == "セクション別表示":
+                    # セクションごとに表示
+                    if isinstance(json_data, dict) and "sections" in json_data:
+                        # メタデータ
+                        metadata = {k: v for k, v in json_data.items() if k != "sections"}
+                        st.subheader("📋 メタデータ")
+                        st.json(metadata)
+
+                        # セクションごと
+                        st.subheader("📑 セクション")
+                        for i, section in enumerate(json_data.get("sections", [])):
+                            with st.expander(f"セクション {i+1}: {section.get('section_name', 'Unknown')}"):
+                                st.json(section)
+                    else:
+                        st.json(json_data)
+
+                elif display_option == "完全表示":
+                    # st.codeを使用して完全表示
+                    st.code(json_str, language="json")
+
+                elif display_option == "ダウンロードのみ":
+                    st.info("💾 ダウンロードボタンのみ表示")
+
+                # ダウンロードボタンを常に表示
+                st.download_button(
+                    label="📥 JSONファイルをダウンロード",
+                    data=json_str,
+                    file_name=f"{title.replace(' ', '_')}.json",
+                    mime="application/json"
+                )
+
+            else:
+                # 小さなJSONの場合は通常通り表示
+                st.json(json_data)
+
+        except Exception as e:
+            logger.error(f"JSON変換エラー: {e}")
+            st.error(f"JSON変換エラー: {e}")
+            st.text(str(data))
 
 
 def display_raw_llm_output(output: str, title: str = "LLM Raw Output"):

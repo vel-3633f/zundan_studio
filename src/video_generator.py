@@ -144,9 +144,7 @@ class VideoGenerator:
             codec="libx264",
             audio_codec="aac",
             temp_audiofile='temp-audio.m4a',
-            remove_temp=True,
-            verbose=False,
-            logger=None
+            remove_temp=True
         )
 
         video_clip.close()
