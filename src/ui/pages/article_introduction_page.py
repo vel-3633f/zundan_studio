@@ -1,21 +1,15 @@
 import streamlit as st
 import os
 import json
-import re
 import logging
-from pathlib import Path
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, Optional, List, Any
+from src.models.food_over import FoodOverconsumptionScript
+from src.core.generate_food_over import generate_food_overconsumption_script
+from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE
 
-import traceback
 from dotenv import load_dotenv
 
 load_dotenv()
-
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.exceptions import OutputParserException
-from pydantic import BaseModel, Field
 
 
 # =============================================================================
@@ -37,16 +31,6 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
-# =============================================================================
-# 設定データ
-# =============================================================================
-
-# プロンプトファイルの設定
-PROMPTS_DIR = Path("prompts")
-SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.txt"
-USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.txt"
-
-
 class CharacterInfo:
     def __init__(self, name: str, display_name: str, personality: str):
         self.name = name
@@ -58,19 +42,6 @@ class ExpressionInfo:
     def __init__(self, name: str, display_name: str):
         self.name = name
         self.display_name = display_name
-
-
-class BackgroundInfo:
-    def __init__(self, name: str, display_name: str):
-        self.name = name
-        self.display_name = display_name
-
-
-class ItemInfo:
-    def __init__(self, name: str, display_name: str, emoji: str):
-        self.name = name
-        self.display_name = display_name
-        self.emoji = emoji
 
 
 class Characters:
@@ -114,296 +85,6 @@ class Expressions:
         return expr.display_name if expr else name
 
 
-class Backgrounds:
-    _backgrounds = {
-        "default": BackgroundInfo("default", "デフォルト"),
-        "blue_sky": BackgroundInfo("blue_sky", "青空"),
-        "sunset": BackgroundInfo("sunset", "夕焼け"),
-        "night": BackgroundInfo("night", "夜"),
-        "forest": BackgroundInfo("forest", "森"),
-        "ocean": BackgroundInfo("ocean", "海"),
-        "sakura": BackgroundInfo("sakura", "桜"),
-        "snow": BackgroundInfo("snow", "雪"),
-        "kitchen": BackgroundInfo("kitchen", "キッチン"),
-        "hospital": BackgroundInfo("hospital", "病院"),
-        "laboratory": BackgroundInfo("laboratory", "研究室"),
-    }
-
-    @classmethod
-    def get_display_name(cls, name: str) -> str:
-        bg = cls._backgrounds.get(name)
-        return bg.display_name if bg else name
-
-
-class Items:
-    _items = {
-        "none": ItemInfo("none", "なし", ""),
-        "coffee": ItemInfo("coffee", "コーヒー", "☕"),
-        "tea": ItemInfo("tea", "お茶", "🍵"),
-        "juice": ItemInfo("juice", "ジュース", "🥤"),
-        "book": ItemInfo("book", "本", "📚"),
-        "notebook": ItemInfo("notebook", "ノート", "📝"),
-        "pen": ItemInfo("pen", "ペン", "✒️"),
-        "phone": ItemInfo("phone", "スマホ", "📱"),
-        "food": ItemInfo("food", "食べ物", "🍽️"),
-        "medicine": ItemInfo("medicine", "薬", "💊"),
-        "magnifying_glass": ItemInfo("magnifying_glass", "虫眼鏡", "🔍"),
-    }
-
-    @classmethod
-    def get_item(cls, name: str) -> Optional[ItemInfo]:
-        return cls._items.get(name)
-
-
-# =============================================================================
-# Pydanticモデル
-# =============================================================================
-
-
-class ConversationSegment(BaseModel):
-    """会話セグメントのモデル"""
-
-    speaker: str = Field(description="話者名")
-    text: str = Field(description="セリフ内容")
-    expression: str = Field(description="表情名")
-    background: str = Field(description="背景名")
-    visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
-    character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
-
-
-class VideoSection(BaseModel):
-    """動画セクションのモデル"""
-
-    section_name: str = Field(description="セクション名")
-    purpose: str = Field(description="セクションの目的")
-    segments: List[ConversationSegment] = Field(
-        description="このセクションの会話セグメント"
-    )
-
-
-class FoodOverconsumptionScript(BaseModel):
-    """食べ物摂取過多動画脚本のモデル"""
-
-    title: str = Field(description="YouTubeタイトル（注目を引く形式）")
-    food_name: str = Field(description="対象の食べ物名")
-    estimated_duration: str = Field(description="推定動画時間")
-    theme: str = Field(description="動画のテーマ")
-    sections: List[VideoSection] = Field(description="動画セクションのリスト")
-    all_segments: List[ConversationSegment] = Field(
-        description="全会話セグメントの統合リスト"
-    )
-
-
-# =============================================================================
-# プロンプト読み込み関数
-# =============================================================================
-
-_prompt_cache = {}
-
-
-def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
-    """プロンプトファイルを読み込む（キャッシュ機能付き）"""
-    if cache_key and cache_key in _prompt_cache:
-        logger.debug(f"プロンプトキャッシュからロード: {cache_key}")
-        return _prompt_cache[cache_key]
-
-    try:
-        if not file_path.exists():
-            raise FileNotFoundError(f"プロンプトファイルが見つかりません: {file_path}")
-
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read().strip()
-
-        if cache_key:
-            _prompt_cache[cache_key] = content
-            logger.debug(f"プロンプトファイルをキャッシュに保存: {cache_key}")
-
-        logger.info(f"プロンプトファイル読み込み成功: {file_path}")
-        return content
-
-    except Exception as e:
-        error_msg = f"プロンプトファイル読み込みエラー ({file_path}): {str(e)}"
-        logger.error(error_msg)
-
-        # フォールバック用のデフォルトプロンプト
-        if "system" in str(file_path).lower():
-            logger.info("デフォルトシステムプロンプトを使用")
-            return get_default_system_prompt()
-        else:
-            logger.info("デフォルトユーザープロンプトを使用")
-            return get_default_user_prompt()
-
-
-def get_default_system_prompt() -> str:
-    """デフォルトシステムプロンプト（フォールバック用）"""
-    return """あなたは食べ物の摂取過多について解説するYouTube動画の脚本を作成するAIです。
-ずんだもん、四国めたん、春日部つむぎ、ナレーターのキャラクターを使って、
-教育的で面白い動画脚本を作成してください。"""
-
-
-def get_default_user_prompt() -> str:
-    """デフォルトユーザープロンプト（フォールバック用）"""
-    return """{food_name}を食べすぎるとどうなるかについて、
-ずんだもんたちが解説する動画脚本を作成してください。
-
-{format_instructions}"""
-
-
-# =============================================================================
-# ユーティリティ関数
-# =============================================================================
-
-
-def split_long_text(text: str, max_length: int = 30) -> List[str]:
-    """長いテキストを指定文字数以内に分割"""
-    if len(text) <= max_length:
-        return [text]
-
-    sentences = re.split(r"([。！？])", text)
-    result = []
-    current = ""
-
-    for i in range(0, len(sentences) - 1, 2):
-        sentence = sentences[i] + (sentences[i + 1] if i + 1 < len(sentences) else "")
-
-        if len(current + sentence) <= max_length:
-            current += sentence
-        else:
-            if current:
-                result.append(current)
-                current = sentence
-            else:
-                while len(sentence) > max_length:
-                    result.append(sentence[:max_length])
-                    sentence = sentence[max_length:]
-                current = sentence
-
-    if current:
-        result.append(current)
-
-    logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
-    return result
-
-
-def process_conversation_segments(
-    segments: List[ConversationSegment],
-) -> List[ConversationSegment]:
-    """会話セグメントの文字数チェックと分割処理"""
-    processed_segments = []
-    original_count = len(segments)
-
-    for segment in segments:
-        text_parts = split_long_text(segment.text, 30)
-
-        for i, text_part in enumerate(text_parts):
-            new_segment = ConversationSegment(
-                speaker=segment.speaker,
-                text=text_part,
-                expression=segment.expression,
-                background=segment.background,
-                visible_characters=segment.visible_characters,
-                character_items=segment.character_items,
-            )
-            processed_segments.append(new_segment)
-
-    logger.info(
-        f"会話セグメント処理完了: {original_count} → {len(processed_segments)}個"
-    )
-    return processed_segments
-
-
-# =============================================================================
-# 脚本生成関数
-# =============================================================================
-
-
-def generate_food_overconsumption_script(
-    food_name: str, model: str = "gpt-4.1", temperature: float = 0.8
-) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
-    """食べ物摂取過多動画脚本を生成する"""
-    logger.info(
-        f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
-    )
-
-    try:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            error_msg = "OPENAI_API_KEY が設定されていません"
-            logger.error(error_msg)
-            return {
-                "error": "API Key Error",
-                "details": error_msg,
-            }
-
-        # プロンプトファイルから読み込み
-        system_template = load_prompt_from_file(SYSTEM_PROMPT_FILE, "system")
-        user_template = load_prompt_from_file(USER_PROMPT_FILE, "user")
-
-        llm = ChatOpenAI(model=model, temperature=temperature, api_key=openai_api_key)
-        parser = PydanticOutputParser(pydantic_object=FoodOverconsumptionScript)
-
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", system_template),
-                ("user", user_template),
-            ]
-        ).partial(format_instructions=parser.get_format_instructions())
-
-        chain = prompt | llm | parser
-
-        logger.info(f"{food_name}の摂取過多動画脚本をLLMで生成中...")
-        response_object = chain.invoke({"food_name": food_name})
-
-        # all_segmentsを作成
-        all_segments = []
-        for section in response_object.sections:
-            all_segments.extend(section.segments)
-
-        logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
-
-        # 文字数チェックと分割処理
-        processed_segments = process_conversation_segments(all_segments)
-        response_object.all_segments = processed_segments
-
-        # セクション内のセグメントも更新
-        segment_index = 0
-        for section in response_object.sections:
-            section_segments = []
-            for _ in section.segments:
-                if segment_index < len(processed_segments):
-                    section_segments.append(processed_segments[segment_index])
-                    segment_index += 1
-            section.segments = section_segments
-
-        logger.info("食べ物摂取過多動画脚本の生成に成功")
-
-        st.session_state.last_generated_json = response_object
-        st.session_state.last_llm_output = "パース成功: 構造化データに変換済み"
-
-        return response_object
-
-    except OutputParserException as e:
-        error_msg = "パースエラー: LLMの出力形式が不正です"
-        logger.error(f"{error_msg}. LLM出力: {e.llm_output}")
-
-        st.session_state.last_llm_output = e.llm_output
-        st.session_state.last_generated_json = None
-
-        return {
-            "error": "Pydantic Parse Error",
-            "details": str(e),
-            "raw_output": e.llm_output,
-        }
-    except Exception as e:
-        error_msg = f"予期せぬエラーが発生しました: {e}"
-        logger.error(error_msg, exc_info=True)
-
-        st.session_state.last_llm_output = f"予期せぬエラー: {str(e)}"
-        st.session_state.last_generated_json = None
-
-        return {"error": "Unexpected Error", "details": str(e)}
-
-
 # =============================================================================
 # 表示・ユーティリティ関数
 # =============================================================================
@@ -432,10 +113,32 @@ def display_raw_llm_output(output: str, title: str = "LLM Raw Output"):
         st.code(output, language="json")
 
 
+def display_search_results_debug(search_results: Dict[str, List[str]]):
+    """検索結果をデバッグ用に表示する"""
+    with st.expander("🔍 Tavily検索結果", expanded=False):
+        sections = [
+            ("overeating", "食べ過ぎに関する検索結果"),
+            ("benefits", "メリットに関する検索結果"),
+            ("disadvantages", "デメリットに関する検索結果"),
+        ]
+
+        for key, title in sections:
+            st.subheader(title)
+            if search_results.get(key):
+                for i, content in enumerate(search_results[key], 1):
+                    st.text_area(f"結果 {i}", content, height=100, key=f"{key}_{i}")
+            else:
+                st.info("検索結果が見つかりませんでした")
+
+
 def estimate_video_duration(segments: List[Dict]) -> str:
     """動画の推定時間を計算"""
-    total_chars = sum(len(segment["text"]) for segment in segments)
-    total_seconds = total_chars * 0.5
+    if not segments:
+        return "約0分00秒"
+
+    total_chars = sum(len(segment.get("text", "")) for segment in segments)
+    # 日本語の読み上げ速度を考慮した計算（1文字あたり0.4秒）
+    total_seconds = total_chars * 0.4
     minutes = int(total_seconds // 60)
     seconds = int(total_seconds % 60)
     duration = f"約{minutes}分{seconds:02d}秒"
@@ -443,12 +146,75 @@ def estimate_video_duration(segments: List[Dict]) -> str:
     return duration
 
 
-def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Dict]):
+def display_background_and_items_info(data: Dict):
+    """背景とアイテム情報を表示する"""
+    st.markdown("### 🎨 背景・アイテム情報")
+
+    # 全セグメントから背景とアイテム情報を収集
+    all_segments = data.get("all_segments", [])
+    if not all_segments:
+        st.info("背景・アイテム情報が見つかりませんでした")
+        return
+
+    # 背景情報の表示
+    backgrounds = set()
+    character_items_all = {}
+
+    for segment in all_segments:
+        if "background" in segment:
+            backgrounds.add(segment["background"])
+
+        if "character_items" in segment and segment["character_items"]:
+            for char, item in segment["character_items"].items():
+                if char not in character_items_all:
+                    character_items_all[char] = set()
+                character_items_all[char].add(item)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("🖼️ 使用される背景")
+        if backgrounds:
+            for bg in sorted(backgrounds):
+                st.write(f"• {bg}")
+        else:
+            st.info("背景情報が見つかりませんでした")
+
+    with col2:
+        st.subheader("🎯 キャラクター別アイテム")
+        if character_items_all:
+            for char, items in character_items_all.items():
+                char_display = Characters.get_display_name(char)
+                st.write(f"**{char_display}**:")
+                for item in sorted(items):
+                    st.write(f"  • {item}")
+        else:
+            st.info("アイテム情報が見つかりませんでした")
+
+    # 詳細なJSON表示
+    with st.expander("🔍 背景・アイテム詳細情報（JSON）", expanded=False):
+        background_items_data = {
+            "backgrounds": list(backgrounds),
+            "character_items": {
+                char: list(items) for char, items in character_items_all.items()
+            },
+            "segment_details": [
+                {
+                    "segment_index": i,
+                    "speaker": segment.get("speaker", "unknown"),
+                    "background": segment.get("background", ""),
+                    "character_items": segment.get("character_items", {}),
+                }
+                for i, segment in enumerate(all_segments)
+                if segment.get("background") or segment.get("character_items")
+            ],
+        }
+        st.json(background_items_data)
+
+
+def display_food_script_preview(script_data: FoodOverconsumptionScript):
     """食べ物摂取過多動画脚本プレビューを表示"""
-    if isinstance(script_data, FoodOverconsumptionScript):
-        data = script_data.model_dump()
-    else:
-        data = script_data
+    data = script_data.model_dump()
 
     if not data or "all_segments" not in data:
         logger.warning("表示するスクリプトデータが不正です")
@@ -456,23 +222,26 @@ def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Di
 
     st.subheader("🍽️ 食べ物摂取過多動画脚本プレビュー")
 
+    st.metric("YouTubeタイトル", data.get("title", "未設定"))
+
     # 動画情報表示
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("YouTubeタイトル", data.get("title", "未設定"))
-    with col2:
         st.metric("対象食品", data.get("food_name", "未設定"))
-    with col3:
+    with col2:
         duration = data.get(
             "estimated_duration", estimate_video_duration(data["all_segments"])
         )
         st.metric("推定時間", duration)
-    with col4:
+    with col3:
         st.metric("総セリフ数", len(data["all_segments"]))
 
     # テーマ表示
     if "theme" in data:
         st.info(f"🎯 動画テーマ: {data['theme']}")
+
+    # 背景・アイテム情報表示
+    display_background_and_items_info(data)
 
     # セクション別表示
     if "sections" in data:
@@ -500,22 +269,19 @@ def display_food_script_preview(script_data: Union[FoodOverconsumptionScript, Di
                     )
                     st.write(f"💬 {segment['text']}")
 
-                    # アイテムと背景情報
-                    col_a, col_b = st.columns(2)
-                    with col_a:
-                        items = segment.get("character_items", {})
-                        for char, item in items.items():
-                            if item != "none":
-                                item_info = Items.get_item(item)
-                                if item_info:
-                                    st.write(
-                                        f"📦 {item_info.emoji} {item_info.display_name}"
-                                    )
+                    # 背景情報表示
+                    if segment.get("background"):
+                        st.caption(f"🖼️ 背景: {segment['background']}")
 
-                    with col_b:
-                        bg_name = segment.get("background", "default")
-                        bg_display = Backgrounds.get_display_name(bg_name)
-                        st.write(f"🖼️ {bg_display}")
+                    # アイテム情報表示
+                    if segment.get("character_items"):
+                        items_text = ", ".join(
+                            [
+                                f"{Characters.get_display_name(char)}: {item}"
+                                for char, item in segment["character_items"].items()
+                            ]
+                        )
+                        st.caption(f"🎯 アイテム: {items_text}")
 
                     if j < len(section["segments"]) - 1:
                         st.markdown("---")
@@ -559,8 +325,10 @@ def display_prompt_file_status():
 
 def display_debug_section():
     """デバッグ情報セクションを表示"""
-    if hasattr(st.session_state, "last_generated_json") or hasattr(
-        st.session_state, "last_llm_output"
+    if (
+        hasattr(st.session_state, "last_generated_json")
+        or hasattr(st.session_state, "last_llm_output")
+        or hasattr(st.session_state, "last_search_results")
     ):
         st.subheader("🔧 デバッグ情報")
 
@@ -569,8 +337,10 @@ def display_debug_section():
         if debug_mode:
             logger.debug("デバッグモードが有効化されました")
 
-            # プロンプトファイル状態表示
             display_prompt_file_status()
+
+            if hasattr(st.session_state, "last_search_results"):
+                display_search_results_debug(st.session_state.last_search_results)
 
             if (
                 hasattr(st.session_state, "last_generated_json")
@@ -599,7 +369,7 @@ def add_conversation_to_session(conversation_data: Dict):
                 "speaker": segment["speaker"],
                 "text": segment["text"],
                 "expression": segment["expression"],
-                "background": segment["background"],
+                "background": segment.get("background", ""),
                 "visible_characters": segment["visible_characters"],
                 "character_items": segment.get("character_items", {}),
             }
@@ -663,7 +433,7 @@ def render_food_overconsumption_page():
         logger.info(f"動画生成ボタンがクリックされました: 食べ物={food_name}")
 
         with st.spinner(
-            f"🤖 {food_name}の摂取過多解説動画を作成中...（30秒〜1分程度お待ちください）"
+            f"🔍 {food_name}の情報を検索中...（検索→脚本生成で1-2分程度お待ちください）"
         ):
             result = generate_food_overconsumption_script(
                 food_name, model=model, temperature=temperature
@@ -686,6 +456,13 @@ def render_food_overconsumption_page():
 
                 error_details = result.get("details", "不明なエラー")
                 st.error(f"詳細: {error_details}")
+
+                # プロンプトファイルエラーの場合は設定方法を案内
+                if result.get("error") == "Prompt File Error":
+                    st.info("💡 以下のプロンプトファイルが必要です:")
+                    st.code(f"- {SYSTEM_PROMPT_FILE}")
+                    st.code(f"- {USER_PROMPT_FILE}")
+                    st.info("これらのファイルを作成してから再度お試しください。")
 
     # デバッグセクション
     display_debug_section()

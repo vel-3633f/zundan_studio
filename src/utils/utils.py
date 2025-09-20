@@ -3,10 +3,13 @@ import logging
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Tuple
-from pathlib import Path
+import re
+from typing import Dict, Optional, List
+from src.models.food_over import ConversationSegment
+
+logger = logging.getLogger(__name__)
 
 
-# 定数定義
 class Constants:
     DEFAULT_PREFIX = "output"
     DEFAULT_EXTENSION = "mp4"
@@ -299,3 +302,61 @@ def validate_text_input(
 def sanitize_filename(filename: str) -> str:
     """Sanitize filename for safe file operations"""
     return TextValidator.sanitize_filename(filename)
+
+
+def split_long_text(text: str, max_length: int = 30) -> List[str]:
+    """長いテキストを指定文字数以内に分割"""
+    if len(text) <= max_length:
+        return [text]
+
+    sentences = re.split(r"([。！？])", text)
+    result = []
+    current = ""
+
+    for i in range(0, len(sentences) - 1, 2):
+        sentence = sentences[i] + (sentences[i + 1] if i + 1 < len(sentences) else "")
+
+        if len(current + sentence) <= max_length:
+            current += sentence
+        else:
+            if current:
+                result.append(current)
+                current = sentence
+            else:
+                while len(sentence) > max_length:
+                    result.append(sentence[:max_length])
+                    sentence = sentence[max_length:]
+                current = sentence
+
+    if current:
+        result.append(current)
+
+    logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
+    return result
+
+
+def process_conversation_segments(
+    segments: List[ConversationSegment],
+) -> List[ConversationSegment]:
+    """会話セグメントの文字数チェックと分割処理"""
+    processed_segments = []
+    original_count = len(segments)
+
+    for segment in segments:
+        text_parts = split_long_text(segment.text, 30)
+
+        for i, text_part in enumerate(text_parts):
+            new_segment = ConversationSegment(
+                speaker=segment.speaker,
+                text=text_part,
+                expression=segment.expression,
+                background=segment.background,
+                visible_characters=segment.visible_characters,
+                character_items=segment.character_items,
+            )
+            processed_segments.append(new_segment)
+
+    logger.info(
+        f"会話セグメント処理完了: {original_count} → {len(processed_segments)}個"
+    )
+    return processed_segments

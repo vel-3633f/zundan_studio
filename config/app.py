@@ -1,10 +1,7 @@
-"""
-アプリケーション基本設定
-"""
-
 from typing import Tuple
 from dataclasses import dataclass
 import os
+from pathlib import Path
 
 
 @dataclass
@@ -104,3 +101,10 @@ class Paths:
 # グローバル設定インスタンス
 APP_CONFIG = AppConfig()
 SUBTITLE_CONFIG = SubtitleConfig()
+
+
+PROMPTS_DIR = Path("src/prompts")
+SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.md"
+USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.md"
+
+TAVILY_SEARCH_RESULTS_COUNT = 3
