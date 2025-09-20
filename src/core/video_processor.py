@@ -137,12 +137,6 @@ class VideoProcessor:
 
         return all_images
 
-    def load_background(self) -> np.ndarray:
-        """背景画像を読み込み（単一画像、後方互換性のため）"""
-        backgrounds = self.load_backgrounds()
-        return backgrounds.get(
-            "default", list(backgrounds.values())[0] if backgrounds else None
-        )
 
     def load_backgrounds(self) -> Dict[str, np.ndarray]:
         """すべての背景画像を読み込み"""

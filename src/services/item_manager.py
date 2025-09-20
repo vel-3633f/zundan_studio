@@ -216,26 +216,9 @@ class ItemManager:
 
         return result
 
-    def get_available_items(self) -> Dict[str, ItemConfig]:
-        """利用可能なアイテム一覧を取得"""
-        return self.available_items
 
-    def get_items_by_category(self, category: str) -> Dict[str, ItemConfig]:
-        """カテゴリ別アイテム一覧を取得"""
-        return Items.get_by_category(category)
 
     def get_categories(self) -> List[str]:
         """利用可能なカテゴリ一覧を取得"""
         return Items.get_categories()
 
-    def is_item_available(self, item_name: str) -> bool:
-        """アイテムが利用可能かチェック"""
-        if not item_name or item_name == "none":
-            return True
-
-        item_config = Items.get_item(item_name)
-        if not item_config:
-            return False
-
-        item_path = Paths.get_item_file_path(item_config.category, item_name)
-        return os.path.exists(item_path)

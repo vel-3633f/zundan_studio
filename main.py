@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import logging
-import json
 
 from src.utils.utils import (
     setup_logging,
@@ -17,28 +16,7 @@ logger = logging.getLogger(__name__)
 ensure_directories()
 
 
-def get_effective_config(config_key, default_value, config_path=None):
-    """有効な設定値を取得（ユーザー設定優先）"""
-    if hasattr(st.session_state, "user_config") and st.session_state.user_config:
-        try:
-            if config_path:
-                value = st.session_state.user_config
-                for key in config_path:
-                    value = value[key]
-                return value
-            else:
-                return st.session_state.user_config.get(config_key, default_value)
-        except (KeyError, TypeError):
-            pass
 
-    return default_value
-
-
-page_title = (
-    get_effective_config("title", APP_CONFIG.title, ["app", "title"])
-    if hasattr(st.session_state, "user_config") and st.session_state.user_config
-    else APP_CONFIG.title
-)
 
 st.set_page_config(
     page_title=f"{APP_CONFIG.title}",
@@ -52,25 +30,34 @@ def main():
     """Main application"""
     init_session_state()
 
-    # ページ選択
-    page = st.sidebar.selectbox(
-        "📄 ページ選択", options=["🏠 ホーム", "📚 記事紹介", "設定"], index=0
+    # ページ設定
+    pages = {
+        "🏠 ホーム": {
+            "module": "src.ui.pages.home_page",
+            "function": "render_home_page",
+        },
+        "📚 記事紹介": {
+            "module": "src.ui.pages.article_introduction_page",
+            "function": "render_food_overconsumption_page",
+        },
+        "📝 JSON編集": {
+            "module": "src.ui.pages.json_editor_page",
+            "function": "render_json_editor_page",
+        },
+    }
+
+    page = st.sidebar.radio(
+        "📄 ページ選択",
+        options=list(pages.keys()),
+        index=0,
     )
 
-    if page == "🏠 ホーム":
-        from src.ui.pages.home_page import render_home_page
-
-        render_home_page()
-    elif page == "📚 記事紹介":
-        from src.ui.pages.article_introduction_page import (
-            render_food_overconsumption_page,
-        )
-
-        render_food_overconsumption_page()
-    elif page == "設定":
-        from src.ui.pages.config_page import render_config_page
-
-        render_config_page()
+    # 選択されたページを動的にインポートして実行
+    if page in pages:
+        page_config = pages[page]
+        module = __import__(page_config["module"], fromlist=[page_config["function"]])
+        render_function = getattr(module, page_config["function"])
+        render_function()
 
 
 if __name__ == "__main__":

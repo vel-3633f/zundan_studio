@@ -5,33 +5,23 @@ from typing import Dict, List, Any, Union
 from src.models.food_over import FoodOverconsumptionScript
 from src.utils.utils import process_conversation_segments
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
+from config.models import get_model_config, get_default_model_config
+from src.utils.logger import get_logger
 
 from dotenv import load_dotenv
 
 load_dotenv()
-import logging
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 from langchain_community.retrievers import TavilySearchAPIRetriever
-from src.models.food_over import FoodOverconsumptionScript
 
 _prompt_cache = {}
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# モジュール専用ロガーの設定
-logger = logging.getLogger(__name__)
-logger.setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
-
-# ハンドラーが既に追加されていない場合のみ追加
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
-    logger.addHandler(handler)
+# ロガーの設定
+logger = get_logger(__name__)
 
 
 def load_prompt_from_file(file_path: Path, cache_key: str = None) -> str:
@@ -128,22 +118,26 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
 
 
 def generate_food_overconsumption_script(
-    food_name: str, model: str = "gpt-4.1", temperature: float = 0.8
+    food_name: str, model: str = None, temperature: float = None
 ) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
     """食べ物摂取過多動画脚本を生成する"""
+
+    # モデル設定をconfigから取得
+    if model is None:
+        model_config = get_default_model_config()
+        model = model_config["id"]
+    else:
+        model_config = get_model_config(model)
+
+    if temperature is None:
+        temperature = model_config["default_temperature"]
+
     logger.info(
         f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
     )
 
     try:
         openai_api_key = os.getenv("OPENAI_API_KEY")
-        if not openai_api_key:
-            error_msg = "OPENAI_API_KEY が設定されていません"
-            logger.error(error_msg)
-            return {
-                "error": "API Key Error",
-                "details": error_msg,
-            }
 
         # Tavily検索を実行
         search_results = search_food_information(food_name)

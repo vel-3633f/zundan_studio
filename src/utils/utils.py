@@ -6,8 +6,9 @@ from typing import Optional, Dict, Tuple
 import re
 from typing import Dict, Optional, List
 from src.models.food_over import ConversationSegment
+from src.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class Constants:
@@ -74,15 +75,15 @@ class FileOperations:
         try:
             os.remove(file_path)
             filename = os.path.basename(file_path)
-            logging.info(f"Cleaned up {file_type}: {filename}")
+            logger.info(f"Cleaned up {file_type}: {filename}")
             return True
         except PermissionError:
             filename = os.path.basename(file_path)
-            logging.warning(f"Permission denied for {file_type}: {filename}")
+            logger.warning(f"Permission denied for {file_type}: {filename}")
             return False
         except OSError as e:
             filename = os.path.basename(file_path)
-            logging.warning(f"Could not delete {file_type} {filename}: {e}")
+            logger.warning(f"Could not delete {file_type} {filename}: {e}")
             return False
 
     @staticmethod
@@ -90,7 +91,7 @@ class FileOperations:
         """指定されたディレクトリをクリーンアップ"""
         if not os.path.exists(directory):
             if dir_type == "temp":
-                logging.info(f"Temp directory not found: {directory}")
+                logger.info(f"Temp directory not found: {directory}")
             return 0
 
         deleted_count = 0
@@ -101,11 +102,11 @@ class FileOperations:
                     if FileOperations.delete_file_safe(file_path, f"{dir_type} file"):
                         deleted_count += 1
 
-            logging.info(
+            logger.info(
                 f"{dir_type.capitalize()} cleanup completed. Deleted {deleted_count} files."
             )
         except Exception as e:
-            logging.error(f"Failed to cleanup {dir_type} files: {e}")
+            logger.error(f"Failed to cleanup {dir_type} files: {e}")
 
         return deleted_count
 
@@ -163,7 +164,7 @@ class FileManager:
         )
         total_deleted += output_deleted
 
-        logging.info(f"Total cleanup completed. Deleted {total_deleted} files.")
+        logger.info(f"Total cleanup completed. Deleted {total_deleted} files.")
         return total_deleted
 
     @staticmethod
@@ -350,7 +351,6 @@ def process_conversation_segments(
                 speaker=segment.speaker,
                 text=text_part,
                 expression=segment.expression,
-                background=segment.background,
                 visible_characters=segment.visible_characters,
                 character_items=segment.character_items,
             )
