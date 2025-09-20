@@ -18,10 +18,24 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
         "default_temperature": 0.8,
         "recommended": True,
     },
+    {
+        "id": "gpt-5",
+        "name": "GPT-5",
+        "temperature_range": (0.0, 1.0),
+        "default_temperature": 0.8,
+        "recommended": True,
+    },
+    {
+        "id": "gpt-5-mini",
+        "name": "GPT-5-mini",
+        "temperature_range": (0.0, 1.0),
+        "default_temperature": 0.8,
+        "recommended": True,
+    },
 ]
 
 # デフォルトモデル設定
-DEFAULT_MODEL_ID = "gpt-4.1-mini"
+DEFAULT_MODEL_ID = "gpt-5-mini"
 
 
 # モデル設定を取得する関数
@@ -36,10 +50,6 @@ def get_model_config(model_id: str) -> Dict[str, Any]:
 def get_default_model_config() -> Dict[str, Any]:
     """デフォルトモデルの設定を取得する"""
     return get_model_config(DEFAULT_MODEL_ID)
-
-
-
-
 
 
 def get_recommended_model_id() -> str:
