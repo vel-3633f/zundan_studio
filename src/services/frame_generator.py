@@ -129,7 +129,8 @@ class FrameGenerator:
                                 segment.intensities[upper_idx] * interpolation_factor
                             )
 
-                        logger.debug(f"Frame {frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}")
+                        current_frame_idx = int(current_time * self.fps)
+                        logger.debug(f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}")
                     else:
                         intensity = 0
 
