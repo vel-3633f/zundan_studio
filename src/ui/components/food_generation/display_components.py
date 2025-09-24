@@ -234,135 +234,148 @@ def merge_short_segments(segments: List[Dict]) -> List[Dict]:
 
 def display_food_script_preview(script_data: FoodOverconsumptionScript):
     """食べ物摂取過多動画脚本プレビューを表示（改良版）"""
-    from .utils import estimate_video_duration
 
-    try:
+    st.markdown("## 🎬 脚本プレビュー")
+
+    # スクリプトデータをJSON形式で取得
+    if hasattr(script_data, "model_dump"):
         data = script_data.model_dump()
-    except Exception as e:
-        logger.error(f"スクリプトデータの変換エラー: {e}")
-        st.error("スクリプトデータの読み込みに失敗しました")
-        return
+    else:
+        data = script_data
 
-    if not data or "all_segments" not in data:
-        logger.warning("表示するスクリプトデータが不正です")
-        st.warning("スクリプトデータが不完全です")
-        return
+    # メタ情報表示
+    with st.container():
+        st.markdown("### 📋 基本情報")
+        col1, col2, col3 = st.columns(3)
 
-    st.subheader("🍽️ 食べ物摂取過多動画脚本プレビュー")
-
-    # YouTubeタイトル表示
-    title = data.get("title", "未設定")
-    st.metric("YouTubeタイトル", title)
-
-    # 動画情報表示
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("対象食品", data.get("food_name", "未設定"))
-    with col2:
-        duration = data.get("estimated_duration", "未計算")
-        if duration == "未計算":
-            try:
-                duration = estimate_video_duration(data["all_segments"])
-            except Exception as e:
-                logger.warning(f"動画時間の推定に失敗: {e}")
-                duration = "推定不可"
-        st.metric("推定時間", duration)
-    with col3:
-        st.metric("総セリフ数", len(data.get("all_segments", [])))
-
-    # シーン・アイテム情報表示
-    display_scene_and_items_info(data)
+        with col1:
+            st.metric("タイトル", data.get("title", "未設定"))
+        with col2:
+            st.metric("食べ物", data.get("food_name", "未設定"))
+        with col3:
+            st.metric("予想時間", data.get("estimated_duration", "未設定"))
 
     # セクション別表示
     sections = data.get("sections", [])
-    if not sections:
-        st.warning("セクション情報が見つかりません")
-        return
+    if sections:
+        st.markdown("### 🎭 シーン構成")
 
-    st.markdown("### 📋 セクション構成")
+        # セクション概要
+        section_overview = []
+        for i, section in enumerate(sections, 1):
+            section_name = section.get("section_name", f"セクション{i}")
+            segment_count = len(section.get("segments", []))
+            scene = section.get("scene_background", "未設定")
+            section_overview.append({
+                "No.": i,
+                "セクション名": section_name,
+                "シーン": scene,
+                "セリフ数": segment_count
+            })
 
-    for i, section in enumerate(sections):
-        section_name = section.get("section_name", f"セクション{i+1}")
-        scene_background = section.get("scene_background", "未設定")
-        segments = section.get("segments", [])
+        # テーブルで概要表示
+        import pandas as pd
+        df = pd.DataFrame(section_overview)
+        st.dataframe(df, use_container_width=True)
 
-        # セリフを結合処理
-        merged_segments = merge_short_segments(segments)
+        # 各セクションの詳細表示
+        for i, section in enumerate(sections, 1):
+            section_name = section.get("section_name", f"セクション{i}")
+            scene_bg = section.get("scene_background", "未設定")
+            segments = section.get("segments", [])
 
-        with st.expander(
-            f"**{i+1}. {section_name}** ({len(merged_segments)}セリフ) - 🎬 {scene_background}",
-            expanded=i == 0,  # 最初のセクションのみ展開
-        ):
-            st.info(f"🎬 シーン: {scene_background}")
+            with st.expander(f"📜 {i}. {section_name} ({len(segments)}セリフ)", expanded=i == 1):
+                st.info(f"🎨 背景: {scene_bg}")
 
-            if not merged_segments:
-                st.warning("このセクションにはセリフがありません")
-                continue
-
-            for j, segment in enumerate(merged_segments):
-                try:
+                # セグメント表示
+                for j, segment in enumerate(segments, 1):
+                    speaker = segment.get("speaker", "不明")
                     text = segment.get("text", "")
-                    text_length = len(text)
-                    length_color = "🟢" if text_length <= 30 else "🔴"
-
-                    speaker = segment.get("speaker", "unknown")
                     expression = segment.get("expression", "normal")
+                    visible_chars = segment.get("visible_characters", [])
+                    items = segment.get("character_items", {})
 
-                    # 表示名を取得（エラーハンドリング付き）
-                    try:
-                        speaker_name = Characters.get_display_name(speaker)
-                    except Exception:
-                        speaker_name = speaker
+                    # キャラクター名を表示名に変換
+                    speaker_display = Characters.get_display_name(speaker)
+                    expression_display = Expressions.get_display_name(expression)
 
-                    try:
-                        expression_name = Expressions.get_display_name(expression)
-                    except Exception:
-                        expression_name = expression
+                    # セリフ表示
+                    with st.container():
+                        col1, col2 = st.columns([1, 4])
 
-                    # セリフ情報の表示
-                    is_merged = segment.get("is_merged", False)
-                    if is_merged:
-                        st.markdown(
-                            f"**{j+1}. {speaker_name}** {expression_name} 🔗({text_length}文字・結合)"
-                        )
-                    else:
-                        st.markdown(
-                            f"**{j+1}. {speaker_name}** {expression_name} {length_color}({text_length}文字)"
-                        )
+                        with col1:
+                            st.write(f"**{j:02d}**")
+                            st.write(f"🗣️ {speaker_display}")
+                            st.write(f"😊 {expression_display}")
 
-                    # セリフテキスト表示
-                    st.write(f"💬 {text}")
+                            # アイテム情報
+                            if items and any(item != "none" for item in items.values()):
+                                st.write("🎯 アイテム:")
+                                for char, item in items.items():
+                                    if item != "none":
+                                        char_display = Characters.get_display_name(char)
+                                        st.write(f"  • {char_display}: {item}")
 
-                    # 背景情報表示
-                    background = segment.get("background")
-                    if background:
-                        st.caption(f"🖼️ 背景: {background}")
+                        with col2:
+                            # セリフテキスト
+                            st.markdown(f"💬 **「{text}」**")
 
-                    # アイテム情報表示
-                    character_items = segment.get("character_items", {})
-                    if character_items:
-                        items_parts = []
-                        for char, item in character_items.items():
-                            if item and item != "none":
-                                try:
-                                    char_display = Characters.get_display_name(char)
-                                except Exception:
-                                    char_display = char
-                                items_parts.append(f"{char_display}: {item}")
+                            # 表示キャラクター
+                            if visible_chars:
+                                visible_display = [Characters.get_display_name(char) for char in visible_chars]
+                                st.write(f"👥 表示: {', '.join(visible_display)}")
 
-                        if items_parts:
-                            items_text = ", ".join(items_parts)
-                            st.caption(f"🎯 アイテム: {items_text}")
+                        st.divider()
 
-                    # セリフ間の区切り線（最後以外）
-                    if j < len(merged_segments) - 1:
-                        st.markdown("---")
+    # 統計情報
+    all_segments = data.get("all_segments", [])
+    if all_segments:
+        st.markdown("### 📊 統計情報")
 
-                except Exception as e:
-                    logger.error(
-                        f"セリフ表示エラー (セクション{i+1}, セリフ{j+1}): {e}"
-                    )
-                    st.error(f"セリフ{j+1}の表示でエラーが発生しました")
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric("総セリフ数", len(all_segments))
+
+        with col2:
+            # 話者別カウント
+            speakers = [seg.get("speaker", "") for seg in all_segments]
+            unique_speakers = len(set(speakers))
+            st.metric("登場キャラクター", unique_speakers)
+
+        with col3:
+            # 平均テキスト長
+            text_lengths = [len(seg.get("text", "")) for seg in all_segments]
+            avg_length = sum(text_lengths) / len(text_lengths) if text_lengths else 0
+            st.metric("平均セリフ長", f"{avg_length:.1f}文字")
+
+        with col4:
+            # 総文字数
+            total_chars = sum(text_lengths)
+            st.metric("総文字数", f"{total_chars:,}文字")
+
+        # キャラクター別セリフ数
+        st.markdown("#### 🎭 キャラクター別詳細")
+        speaker_stats = {}
+        for segment in all_segments:
+            speaker = segment.get("speaker", "不明")
+            if speaker not in speaker_stats:
+                speaker_stats[speaker] = {"count": 0, "chars": 0}
+            speaker_stats[speaker]["count"] += 1
+            speaker_stats[speaker]["chars"] += len(segment.get("text", ""))
+
+        stats_data = []
+        for speaker, stats in speaker_stats.items():
+            display_name = Characters.get_display_name(speaker)
+            stats_data.append({
+                "キャラクター": display_name,
+                "セリフ数": stats["count"],
+                "文字数": stats["chars"],
+                "平均長": f"{stats['chars'] / stats['count']:.1f}"
+            })
+
+        stats_df = pd.DataFrame(stats_data)
+        st.dataframe(stats_df, use_container_width=True)
 
     logger.info("脚本プレビュー表示完了")
 
