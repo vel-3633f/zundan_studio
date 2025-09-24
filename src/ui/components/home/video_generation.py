@@ -55,7 +55,7 @@ def generate_conversation_video(
             progress_bar.progress(0.5 + (progress * 0.4))
             status_text.text(f"会話動画を生成中... ({int(progress * 100)}%)")
 
-        result = video_gen.generate_conversation_video_v2(
+        result = video_gen.generate_conversation_video(
             conversations=conversations,
             audio_file_list=audio_files,
             output_path=video_path,
