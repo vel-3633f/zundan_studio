@@ -1,7 +1,7 @@
 import streamlit as st
 import logging
 
-from src.video_generator import VideoGenerator
+from src.services.video_generator import VideoGenerator
 from config import APP_CONFIG, UI_CONFIG, Expressions, Items
 from src.ui.components.home.conversation_input import render_conversation_input
 from src.ui.components.home.sidebar import render_sidebar

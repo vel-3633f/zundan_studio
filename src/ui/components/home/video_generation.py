@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Dict, Optional
 from src.core.voice_generator import VoiceGenerator
-from src.video_generator import VideoGenerator
+from src.services.video_generator import VideoGenerator
 from src.utils.utils import generate_unique_filename
 from config import Paths
 
