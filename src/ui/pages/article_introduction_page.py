@@ -8,13 +8,15 @@ from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_
 from src.utils.logger import get_logger
 
 # Food generation components
-from src.ui.components.food_generation import (
+from src.ui.components.food_generation.display_components import (
     display_food_script_preview,
     display_json_debug,
-    display_debug_section,
+)
+from src.ui.components.food_generation.utils import (
     save_json_to_outputs,
     add_conversation_to_session,
 )
+
 
 from dotenv import load_dotenv
 
@@ -125,6 +127,3 @@ def render_food_overconsumption_page():
                     st.code(f"- {SYSTEM_PROMPT_FILE}")
                     st.code(f"- {USER_PROMPT_FILE}")
                     st.info("これらのファイルを作成してから再度お試しください。")
-
-    # デバッグセクション
-    display_debug_section()

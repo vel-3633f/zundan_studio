@@ -1,5 +1,4 @@
-"""Display components for food generation UI"""
-
+import pandas as pd
 import streamlit as st
 import json
 from typing import Dict, List, Any
@@ -232,154 +231,6 @@ def merge_short_segments(segments: List[Dict]) -> List[Dict]:
     return merged
 
 
-def display_food_script_preview(script_data: FoodOverconsumptionScript):
-    """食べ物摂取過多動画脚本プレビューを表示（改良版）"""
-
-    st.markdown("## 🎬 脚本プレビュー")
-
-    # スクリプトデータをJSON形式で取得
-    if hasattr(script_data, "model_dump"):
-        data = script_data.model_dump()
-    else:
-        data = script_data
-
-    # メタ情報表示
-    with st.container():
-        st.markdown("### 📋 基本情報")
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.metric("タイトル", data.get("title", "未設定"))
-        with col2:
-            st.metric("食べ物", data.get("food_name", "未設定"))
-        with col3:
-            st.metric("予想時間", data.get("estimated_duration", "未設定"))
-
-    # セクション別表示
-    sections = data.get("sections", [])
-    if sections:
-        st.markdown("### 🎭 シーン構成")
-
-        # セクション概要
-        section_overview = []
-        for i, section in enumerate(sections, 1):
-            section_name = section.get("section_name", f"セクション{i}")
-            segment_count = len(section.get("segments", []))
-            scene = section.get("scene_background", "未設定")
-            section_overview.append({
-                "No.": i,
-                "セクション名": section_name,
-                "シーン": scene,
-                "セリフ数": segment_count
-            })
-
-        # テーブルで概要表示
-        import pandas as pd
-        df = pd.DataFrame(section_overview)
-        st.dataframe(df, use_container_width=True)
-
-        # 各セクションの詳細表示
-        for i, section in enumerate(sections, 1):
-            section_name = section.get("section_name", f"セクション{i}")
-            scene_bg = section.get("scene_background", "未設定")
-            segments = section.get("segments", [])
-
-            with st.expander(f"📜 {i}. {section_name} ({len(segments)}セリフ)", expanded=i == 1):
-                st.info(f"🎨 背景: {scene_bg}")
-
-                # セグメント表示
-                for j, segment in enumerate(segments, 1):
-                    speaker = segment.get("speaker", "不明")
-                    text = segment.get("text", "")
-                    expression = segment.get("expression", "normal")
-                    visible_chars = segment.get("visible_characters", [])
-                    items = segment.get("character_items", {})
-
-                    # キャラクター名を表示名に変換
-                    speaker_display = Characters.get_display_name(speaker)
-                    expression_display = Expressions.get_display_name(expression)
-
-                    # セリフ表示
-                    with st.container():
-                        col1, col2 = st.columns([1, 4])
-
-                        with col1:
-                            st.write(f"**{j:02d}**")
-                            st.write(f"🗣️ {speaker_display}")
-                            st.write(f"😊 {expression_display}")
-
-                            # アイテム情報
-                            if items and any(item != "none" for item in items.values()):
-                                st.write("🎯 アイテム:")
-                                for char, item in items.items():
-                                    if item != "none":
-                                        char_display = Characters.get_display_name(char)
-                                        st.write(f"  • {char_display}: {item}")
-
-                        with col2:
-                            # セリフテキスト
-                            st.markdown(f"💬 **「{text}」**")
-
-                            # 表示キャラクター
-                            if visible_chars:
-                                visible_display = [Characters.get_display_name(char) for char in visible_chars]
-                                st.write(f"👥 表示: {', '.join(visible_display)}")
-
-                        st.divider()
-
-    # 統計情報
-    all_segments = data.get("all_segments", [])
-    if all_segments:
-        st.markdown("### 📊 統計情報")
-
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric("総セリフ数", len(all_segments))
-
-        with col2:
-            # 話者別カウント
-            speakers = [seg.get("speaker", "") for seg in all_segments]
-            unique_speakers = len(set(speakers))
-            st.metric("登場キャラクター", unique_speakers)
-
-        with col3:
-            # 平均テキスト長
-            text_lengths = [len(seg.get("text", "")) for seg in all_segments]
-            avg_length = sum(text_lengths) / len(text_lengths) if text_lengths else 0
-            st.metric("平均セリフ長", f"{avg_length:.1f}文字")
-
-        with col4:
-            # 総文字数
-            total_chars = sum(text_lengths)
-            st.metric("総文字数", f"{total_chars:,}文字")
-
-        # キャラクター別セリフ数
-        st.markdown("#### 🎭 キャラクター別詳細")
-        speaker_stats = {}
-        for segment in all_segments:
-            speaker = segment.get("speaker", "不明")
-            if speaker not in speaker_stats:
-                speaker_stats[speaker] = {"count": 0, "chars": 0}
-            speaker_stats[speaker]["count"] += 1
-            speaker_stats[speaker]["chars"] += len(segment.get("text", ""))
-
-        stats_data = []
-        for speaker, stats in speaker_stats.items():
-            display_name = Characters.get_display_name(speaker)
-            stats_data.append({
-                "キャラクター": display_name,
-                "セリフ数": stats["count"],
-                "文字数": stats["chars"],
-                "平均長": f"{stats['chars'] / stats['count']:.1f}"
-            })
-
-        stats_df = pd.DataFrame(stats_data)
-        st.dataframe(stats_df, use_container_width=True)
-
-    logger.info("脚本プレビュー表示完了")
-
-
 def display_prompt_file_status():
     """プロンプトファイルの状態を表示"""
     with st.expander("📄 プロンプトファイル設定", expanded=False):
@@ -414,33 +265,243 @@ def display_prompt_file_status():
         st.info("💡 プロンプトファイルを編集することで、AIの動作をカスタマイズできます")
 
 
-def display_debug_section():
-    """デバッグ情報セクションを表示"""
-    if (
-        hasattr(st.session_state, "last_generated_json")
-        or hasattr(st.session_state, "last_llm_output")
-        or hasattr(st.session_state, "last_search_results")
-    ):
-        st.subheader("🔧 デバッグ情報")
+def load_scenario_data(json_data: Dict[str, Any]) -> Dict[str, Any]:
+    """JSONデータを読み込み、処理用の形式に変換"""
+    return json_data
 
-        debug_mode = st.checkbox("デバッグモードを有効にする", value=False)
 
-        if debug_mode:
-            logger.debug("デバッグモードが有効化されました")
+def display_header(data: Dict[str, Any]):
+    """ヘッダー部分の表示"""
+    st.title(f"🎬 {data['title']}")
 
-            display_prompt_file_status()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("食品名", data["food_name"])
+    with col2:
+        st.metric("推定時間", data["estimated_duration"])
+    with col3:
+        st.metric("総セクション数", len(data["sections"]))
 
-            if hasattr(st.session_state, "last_search_results"):
-                display_search_results_debug(st.session_state.last_search_results)
 
-            if (
-                hasattr(st.session_state, "last_generated_json")
-                and st.session_state.last_generated_json
-            ):
-                display_json_debug(
-                    st.session_state.last_generated_json,
-                    "生成されたPydanticオブジェクト",
-                )
+def get_character_emoji(character: str) -> str:
+    """キャラクターに対応する絵文字を返す"""
+    emoji_map = {"zundamon": "🟢", "metan": "🔵", "tsumugi": "🟡", "narrator": "📢"}
+    return emoji_map.get(character, "👤")
 
-            if hasattr(st.session_state, "last_llm_output"):
-                display_raw_llm_output(st.session_state.last_llm_output, "LLMの生出力")
+
+def get_expression_emoji(expression: str) -> str:
+    """表情に対応する絵文字を返す"""
+    expression_map = {
+        "happy": "😊",
+        "excited": "🤩",
+        "worried": "😰",
+        "thinking": "🤔",
+        "sad": "😢",
+        "surprised": "😲",
+        "serious": "😐",
+        "normal": "😐",
+    }
+    return expression_map.get(expression, "😐")
+
+
+def display_segment(segment: Dict[str, Any], segment_index: int):
+    """個別セグメントの表示"""
+    character_emoji = get_character_emoji(segment["speaker"])
+    expression_emoji = get_expression_emoji(segment["expression"])
+
+    with st.container():
+        col1, col2 = st.columns([1, 10])
+
+        with col1:
+            st.write(f"{character_emoji}")
+
+        with col2:
+            # キャラクター名と表情
+            st.markdown(f"**{segment['speaker']}** {expression_emoji}")
+
+            # セリフ
+            st.markdown(f"💬 {segment['text']}")
+
+            # アイテム情報があれば表示
+            if segment.get("character_items") and segment["character_items"]:
+                items = list(segment["character_items"].values())
+                st.caption(f"📦 アイテム: {', '.join(items)}")
+
+            # 登場キャラクター
+            if segment.get("visible_characters"):
+                characters = ", ".join(segment["visible_characters"])
+                st.caption(f"👥 登場: {characters}")
+
+        st.divider()
+
+
+def display_section_overview(sections: List[Dict[str, Any]]):
+    """セクション概要の表示"""
+    st.subheader("📋 セクション概要")
+
+    section_data = []
+    for i, section in enumerate(sections):
+        section_data.append(
+            {
+                "セクション": f"{i+1}. {section['section_name']}",
+                "セグメント数": len(section["segments"]),
+                "背景": section["scene_background"],
+            }
+        )
+
+    df = pd.DataFrame(section_data)
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+def display_character_stats(all_segments: List[Dict[str, Any]]):
+    """キャラクター統計の表示"""
+    st.subheader("👤 キャラクター統計")
+
+    character_counts = {}
+    expression_counts = {}
+
+    for segment in all_segments:
+        speaker = segment["speaker"]
+        expression = segment["expression"]
+
+        character_counts[speaker] = character_counts.get(speaker, 0) + 1
+        expression_counts[expression] = expression_counts.get(expression, 0) + 1
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.write("**セリフ数**")
+        for char, count in sorted(
+            character_counts.items(), key=lambda x: x[1], reverse=True
+        ):
+            emoji = get_character_emoji(char)
+            st.write(f"{emoji} {char}: {count}")
+
+    with col2:
+        st.write("**表情分布**")
+        for expr, count in sorted(
+            expression_counts.items(), key=lambda x: x[1], reverse=True
+        ):
+            emoji = get_expression_emoji(expr)
+            st.write(f"{emoji} {expr}: {count}")
+
+
+def search_segments(
+    all_segments: List[Dict[str, Any]], query: str
+) -> List[Dict[str, Any]]:
+    """セグメント検索機能"""
+    if not query:
+        return all_segments
+
+    query = query.lower()
+    filtered_segments = []
+
+    for segment in all_segments:
+        if (
+            query in segment["text"].lower()
+            or query in segment["speaker"].lower()
+            or query in segment["expression"].lower()
+        ):
+            filtered_segments.append(segment)
+
+    return filtered_segments
+
+
+def display_food_script_preview(script_data: FoodOverconsumptionScript):
+
+    data = script_data
+
+    # ヘッダー表示
+    display_header(data)
+
+    # サイドバー
+    with st.sidebar:
+        st.header("🎛️ コントロール")
+
+        # セクション選択
+        section_names = [
+            f"{i+1}. {s['section_name']}" for i, s in enumerate(data["sections"])
+        ]
+        selected_section = st.selectbox("セクション選択", ["全て"] + section_names)
+
+        # キャラクターフィルター
+        all_characters = list(
+            set(seg["speaker"] for seg in data.get("all_segments", []))
+        )
+        selected_characters = st.multiselect(
+            "キャラクター", all_characters, default=all_characters
+        )
+
+        # 検索機能
+        search_query = st.text_input("🔍 テキスト検索")
+
+        # JSONアップロード機能
+        st.subheader("📁 データアップロード")
+        uploaded_file = st.file_uploader("JSONファイルをアップロード", type=["json"])
+
+        if uploaded_file is not None:
+            try:
+                new_data = json.load(uploaded_file)
+                st.session_state.scenario_data = new_data
+                st.success("データが更新されました！")
+                st.rerun()
+            except Exception as e:
+                st.error(f"ファイル読み込みエラー: {e}")
+
+    # メインコンテンツ
+    tab1, tab2, tab3 = st.tabs(["📖 シナリオ表示", "📊 統計情報", "📋 概要"])
+
+    with tab1:
+        # セグメント表示
+        segments_to_show = data.get("all_segments", [])
+
+        # フィルタリング
+        if selected_section != "全て":
+            section_index = int(selected_section.split(".")[0]) - 1
+            segments_to_show = data["sections"][section_index]["segments"]
+
+        if selected_characters:
+            segments_to_show = [
+                s for s in segments_to_show if s["speaker"] in selected_characters
+            ]
+
+        if search_query:
+            segments_to_show = search_segments(segments_to_show, search_query)
+
+        # 結果表示
+        st.subheader(f"📝 セグメント表示 ({len(segments_to_show)}件)")
+
+        if segments_to_show:
+            # プログレスバー
+            progress = st.progress(0)
+
+            for i, segment in enumerate(segments_to_show):
+                display_segment(segment, i)
+                progress.progress((i + 1) / len(segments_to_show))
+        else:
+            st.info("条件に一致するセグメントがありません。")
+
+    with tab2:
+        if data.get("all_segments"):
+            display_character_stats(data["all_segments"])
+        else:
+            st.info("統計情報を表示するには all_segments データが必要です。")
+
+    with tab3:
+        display_section_overview(data["sections"])
+
+        # エクスポート機能
+        st.subheader("📤 エクスポート")
+        if st.button("テキストファイルとしてエクスポート"):
+            text_content = f"# {data['title']}\n\n"
+            for section in data["sections"]:
+                text_content += f"## {section['section_name']}\n\n"
+                for segment in section["segments"]:
+                    text_content += f"**{segment['speaker']}**: {segment['text']}\n\n"
+
+            st.download_button(
+                label="ダウンロード",
+                data=text_content,
+                file_name=f"{data['food_name']}_scenario.txt",
+                mime="text/plain",
+            )
