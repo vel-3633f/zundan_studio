@@ -10,6 +10,7 @@ from src.ui.components.sidebar import render_sidebar
 from src.ui.components.results import render_results
 from src.ui.components.video_generation import generate_conversation_video
 from src.ui.components.json_loader import render_json_selector
+from config import Characters
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def render_home_page():
     item_options = ["none"] + list(Items.get_all().keys())
 
     # JSON selector section - pass available options for validation
-    from config import Characters
+
     available_characters = list(Characters.get_all().keys())
     render_json_selector(available_characters, background_options, expression_options)
 
@@ -97,14 +98,3 @@ def render_home_page():
 
     # Results
     render_results()
-
-    # Footer
-    st.markdown("---")
-    st.markdown(
-        """
-    **注意事項:**
-    - 生成には時間がかかる場合があります
-    - 長いテキストほど処理時間が長くなります
-    - 各セリフごとに背景を変更できます
-    """
-    )
