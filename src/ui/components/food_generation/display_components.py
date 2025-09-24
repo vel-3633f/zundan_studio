@@ -411,7 +411,6 @@ def display_food_script_preview(script_data: FoodOverconsumptionScript):
 
     data = script_data
 
-    # ヘッダー表示
     display_header(data)
 
     # サイドバー

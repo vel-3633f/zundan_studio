@@ -1,20 +1,16 @@
 import streamlit as st
-from typing import Dict, Any
 
 from src.models.food_over import FoodOverconsumptionScript
 from src.core.generate_food_over import generate_food_overconsumption_script
-from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE
 from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_config
 from src.utils.logger import get_logger
 
-# Food generation components
 from src.ui.components.food_generation.display_components import (
     display_food_script_preview,
     display_json_debug,
 )
 from src.ui.components.food_generation.utils import (
     save_json_to_outputs,
-    add_conversation_to_session,
 )
 
 
@@ -22,7 +18,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ロガーの設定
 logger = get_logger(__name__)
 
 
@@ -53,12 +48,10 @@ def render_food_overconsumption_page():
     with st.expander("⚙️ 生成設定（詳細設定）"):
         col1, col2 = st.columns(2)
         with col1:
-            # モデル選択肢を動的に生成
             model_options = [model["name"] for model in AVAILABLE_MODELS]
 
             model_id_map = {model["name"]: model["id"] for model in AVAILABLE_MODELS}
 
-            # 推奨モデルをデフォルトに設定
             recommended_model_id = get_recommended_model_id()
             default_index = 0
             for i, model in enumerate(AVAILABLE_MODELS):
@@ -87,7 +80,6 @@ def render_food_overconsumption_page():
                 help="高いほど創造的だが、一貫性が下がる可能性があります",
             )
 
-    # 生成ボタン
     if food_name and st.button("🎬 食べ物摂取過多解説動画を作成！", type="primary"):
         logger.info(f"動画生成ボタンがクリックされました: 食べ物={food_name}")
 
@@ -109,21 +101,11 @@ def render_food_overconsumption_page():
                 else:
                     st.warning("⚠️ JSONファイルの保存に失敗しました")
 
-                # JSON表示
                 display_json_debug(result, "生成された食べ物摂取過多脚本データ")
 
-                # 会話リストに追加ボタン
-                if st.button("📝 会話リストに追加する", type="secondary"):
-                    add_conversation_to_session(result.model_dump())
             else:
                 logger.error(f"脚本生成失敗: {result}")
                 st.error(f"❌ 食べ物摂取過多脚本の生成に失敗しました")
 
                 error_details = result.get("details", "不明なエラー")
                 st.error(f"詳細: {error_details}")
-
-                if result.get("error") == "Prompt File Error":
-                    st.info("💡 以下のプロンプトファイルが必要です:")
-                    st.code(f"- {SYSTEM_PROMPT_FILE}")
-                    st.code(f"- {USER_PROMPT_FILE}")
-                    st.info("これらのファイルを作成してから再度お試しください。")
