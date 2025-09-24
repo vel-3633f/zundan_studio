@@ -8,7 +8,7 @@ from src.utils.utils import (
 )
 from config import APP_CONFIG
 
-from src.ui.components.session_state import init_session_state
+from src.ui.components.home.session_state import init_session_state
 
 # Setup
 setup_logging(debug=os.getenv("DEBUG_MODE", "false").lower() == "true")

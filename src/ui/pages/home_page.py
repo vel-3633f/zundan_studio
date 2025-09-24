@@ -3,11 +3,11 @@ import logging
 
 from src.video_generator import VideoGenerator
 from config import APP_CONFIG, UI_CONFIG, Expressions, Items
-from src.ui.components.conversation_input import render_conversation_input
-from src.ui.components.sidebar import render_sidebar
-from src.ui.components.results import render_results
-from src.ui.components.video_generation import generate_conversation_video
-from src.ui.components.json_loader import render_json_selector
+from src.ui.components.home.conversation_input import render_conversation_input
+from src.ui.components.home.sidebar import render_sidebar
+from src.ui.components.home.results import render_results
+from src.ui.components.home.video_generation import generate_conversation_video
+from src.ui.components.home.json_loader import render_json_selector
 from config import Characters
 
 logger = logging.getLogger(__name__)
