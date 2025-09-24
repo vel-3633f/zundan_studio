@@ -34,8 +34,8 @@ def main():
             "module": "src.ui.pages.home_page",
             "function": "render_home_page",
         },
-        "📚 記事紹介": {
-            "module": "src.ui.pages.article_introduction_page",
+        "📚 台本生成": {
+            "module": "src.ui.pages.food_generation_page",
             "function": "render_food_overconsumption_page",
         },
         "📝 JSON編集": {
