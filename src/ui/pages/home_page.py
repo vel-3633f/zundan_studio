@@ -5,7 +5,6 @@ from src.video_generator import VideoGenerator
 from config import APP_CONFIG, UI_CONFIG, Expressions, Items
 from src.ui.components.session_state import check_voicevox_connection
 from src.ui.components.conversation_input import render_conversation_input
-from src.ui.components.control_buttons import render_control_buttons
 from src.ui.components.sidebar import render_sidebar
 from src.ui.components.results import render_results
 from src.ui.components.video_generation import generate_conversation_video
@@ -21,7 +20,6 @@ def render_home_page():
     st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
 
-    # Check VOICEVOX connection
     if not check_voicevox_connection():
         st.error(
             "⚠️ VOICEVOX APIに接続できません。Dockerコンテナが起動しているか確認してください。"
@@ -34,20 +32,16 @@ def render_home_page():
     # Sidebar
     speed, pitch, intonation, enable_subtitles, conversation_mode = render_sidebar()
 
-    # Conversation input section
     background_options = [
         "default"
     ] + VideoGenerator().video_processor.get_background_names()
     expression_options = Expressions.get_available_names()
     item_options = ["none"] + list(Items.get_all().keys())
 
-    # JSON selector section - pass available options for validation
-
     available_characters = list(Characters.get_all().keys())
     render_json_selector(available_characters, background_options, expression_options)
 
     render_conversation_input(background_options, expression_options, item_options)
-    render_control_buttons()
 
     st.markdown("---")
 

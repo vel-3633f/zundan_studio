@@ -18,7 +18,7 @@ def get_json_files_list() -> List[str]:
 
         json_files = []
         for file in os.listdir(json_dir):
-            if file.endswith('.json'):
+            if file.endswith(".json"):
                 json_files.append(file)
 
         return sorted(json_files, reverse=True)  # 新しい順にソート
@@ -33,7 +33,7 @@ def load_json_file(filename: str) -> Optional[Dict[str, Any]]:
         json_dir = os.path.join(Paths.get_outputs_dir(), "json")
         file_path = os.path.join(json_dir, filename)
 
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         logger.error(f"Failed to load JSON file {filename}: {e}")
@@ -53,15 +53,25 @@ def validate_json_structure(data: Dict[str, Any]) -> bool:
         if not isinstance(segment, dict):
             return False
 
-        required_segment_fields = ["speaker", "text", "expression", "visible_characters", "character_items"]
+        required_segment_fields = [
+            "speaker",
+            "text",
+            "expression",
+            "visible_characters",
+            "character_items",
+        ]
         if not all(field in segment for field in required_segment_fields):
             return False
 
     return True
 
 
-def validate_and_clean_data(data: Dict[str, Any], available_characters: List[str],
-                           available_backgrounds: List[str], available_expressions: List[str]) -> Dict[str, Any]:
+def validate_and_clean_data(
+    data: Dict[str, Any],
+    available_characters: List[str],
+    available_backgrounds: List[str],
+    available_expressions: List[str],
+) -> Dict[str, Any]:
     """JSONデータを検証・クリーニング"""
     cleaned_segments = []
 
@@ -101,16 +111,19 @@ def validate_and_clean_data(data: Dict[str, Any], available_characters: List[str
             "text": segment.get("text", ""),
             "expression": expression,
             "visible_characters": cleaned_visible_chars,
-            "character_items": cleaned_items
+            "character_items": cleaned_items,
         }
         cleaned_segments.append(cleaned_segment)
 
     return {**data, "all_segments": cleaned_segments}
 
 
-def convert_json_to_conversation_lines(data: Dict[str, Any], available_characters: List[str] = None,
-                                     available_backgrounds: List[str] = None,
-                                     available_expressions: List[str] = None) -> List[Dict[str, Any]]:
+def convert_json_to_conversation_lines(
+    data: Dict[str, Any],
+    available_characters: List[str] = None,
+    available_backgrounds: List[str] = None,
+    available_expressions: List[str] = None,
+) -> List[Dict[str, Any]]:
     """JSONデータを会話入力UI用のフォーマットに変換"""
     if not validate_json_structure(data):
         raise ValueError("Invalid JSON structure")
@@ -121,10 +134,23 @@ def convert_json_to_conversation_lines(data: Dict[str, Any], available_character
     if available_backgrounds is None:
         available_backgrounds = ["default"]
     if available_expressions is None:
-        available_expressions = ["normal", "happy", "sad", "angry", "surprised", "worried", "excited", "sick", "thinking", "serious"]
+        available_expressions = [
+            "normal",
+            "happy",
+            "sad",
+            "angry",
+            "surprised",
+            "worried",
+            "excited",
+            "sick",
+            "thinking",
+            "serious",
+        ]
 
     # データクリーニング
-    data = validate_and_clean_data(data, available_characters, available_backgrounds, available_expressions)
+    data = validate_and_clean_data(
+        data, available_characters, available_backgrounds, available_expressions
+    )
 
     conversation_lines = []
     sections = data.get("sections", [])
@@ -138,7 +164,9 @@ def convert_json_to_conversation_lines(data: Dict[str, Any], available_character
             scene_background = section.get("scene_background", "default")
             # 背景の検証
             if scene_background not in available_backgrounds:
-                logger.warning(f"Unknown background '{scene_background}', using 'default'")
+                logger.warning(
+                    f"Unknown background '{scene_background}', using 'default'"
+                )
                 scene_background = "default"
             section_backgrounds[section_name] = scene_background
 
@@ -157,7 +185,9 @@ def convert_json_to_conversation_lines(data: Dict[str, Any], available_character
                 current_section_idx += 1
                 segments_processed = 0
                 if current_section_idx < len(sections):
-                    current_background = sections[current_section_idx].get("scene_background", "default")
+                    current_background = sections[current_section_idx].get(
+                        "scene_background", "default"
+                    )
             else:
                 current_background = section.get("scene_background", "default")
                 segments_processed += 1
@@ -170,7 +200,7 @@ def convert_json_to_conversation_lines(data: Dict[str, Any], available_character
             "expression": segment["expression"],
             "visible_characters": segment["visible_characters"].copy(),
             "character_items": segment["character_items"].copy(),
-            "item": "none"  # 旧形式との互換性
+            "item": "none",  # 旧形式との互換性
         }
 
         conversation_lines.append(conversation_line)
@@ -178,9 +208,12 @@ def convert_json_to_conversation_lines(data: Dict[str, Any], available_character
     return conversation_lines
 
 
-def load_json_to_session_state(filename: str, available_characters: List[str] = None,
-                              available_backgrounds: List[str] = None,
-                              available_expressions: List[str] = None) -> Optional[Dict[str, Any]]:
+def load_json_to_session_state(
+    filename: str,
+    available_characters: List[str] = None,
+    available_backgrounds: List[str] = None,
+    available_expressions: List[str] = None,
+) -> Optional[Dict[str, Any]]:
     """JSONファイルをセッション状態に読み込み"""
     try:
         # JSONファイルを読み込み
@@ -207,7 +240,7 @@ def load_json_to_session_state(filename: str, available_characters: List[str] = 
             "title": data.get("title", "Untitled"),
             "food_name": data.get("food_name", "Unknown"),
             "estimated_duration": data.get("estimated_duration", "Unknown"),
-            "total_segments": len(conversation_lines)
+            "total_segments": len(conversation_lines),
         }
 
         return metadata
@@ -218,9 +251,11 @@ def load_json_to_session_state(filename: str, available_characters: List[str] = 
         return None
 
 
-def render_json_selector(available_characters: List[str] = None,
-                        available_backgrounds: List[str] = None,
-                        available_expressions: List[str] = None) -> None:
+def render_json_selector(
+    available_characters: List[str] = None,
+    available_backgrounds: List[str] = None,
+    available_expressions: List[str] = None,
+) -> None:
     """JSONファイル選択機能をレンダリング"""
     st.subheader("JSONファイルから会話を読み込み")
 
@@ -238,7 +273,7 @@ def render_json_selector(available_characters: List[str] = None,
         options=[""] + json_files,
         format_func=lambda x: "ファイルを選択..." if x == "" else x,
         help="outputs/jsonディレクトリのJSONファイルから選択できます",
-        key="json_selector"
+        key="json_selector",
     )
 
     if selected_file and selected_file != "":
@@ -259,12 +294,21 @@ def render_json_selector(available_characters: List[str] = None,
                     st.metric("推定時間", data.get("estimated_duration", "N/A"))
 
                 # 読み込みボタン
-                if st.button("🔄 JSONファイルから会話を読み込み", type="primary", use_container_width=True):
+                if st.button(
+                    "🔄 JSONファイルから会話を読み込み",
+                    type="primary",
+                    use_container_width=True,
+                ):
                     metadata = load_json_to_session_state(
-                        selected_file, available_characters, available_backgrounds, available_expressions
+                        selected_file,
+                        available_characters,
+                        available_backgrounds,
+                        available_expressions,
                     )
                     if metadata:
-                        st.success(f"✅ 会話を読み込みました！ ({metadata['total_segments']}個のセリフ)")
+                        st.success(
+                            f"✅ 会話を読み込みました！ ({metadata['total_segments']}個のセリフ)"
+                        )
                         st.rerun()
             else:
                 st.error("ファイルの読み込みに失敗しました")

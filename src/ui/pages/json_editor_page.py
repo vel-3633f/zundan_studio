@@ -7,8 +7,6 @@ from datetime import datetime
 
 from src.models.food_over import (
     FoodOverconsumptionScript,
-    ConversationSegment,
-    VideoSection,
 )
 from config.characters import Characters, Expressions
 from src.utils.logger import get_logger
