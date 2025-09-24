@@ -3,7 +3,6 @@ import logging
 
 from src.video_generator import VideoGenerator
 from config import APP_CONFIG, UI_CONFIG, Expressions, Items
-from src.ui.components.session_state import check_voicevox_connection
 from src.ui.components.conversation_input import render_conversation_input
 from src.ui.components.sidebar import render_sidebar
 from src.ui.components.results import render_results
@@ -19,15 +18,6 @@ def render_home_page():
     # Header
     st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
-
-    if not check_voicevox_connection():
-        st.error(
-            "⚠️ VOICEVOX APIに接続できません。Dockerコンテナが起動しているか確認してください。"
-        )
-        st.info("コマンド: `docker-compose up voicevox`")
-        return
-
-    st.success("✅ VOICEVOX API接続完了")
 
     # Sidebar
     speed, pitch, intonation, enable_subtitles, conversation_mode = render_sidebar()

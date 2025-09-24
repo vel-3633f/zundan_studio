@@ -16,8 +16,6 @@ logger = logging.getLogger(__name__)
 ensure_directories()
 
 
-
-
 st.set_page_config(
     page_title=f"{APP_CONFIG.title}",
     page_icon=APP_CONFIG.page_icon,
@@ -52,7 +50,6 @@ def main():
         index=0,
     )
 
-    # 選択されたページを動的にインポートして実行
     if page in pages:
         page_config = pages[page]
         module = __import__(page_config["module"], fromlist=[page_config["function"]])

@@ -19,12 +19,3 @@ def init_session_state():
     ]:
         if key not in st.session_state:
             st.session_state[key] = default
-
-
-def check_voicevox_connection() -> bool:
-    """Check VOICEVOX API connection"""
-    try:
-        return VoiceGenerator().check_health()
-    except Exception as e:
-        logger.error(f"VOICEVOX connection check failed: {e}")
-        return False
