@@ -118,6 +118,30 @@ def validate_and_clean_data(
     return {**data, "all_segments": cleaned_segments}
 
 
+def extract_backgrounds_from_json(data: Dict[str, Any]) -> List[str]:
+    """JSONデータから使用されている背景名を抽出"""
+    backgrounds = set()
+
+    # セクションから背景を抽出
+    sections = data.get("sections", [])
+    for section in sections:
+        scene_background = section.get("scene_background", "default")
+        if scene_background:
+            backgrounds.add(scene_background)
+
+    # セグメントから背景を抽出（もしあれば）
+    all_segments = data.get("all_segments", [])
+    for segment in all_segments:
+        background = segment.get("background")
+        if background:
+            backgrounds.add(background)
+
+    # defaultは常に含める
+    backgrounds.add("default")
+
+    return sorted(list(backgrounds))
+
+
 def convert_json_to_conversation_lines(
     data: Dict[str, Any],
     available_characters: List[str] = None,
@@ -234,6 +258,7 @@ def load_json_to_session_state(
 
         # セッション状態に設定
         st.session_state.conversation_lines = conversation_lines
+        st.session_state.loaded_json_data = data  # 背景抽出用にJSONデータを保存
 
         # メタデータも保存（オプション）
         metadata = {

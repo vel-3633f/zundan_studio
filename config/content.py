@@ -28,51 +28,12 @@ class Backgrounds:
     _default_backgrounds = {
         "default": BackgroundConfig(
             name="default",
-            display_name="デフォルト",
-            emoji="🖼️",
+            display_name="default",
+            emoji="",
             description="標準の背景画像"
         )
     }
 
-    @classmethod
-    def load_backgrounds_from_json(cls, json_file_path: str) -> bool:
-        """JSONファイルから背景設定を読み込む"""
-        try:
-            if not os.path.exists(json_file_path):
-                logger.warning(f"Background JSON file not found: {json_file_path}")
-                return False
-
-            with open(json_file_path, 'r', encoding='utf-8') as f:
-                background_data = json.load(f)
-
-            cls._loaded_backgrounds = {}
-
-            for bg_name, bg_info in background_data.items():
-                config = BackgroundConfig(
-                    name=bg_name,
-                    display_name=bg_info.get("display_name", bg_name),
-                    emoji=bg_info.get("emoji", "🖼️"),
-                    description=bg_info.get("description", "")
-                )
-                cls._loaded_backgrounds[bg_name] = config
-
-            logger.info(f"Loaded {len(cls._loaded_backgrounds)} backgrounds from {json_file_path}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to load backgrounds from JSON: {e}")
-            return False
-
-    @classmethod
-    def register_background(cls, name: str, display_name: str, emoji: str = "🖼️", description: str = ""):
-        """背景設定を動的に登録"""
-        config = BackgroundConfig(
-            name=name,
-            display_name=display_name,
-            emoji=emoji,
-            description=description
-        )
-        cls._loaded_backgrounds[name] = config
 
     @classmethod
     def get_all(cls) -> Dict[str, BackgroundConfig]:
@@ -87,8 +48,8 @@ class Backgrounds:
         backgrounds = cls.get_all()
         if name in backgrounds:
             bg = backgrounds[name]
-            return f"{bg.emoji} {bg.display_name}"
-        return f"🖼️ {name}"
+            return bg.display_name
+        return name
 
     @classmethod
     def get_supported_extensions(cls) -> set:
@@ -99,6 +60,25 @@ class Backgrounds:
     def is_valid_background(cls, name: str) -> bool:
         """指定された背景名が有効かチェック"""
         return name in cls.get_all()
+
+    @classmethod
+    def load_backgrounds_from_names(cls, background_names: List[str]) -> None:
+        """背景名のリストから背景設定を動的に作成"""
+        cls._loaded_backgrounds = {}
+
+        for bg_name in background_names:
+            if bg_name == "default":
+                continue  # デフォルトは既にある
+
+            config = BackgroundConfig(
+                name=bg_name,
+                display_name=bg_name,
+                emoji="",
+                description=f"背景: {bg_name}"
+            )
+            cls._loaded_backgrounds[bg_name] = config
+
+        logger.info(f"Created {len(cls._loaded_backgrounds)} background configurations from names")
 
 
 @dataclass

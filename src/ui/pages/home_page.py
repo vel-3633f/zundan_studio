@@ -2,12 +2,12 @@ import streamlit as st
 import logging
 
 from src.services.video_generator import VideoGenerator
-from config import APP_CONFIG, UI_CONFIG, Expressions, Items
+from config import APP_CONFIG, UI_CONFIG, Expressions, Items, Backgrounds
 from src.ui.components.home.conversation_input import render_conversation_input
 from src.ui.components.home.sidebar import render_sidebar
 from src.ui.components.home.results import render_results
 from src.ui.components.home.video_generation import generate_conversation_video
-from src.ui.components.home.json_loader import render_json_selector
+from src.ui.components.home.json_loader import render_json_selector, extract_backgrounds_from_json
 from config import Characters
 
 logger = logging.getLogger(__name__)
@@ -22,9 +22,24 @@ def render_home_page():
     # Sidebar
     speed, pitch, intonation, enable_subtitles, conversation_mode = render_sidebar()
 
-    background_options = [
-        "default"
-    ] + VideoGenerator().video_processor.get_background_names()
+    # JSONファイルから背景を抽出（読み込まれている場合）
+    background_options = ["default"]
+    if hasattr(st.session_state, 'loaded_json_data') and st.session_state.loaded_json_data:
+        # JSONから背景名を抽出
+        json_backgrounds = extract_backgrounds_from_json(st.session_state.loaded_json_data)
+        # 背景設定を動的に作成
+        Backgrounds.load_backgrounds_from_names(json_backgrounds)
+        background_options = json_backgrounds
+        logger.info(f"Using backgrounds from JSON: {json_backgrounds}")
+        # デバッグ情報を表示
+        st.info(f"🎬 JSONファイルから {len(json_backgrounds)} の背景を読み込みました: {', '.join(json_backgrounds)}")
+    else:
+        # 従来通り画像ファイルから背景を取得
+        background_options = [
+            "default"
+        ] + VideoGenerator().video_processor.get_background_names()
+        logger.info(f"Using backgrounds from image files: {background_options}")
+
     expression_options = Expressions.get_available_names()
     item_options = ["none"] + list(Items.get_all().keys())
 
