@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 def generate_conversation_video(
     conversations: List[Dict],
-    speed: float,
-    pitch: float,
-    intonation: float,
     progress_bar,
     status_text,
     enable_subtitles: bool = True,
@@ -30,16 +27,12 @@ def generate_conversation_video(
         progress_bar.progress(0.1)
         status_text.text("会話音声を生成中...")
 
-        # UIパラメータがデフォルト値の場合はNoneを渡してキャラクター個別設定を使用
-        use_speed = None if speed == 1.0 else speed
-        use_pitch = None if pitch == 0.0 else pitch
-        use_intonation = None if intonation == 1.0 else intonation
-
+        # キャラクター個別設定を使用（パラメータはNoneを渡す）
         audio_files = voice_gen.generate_conversation_voices(
             conversations=conversations,
-            speed=use_speed,
-            pitch=use_pitch,
-            intonation=use_intonation,
+            speed=None,
+            pitch=None,
+            intonation=None,
             output_dir=Paths.get_temp_dir(),
         )
 

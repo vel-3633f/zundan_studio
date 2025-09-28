@@ -20,7 +20,7 @@ def render_home_page():
     st.markdown(APP_CONFIG.description)
 
     # Sidebar
-    speed, pitch, intonation, enable_subtitles, conversation_mode = render_sidebar()
+    enable_subtitles, conversation_mode = render_sidebar()
 
     # JSONファイルから背景を抽出（読み込まれている場合）
     background_options = ["default"]
@@ -79,9 +79,6 @@ def render_home_page():
 
                 result = generate_conversation_video(
                     conversations=valid_lines,
-                    speed=speed,
-                    pitch=pitch,
-                    intonation=intonation,
                     progress_bar=progress_bar,
                     status_text=status_text,
                     enable_subtitles=enable_subtitles,
