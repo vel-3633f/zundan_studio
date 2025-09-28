@@ -30,11 +30,16 @@ def generate_conversation_video(
         progress_bar.progress(0.1)
         status_text.text("会話音声を生成中...")
 
+        # UIパラメータがデフォルト値の場合はNoneを渡してキャラクター個別設定を使用
+        use_speed = None if speed == 1.0 else speed
+        use_pitch = None if pitch == 0.0 else pitch
+        use_intonation = None if intonation == 1.0 else intonation
+
         audio_files = voice_gen.generate_conversation_voices(
             conversations=conversations,
-            speed=speed,
-            pitch=pitch,
-            intonation=intonation,
+            speed=use_speed,
+            pitch=use_pitch,
+            intonation=use_intonation,
             output_dir=Paths.get_temp_dir(),
         )
 
