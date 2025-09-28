@@ -127,16 +127,16 @@ class VoiceGenerator:
     def generate_conversation_voices(
         self,
         conversations: List[Dict],
-        speed: float = 1.0,
-        pitch: float = 0.0,
-        intonation: float = 1.0,
+        speed: float = None,
+        pitch: float = None,
+        intonation: float = None,
         output_dir: str = None,
     ) -> List[str]:
         """Generate voice files for conversation in sequence
 
         Args:
             conversations: List of conversation items with keys: 'speaker', 'text'
-            speed, pitch, intonation: Voice parameters
+            speed, pitch, intonation: Global voice parameters (None = use character defaults)
             output_dir: Output directory for audio files
 
         Returns:
@@ -157,6 +157,17 @@ class VoiceGenerator:
             if not text:
                 continue
 
+            # キャラクター設定を取得
+            characters = Characters.get_all()
+            char_config = characters.get(speaker)
+
+            # 音声パラメータを決定（グローバル設定があればそれを優先、なければキャラクター個別設定）
+            final_speed = speed if speed is not None else (char_config.default_speed if char_config else 1.0)
+            final_pitch = pitch if pitch is not None else (char_config.default_pitch if char_config else 0.0)
+            final_intonation = intonation if intonation is not None else (char_config.default_intonation if char_config else 1.0)
+
+            logger.info(f"Speaker: {speaker}, Final params - Speed: {final_speed}, Pitch: {final_pitch}, Intonation: {final_intonation}")
+
             # 出力ファイル名（会話順序を含む）
             audio_filename = f"conv_{i:03d}_{speaker}.wav"
             audio_path = os.path.join(output_dir, audio_filename)
@@ -164,9 +175,9 @@ class VoiceGenerator:
             # 音声生成
             generated_path = self.generate_voice(
                 text=text,
-                speed=speed,
-                pitch=pitch,
-                intonation=intonation,
+                speed=final_speed,
+                pitch=final_pitch,
+                intonation=final_intonation,
                 output_path=audio_path,
                 speaker=speaker,
             )

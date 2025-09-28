@@ -6,14 +6,11 @@ from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_
 from src.utils.logger import get_logger
 
 from src.ui.components.food_generation.display_components import (
-    display_food_script_preview,
     display_json_debug,
 )
 from src.ui.components.food_generation.utils import (
     save_json_to_outputs,
 )
-
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,9 +20,8 @@ logger = get_logger(__name__)
 
 def render_food_overconsumption_page():
     """食べ物摂取過多解説動画生成ページを表示"""
-    logger.info("食べ物摂取過多解説動画生成ページを表示開始")
 
-    st.title("🍽️ 食べ物摂取過多解説動画ジェネレーター")
+    st.title("🍽️ 動画台本生成")
     st.markdown(
         "食べ物を食べすぎるとどうなるのか？をテーマに、ずんだもんたちが面白く解説する動画脚本を作成するのだ〜！"
     )
@@ -93,7 +89,6 @@ def render_food_overconsumption_page():
             if isinstance(result, FoodOverconsumptionScript):
                 logger.info("脚本生成成功、プレビューを表示")
                 st.success("🎉 食べ物摂取過多解説動画脚本が完成したのだ〜！")
-                display_food_script_preview(result)
 
                 saved_file_path = save_json_to_outputs(result.model_dump(), food_name)
                 if saved_file_path:
