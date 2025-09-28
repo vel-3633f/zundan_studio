@@ -23,9 +23,8 @@ logger = get_logger(__name__)
 
 def render_food_overconsumption_page():
     """食べ物摂取過多解説動画生成ページを表示"""
-    logger.info("食べ物摂取過多解説動画生成ページを表示開始")
 
-    st.title("🍽️ 食べ物摂取過多解説動画ジェネレーター")
+    st.title("🍽️ 動画台本生成")
     st.markdown(
         "食べ物を食べすぎるとどうなるのか？をテーマに、ずんだもんたちが面白く解説する動画脚本を作成するのだ〜！"
     )
