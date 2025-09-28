@@ -1,15 +1,14 @@
 import streamlit as st
 import logging
 
-from src.video_generator import VideoGenerator
+from src.services.video_generator import VideoGenerator
 from config import APP_CONFIG, UI_CONFIG, Expressions, Items
-from src.ui.components.session_state import check_voicevox_connection
-from src.ui.components.conversation_input import render_conversation_input
-from src.ui.components.control_buttons import render_control_buttons
-from src.ui.components.sidebar import render_sidebar
-from src.ui.components.results import render_results
-from src.ui.components.video_generation import generate_conversation_video
-from src.ui.components.json_loader import render_json_selector
+from src.ui.components.home.conversation_input import render_conversation_input
+from src.ui.components.home.sidebar import render_sidebar
+from src.ui.components.home.results import render_results
+from src.ui.components.home.video_generation import generate_conversation_video
+from src.ui.components.home.json_loader import render_json_selector
+from config import Characters
 
 logger = logging.getLogger(__name__)
 
@@ -20,33 +19,19 @@ def render_home_page():
     st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
 
-    # Check VOICEVOX connection
-    if not check_voicevox_connection():
-        st.error(
-            "⚠️ VOICEVOX APIに接続できません。Dockerコンテナが起動しているか確認してください。"
-        )
-        st.info("コマンド: `docker-compose up voicevox`")
-        return
-
-    st.success("✅ VOICEVOX API接続完了")
-
     # Sidebar
     speed, pitch, intonation, enable_subtitles, conversation_mode = render_sidebar()
 
-    # Conversation input section
     background_options = [
         "default"
     ] + VideoGenerator().video_processor.get_background_names()
     expression_options = Expressions.get_available_names()
     item_options = ["none"] + list(Items.get_all().keys())
 
-    # JSON selector section - pass available options for validation
-    from config import Characters
     available_characters = list(Characters.get_all().keys())
     render_json_selector(available_characters, background_options, expression_options)
 
     render_conversation_input(background_options, expression_options, item_options)
-    render_control_buttons()
 
     st.markdown("---")
 
@@ -97,14 +82,3 @@ def render_home_page():
 
     # Results
     render_results()
-
-    # Footer
-    st.markdown("---")
-    st.markdown(
-        """
-    **注意事項:**
-    - 生成には時間がかかる場合があります
-    - 長いテキストほど処理時間が長くなります
-    - 各セリフごとに背景を変更できます
-    """
-    )

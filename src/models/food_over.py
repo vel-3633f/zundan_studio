@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, List
 
 
 class ConversationSegment(BaseModel):
@@ -11,16 +11,14 @@ class ConversationSegment(BaseModel):
     visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
     character_items: Dict[str, str] = Field(description="キャラクターが持つアイテム")
 
-    @field_validator('character_items')
+    @field_validator("character_items")
     @classmethod
     def validate_character_items(cls, v: Dict[str, str]) -> Dict[str, str]:
-        """ずんだもん以外のキャラクターのアイテムをnoneに設定"""
+        """ずんだもんのみアイテムを設定可能、他のキャラクターはアイテム設定を除外"""
         validated_items = {}
         for character, item in v.items():
             if character == "zundamon":
                 validated_items[character] = item
-            else:
-                validated_items[character] = "none"
         return validated_items
 
 

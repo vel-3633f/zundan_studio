@@ -13,7 +13,6 @@ from config import (
     Backgrounds,
     Expressions,
     Paths,
-    Items,
 )
 
 logger = logging.getLogger(__name__)
@@ -136,7 +135,6 @@ class VideoProcessor:
                 all_images[char_key] = char_expressions
 
         return all_images
-
 
     def load_backgrounds(self) -> Dict[str, np.ndarray]:
         """すべての背景画像を読み込み"""

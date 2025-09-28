@@ -3,7 +3,7 @@ import os
 import logging
 from typing import List, Dict, Optional
 from src.core.voice_generator import VoiceGenerator
-from src.video_generator import VideoGenerator
+from src.services.video_generator import VideoGenerator
 from src.utils.utils import generate_unique_filename
 from config import Paths
 
@@ -55,7 +55,7 @@ def generate_conversation_video(
             progress_bar.progress(0.5 + (progress * 0.4))
             status_text.text(f"会話動画を生成中... ({int(progress * 100)}%)")
 
-        result = video_gen.generate_conversation_video_v2(
+        result = video_gen.generate_conversation_video(
             conversations=conversations,
             audio_file_list=audio_files,
             output_path=video_path,
