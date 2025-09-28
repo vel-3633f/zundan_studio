@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Union
 from src.models.food_over import FoodOverconsumptionScript
-from src.utils.utils import process_conversation_segments
 from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
 from config.models import get_model_config, get_default_model_config
 from src.utils.logger import get_logger
@@ -175,8 +174,7 @@ def generate_food_overconsumption_script(
         logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
 
         # 文字数チェックと分割処理
-        processed_segments = process_conversation_segments(all_segments)
-        response_object.all_segments = processed_segments
+        response_object.all_segments = all_segments
 
         # セクション内のセグメントも更新
         segment_index = 0
