@@ -88,7 +88,6 @@ class ItemConfig:
     name: str
     display_name: str
     category: str
-    emoji: str = "📦"
     # キャラクターごとの位置調整（キャラクター名をキー）
     positions: Dict[str, Tuple[float, float]] = None  # (x_ratio, y_ratio)
     # キャラクターごとのサイズ調整
@@ -132,7 +131,6 @@ class Items:
         name="chocolate_bar",
         display_name="チョコレートバー",
         category="food",
-        emoji="🍫",
         description="チョコレートバー",
         positions={
             "zundamon": (0.1, 0.35),  # 右手

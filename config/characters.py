@@ -49,9 +49,9 @@ class Characters:
         display_name="ずんだもん",
         emoji="🟢",
         display_position="right",
-        default_speed=1.2,  # 元気で明るいキャラなので少し速め
+        default_speed=1.2,
         default_pitch=0.0,
-        default_intonation=1.4,  # 抑揚を強めに
+        default_intonation=1.5,  # 抑揚を強めに
     )
 
     METAN = CharacterConfig(
@@ -65,25 +65,25 @@ class Characters:
         display_name="四国めたん",
         emoji="🩷",
         display_position="left",
-        default_speed=1.0,  # 優しい感じなので標準的な速度
+        default_speed=1.0,
         default_pitch=0.0,
-        default_intonation=1.2,  # 抑揚は控えめ
+        default_intonation=1.2,
     )
 
     TSUMUGI = CharacterConfig(
         name="tsumugi",
         speaker_id=8,
         position="left",
-        subtitle_color=(255, 215, 0),  # 黄色
+        subtitle_color=(255, 215, 0),
         size_ratio=1.5,
         x_offset_ratio=0.25,
         y_offset_ratio=0.2,
         display_name="春日部つむぎ",
         emoji="💛",
         display_position="left",
-        default_speed=1,  # 上品で落ち着いた感じなので少し遅め
+        default_speed=1,
         default_pitch=0.0,
-        default_intonation=1.2,  # 適度な抑揚
+        default_intonation=1.2,
     )
 
     NARRATOR = CharacterConfig(

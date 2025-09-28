@@ -130,14 +130,18 @@ def render_conversation_input(
                         return "なし"
                     item_config = Items.get_item(item_name)
                     if item_config:
-                        return f"{item_config.emoji} {item_config.display_name}"
+                        return item_config.display_name
+                    # 設定にないアイテム（JSONから読み込まれたアイテム）はそのまま表示
                     return item_name
 
-                # 各キャラクターのアイテム選択
+                # ずんだもんのみアイテム選択可能
                 for char_name in visible_chars:
                     if char_name == "narrator":
                         continue
-                    
+                    # ずんだもんのみアイテムを持てる
+                    if char_name != "zundamon":
+                        continue
+
                     char_config = characters.get(char_name)
                     if not char_config:
                         continue
