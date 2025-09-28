@@ -173,18 +173,8 @@ def generate_food_overconsumption_script(
 
         logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
 
-        # 文字数チェックと分割処理
+        # all_segmentsを設定
         response_object.all_segments = all_segments
-
-        # セクション内のセグメントも更新
-        segment_index = 0
-        for section in response_object.sections:
-            section_segments = []
-            for _ in section.segments:
-                if segment_index < len(processed_segments):
-                    section_segments.append(processed_segments[segment_index])
-                    segment_index += 1
-            section.segments = section_segments
 
         logger.info("食べ物摂取過多動画脚本の生成に成功")
 
