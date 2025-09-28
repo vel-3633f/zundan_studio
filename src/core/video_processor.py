@@ -140,6 +140,12 @@ class VideoProcessor:
         """すべての背景画像を読み込み"""
         bg_dir = Paths.get_backgrounds_dir()
 
+        # JSONファイルから背景設定を読み込み
+        json_path = os.path.join(bg_dir, "backgrounds.json")
+        if os.path.exists(json_path):
+            Backgrounds.load_backgrounds_from_json(json_path)
+            logger.info(f"Loaded background configurations from {json_path}")
+
         backgrounds = {}
 
         if not os.path.exists(bg_dir):
@@ -170,6 +176,15 @@ class VideoProcessor:
 
                     bg_name = os.path.splitext(filename)[0]
                     backgrounds[bg_name] = bg
+
+                    # 画像ファイルから動的に背景設定を登録
+                    if not Backgrounds.is_valid_background(bg_name):
+                        Backgrounds.register_background(
+                            name=bg_name,
+                            display_name=bg_name.replace("_", " ").title(),
+                            emoji="🖼️",
+                            description=f"背景画像: {bg_name}"
+                        )
 
             except Exception as e:
                 logger.error(f"Error loading background {file_path}: {e}")

@@ -11,8 +11,6 @@ from src.ui.components.food_generation.display_components import (
 from src.ui.components.food_generation.utils import (
     save_json_to_outputs,
 )
-
-
 from dotenv import load_dotenv
 
 load_dotenv()
