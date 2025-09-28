@@ -1,6 +1,8 @@
 import cv2
 import logging
+import os
 from typing import List, Dict, Optional, Tuple
+from moviepy import AudioFileClip
 from src.models.video_models import AudioSegmentInfo, SubtitleData
 
 logger = logging.getLogger(__name__)
@@ -28,6 +30,12 @@ class FrameGenerator:
         progress_callback=None,
     ) -> bool:
         """動画フレームの生成"""
+        # タイミング整合性の検証
+        if not self._validate_timing_consistency(
+            segment_audio_intensities, audio_file_list
+        ):
+            logger.warning("Timing inconsistency detected, but continuing...")
+
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(
             temp_video_path, fourcc, self.fps, self.video_processor.resolution
@@ -103,18 +111,37 @@ class FrameGenerator:
                 if segment_start <= current_time < segment_end:
                     current_conversation = conv
                     local_time = current_time - segment_start
-                    local_frame = max(
-                        0,
-                        min(
-                            int(local_time * self.fps),
-                            len(segment.intensities) - 1,
-                        ),
-                    )
+
+                    # より精密なフレーム番号計算（線形補間使用）
+                    if segment.intensities and segment.duration > 0:
+                        # 相対的な進行度を計算
+                        frame_progress = local_time / segment.duration
+                        exact_frame_index = frame_progress * (
+                            len(segment.intensities) - 1
+                        )
+
+                        # 線形補間でintensityを計算
+                        lower_idx = max(0, int(exact_frame_index))
+                        upper_idx = min(lower_idx + 1, len(segment.intensities) - 1)
+
+                        if lower_idx == upper_idx:
+                            intensity = segment.intensities[lower_idx]
+                        else:
+                            interpolation_factor = exact_frame_index - lower_idx
+                            intensity = (
+                                segment.intensities[lower_idx]
+                                * (1 - interpolation_factor)
+                                + segment.intensities[upper_idx] * interpolation_factor
+                            )
+
+                        current_frame_idx = int(current_time * self.fps)
+                        logger.debug(
+                            f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}"
+                        )
+                    else:
+                        intensity = 0
 
                     speaker = conv.get("speaker", "zundamon")
-                    intensity = (
-                        segment.intensities[local_frame] if segment.intensities else 0
-                    )
                     expression = conv.get("expression", "normal")
 
                     # 現在のセリフの背景を取得
@@ -193,3 +220,39 @@ class FrameGenerator:
                 break
 
         return frame
+
+    def _validate_timing_consistency(
+        self, segments: List[AudioSegmentInfo], audio_files: List[str]
+    ) -> bool:
+        """タイミングの整合性をチェック"""
+        try:
+            # セグメント時間の合計を計算
+            total_segment_duration = sum(segment.duration for segment in segments)
+
+            # 実際の音声ファイル時間の合計を計算
+            total_actual_duration = 0.0
+            for audio_path in audio_files:
+                if os.path.exists(audio_path):
+                    audio_clip = AudioFileClip(audio_path)
+                    total_actual_duration += audio_clip.duration
+                    audio_clip.close()
+
+            # 許容誤差（1秒）
+            tolerance = 1.0
+            time_diff = abs(total_segment_duration - total_actual_duration)
+
+            logger.info(
+                f"Timing validation: segment_total={total_segment_duration:.3f}s, actual_total={total_actual_duration:.3f}s, diff={time_diff:.3f}s"
+            )
+
+            if time_diff > tolerance:
+                logger.warning(
+                    f"Large timing difference detected: {time_diff:.3f}s > {tolerance}s"
+                )
+                return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Timing validation failed: {e}")
+            return False

@@ -60,8 +60,11 @@ class VideoGenerator:
             if combined_audio is None:
                 return None
 
-            total_duration = combined_audio.duration
-            total_frames = int(total_duration * self.fps)
+            # 実際の音声時間を基準にフレーム数を計算
+            actual_total_duration = combined_audio.duration
+            total_frames = int(actual_total_duration * self.fps)
+
+            logger.info(f"Audio duration: {actual_total_duration:.3f}s, Total frames: {total_frames} at {self.fps} FPS")
 
             # 字幕作成
             subtitle_lines = self.subtitle_generator.generate_subtitles(
@@ -74,7 +77,7 @@ class VideoGenerator:
             )
 
             # 瞬きタイミング生成
-            blink_timings = self.resource_manager.generate_blink_timings(total_duration)
+            blink_timings = self.resource_manager.generate_blink_timings(actual_total_duration)
 
             # 動画書き出し
             temp_video_path = output_path.replace(".mp4", "_temp.mp4")
@@ -118,10 +121,31 @@ class VideoGenerator:
     def _combine_video_with_audio(
         self, temp_video_path: str, combined_audio, output_path: str
     ) -> str:
-        """動画と音声の結合"""
+        """動画と音声の結合（精密な同期）"""
         video_clip = VideoFileClip(temp_video_path)
+
+        # 映像の長さを音声に正確に合わせる
+        video_duration = video_clip.duration
+        audio_duration = combined_audio.duration
+        duration_diff = abs(video_duration - audio_duration)
+
+        logger.info(f"Video duration: {video_duration:.3f}s, Audio duration: {audio_duration:.3f}s, Diff: {duration_diff:.3f}s")
+
+        # 1ms以上の差がある場合は映像の長さを調整
+        if duration_diff > 0.001:
+            logger.info(f"Adjusting video duration from {video_duration:.3f}s to {audio_duration:.3f}s")
+            video_clip = video_clip.with_duration(audio_duration)
+
         final_clip = video_clip.with_audio(combined_audio)
-        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+
+        # より精密なエンコーディング設定
+        final_clip.write_videofile(
+            output_path,
+            codec="libx264",
+            audio_codec="aac",
+            temp_audiofile='temp-audio.m4a',
+            remove_temp=True
+        )
 
         video_clip.close()
         final_clip.close()
