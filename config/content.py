@@ -1,9 +1,3 @@
-"""
-背景 + アイテム設定
-"""
-
-import json
-import os
 import logging
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
@@ -30,10 +24,9 @@ class Backgrounds:
             name="default",
             display_name="default",
             emoji="",
-            description="標準の背景画像"
+            description="標準の背景画像",
         )
     }
-
 
     @classmethod
     def get_all(cls) -> Dict[str, BackgroundConfig]:
@@ -74,11 +67,13 @@ class Backgrounds:
                 name=bg_name,
                 display_name=bg_name,
                 emoji="",
-                description=f"背景: {bg_name}"
+                description=f"背景: {bg_name}",
             )
             cls._loaded_backgrounds[bg_name] = config
 
-        logger.info(f"Created {len(cls._loaded_backgrounds)} background configurations from names")
+        logger.info(
+            f"Created {len(cls._loaded_backgrounds)} background configurations from names"
+        )
 
 
 @dataclass
@@ -133,11 +128,9 @@ class Items:
         category="food",
         description="チョコレートバー",
         positions={
-            "zundamon": (0.1, 0.35),  # 右手
-            "metan": (0.9, 0.35),  # 左手
-            "tsumugi": (0.9, 0.35),  # 左手
+            "zundamon": (0.1, 0.35),
         },
-        base_size=0.12
+        base_size=0.6,
     )
 
     @classmethod

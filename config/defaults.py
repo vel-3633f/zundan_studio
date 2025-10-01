@@ -40,20 +40,6 @@ class DefaultConversations:
                 "expression": "normal",
                 "visible_characters": ["zundamon", "tsumugi"],
             },
-            {
-                "speaker": "zundamon",
-                "text": "今日は何をするのだ？",
-                "background": "default",
-                "expression": "thinking",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
-            {
-                "speaker": "tsumugi",
-                "text": "一緒にお散歩でもしませんか？",
-                "background": "sunset",
-                "expression": "happy",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
         ]
 
     @staticmethod
