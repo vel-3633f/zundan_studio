@@ -27,13 +27,6 @@ class DefaultConversations:
                 "visible_characters": ["zundamon", "metan"],
             },
             {
-                "speaker": "zundamon",
-                "text": "今日のゲストを紹介するのだ！",
-                "background": "default",
-                "expression": "happy",
-                "visible_characters": ["zundamon"],
-            },
-            {
                 "speaker": "tsumugi",
                 "text": "春日部つむぎです。よろしくお願いします！",
                 "background": "sakura",

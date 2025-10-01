@@ -174,9 +174,6 @@ class Expressions:
         name="sick", display_name="体調不良", emoji="🤢", description="具合が悪い表情"
     )
 
-    SERIOUS = ExpressionConfig(
-        name="serious", display_name="真剣", emoji="😤", description="真剣な表情"
-    )
 
     @classmethod
     def get_all(cls) -> Dict[str, ExpressionConfig]:
@@ -191,7 +188,6 @@ class Expressions:
             "worried": cls.WORRIED,
             "excited": cls.EXCITED,
             "sick": cls.SICK,
-            "serious": cls.SERIOUS,
         }
 
     @classmethod

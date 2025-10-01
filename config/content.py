@@ -128,9 +128,9 @@ class Items:
         category="food",
         description="チョコレートバー",
         positions={
-            "zundamon": (0.1, 0.35),
+            "zundamon": (0.2, 0.3),
         },
-        base_size=0.6,
+        base_size=0.3,
     )
 
     @classmethod
