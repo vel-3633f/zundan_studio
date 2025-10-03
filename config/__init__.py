@@ -15,12 +15,10 @@ from .characters import (
     Expressions
 )
 
-# 背景 + アイテム設定
+# 背景設定
 from .content import (
-    BackgroundConfig, 
-    ItemConfig, 
-    Backgrounds, 
-    Items
+    BackgroundConfig,
+    Backgrounds,
 )
 
 # デフォルトデータ + UI設定
@@ -30,23 +28,21 @@ from .defaults import DefaultConversations, UIConfig, UI_CONFIG
 __all__ = [
     # 設定クラス
     "AppConfig",
-    "CharacterConfig", 
+    "CharacterConfig",
     "ExpressionConfig",
     "BackgroundConfig",
-    "ItemConfig", 
     "SubtitleConfig",
     "UIConfig",
-    
+
     # データクラス
     "Characters",
-    "Expressions", 
+    "Expressions",
     "Backgrounds",
-    "Items",
     "DefaultConversations",
     "Paths",
-    
+
     # インスタンス
     "APP_CONFIG",
-    "SUBTITLE_CONFIG", 
+    "SUBTITLE_CONFIG",
     "UI_CONFIG",
 ]

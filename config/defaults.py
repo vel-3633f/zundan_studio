@@ -78,10 +78,9 @@ class UIConfig:
         3,
         1,
         1,
-        1,
         2,
         1,
-    ]  # 話者、テキスト、背景、表情、アイテム、表示キャラ、削除
+    ]  # 話者、テキスト、背景、表情、表示キャラ、削除
     button_columns: List[int] = [1, 1, 1]
     generate_columns: List[int] = [1, 2, 1]
 

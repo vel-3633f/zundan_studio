@@ -5,14 +5,12 @@ from config import (
     Characters,
     Backgrounds,
     Expressions,
-    Items,
 )
 
 
 def render_conversation_input(
     background_options: List[str],
     expression_options: List[str],
-    item_options: List[str],
 ) -> None:
     """Render conversation input interface"""
     st.subheader("会話内容")
@@ -24,11 +22,6 @@ def render_conversation_input(
             line["expression"] = "normal"
         if "visible_characters" not in line:
             line["visible_characters"] = ["zundamon", line.get("speaker", "zundamon")]
-        if "item" not in line:
-            line["item"] = "none"
-        # キャラクターごとのアイテム設定を追加
-        if "character_items" not in line:
-            line["character_items"] = {}
 
         # Get character info from config
         characters = Characters.get_all()
@@ -116,55 +109,8 @@ def render_conversation_input(
                     label_visibility="collapsed",
                 )
 
-            # Character-specific item selection
-            with cols[4]:
-                st.write("キャラクターアイテム")
-                
-                # 表示されるキャラクターごとにアイテム選択UIを表示
-                visible_chars = line.get("visible_characters", [])
-                if line["speaker"] != "narrator" and line["speaker"] not in visible_chars:
-                    visible_chars.append(line["speaker"])
-                
-                def format_item_display(item_name):
-                    if item_name == "none":
-                        return "なし"
-                    item_config = Items.get_item(item_name)
-                    if item_config:
-                        return item_config.display_name
-                    # 設定にないアイテム（JSONから読み込まれたアイテム）はそのまま表示
-                    return item_name
-
-                # ずんだもんのみアイテム選択可能
-                for char_name in visible_chars:
-                    if char_name == "narrator":
-                        continue
-                    # ずんだもんのみアイテムを持てる
-                    if char_name != "zundamon":
-                        continue
-
-                    char_config = characters.get(char_name)
-                    if not char_config:
-                        continue
-                        
-                    current_item = line["character_items"].get(char_name, "none")
-                    current_item_index = (
-                        item_options.index(current_item)
-                        if current_item in item_options
-                        else 0
-                    )
-                    
-                    selected_item = st.selectbox(
-                        f"{char_config.emoji} {char_config.display_name}",
-                        options=item_options,
-                        key=f"char_item_{char_name}_{i}",
-                        index=current_item_index,
-                        format_func=format_item_display,
-                    )
-                    
-                    line["character_items"][char_name] = selected_item
-
             # Visible characters selection
-            with cols[5]:
+            with cols[4]:
                 st.write("表示キャラクター")
                 # ナレーター以外のキャラクターのみを表示選択肢に含める
                 char_options = [
@@ -207,7 +153,7 @@ def render_conversation_input(
                     line["visible_characters"].append(line["speaker"])
 
             # Delete button
-            with cols[6]:
+            with cols[5]:
                 st.write("")
                 st.write("")
                 if st.button(
