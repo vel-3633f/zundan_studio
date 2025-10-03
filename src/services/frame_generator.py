@@ -53,7 +53,7 @@ class FrameGenerator:
                 current_time = frame_idx / self.fps
 
                 # 現在のフレーム情報を取得
-                active_speakers, current_background, character_items = (
+                active_speakers, current_background = (
                     self._get_frame_info(
                         current_time,
                         conversations,
@@ -71,7 +71,6 @@ class FrameGenerator:
                     conversation_mode,
                     current_time,
                     blink_timings,
-                    character_items,
                 )
 
                 # 字幕追加
@@ -94,12 +93,11 @@ class FrameGenerator:
         audio_file_list: List[str],
         segment_audio_intensities: List[AudioSegmentInfo],
         backgrounds: Dict,
-    ) -> Tuple[Dict, any, Dict[str, str]]:
+    ) -> Tuple[Dict, any]:
         """現在のフレーム情報を取得"""
         active_speakers = {}
         current_background = backgrounds["default"]
         current_conversation = None
-        character_items = {}
 
         # 現在の話者と強度、背景、表情を特定
         for i, (conv, audio_path) in enumerate(zip(conversations, audio_file_list)):
@@ -149,16 +147,6 @@ class FrameGenerator:
                     if background_name in backgrounds:
                         current_background = backgrounds[background_name]
 
-                    # 現在のセリフのキャラクター別アイテム情報を取得
-                    char_items = conv.get("character_items", {})
-                    if char_items:
-                        character_items.update(char_items)
-
-                    # 後方互換性のため、古い形式のitemも処理
-                    item_name = conv.get("item", "none")
-                    if item_name and item_name != "none":
-                        character_items[speaker] = item_name
-
                     break
 
         # 表示するキャラクターを決定
@@ -201,7 +189,7 @@ class FrameGenerator:
         else:
             active_speakers = {"zundamon": {"intensity": 0, "expression": "normal"}}
 
-        return active_speakers, current_background, character_items
+        return active_speakers, current_background
 
     def _add_subtitle_to_frame(
         self, frame, subtitle_lines: List[SubtitleData], current_time: float
