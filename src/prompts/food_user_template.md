@@ -211,9 +211,8 @@
 - 話者名: zundamon, metan, tsumugi, narrator
 - 表情: normal, happy, sad, angry, surprised, thinking, worried, excited, sick
 - 背景: シーンの内容に応じて適切な英語の背景を選択
-- アイテム: ずんだもんのみアイテムを持つことができる。
 
-各セクションではキャラクターを 2 人 1 組で使用し、visible_characters に表示する 2 人のキャラクターを指定し、シーンに最も適した背景とアイテムを英語で選択してください。
+各セクションではキャラクターを 2 人 1 組で使用し、visible_characters に表示する 2 人のキャラクターを指定し、シーンに最も適した背景を英語で選択してください。
 
 ## 出力構成
 
