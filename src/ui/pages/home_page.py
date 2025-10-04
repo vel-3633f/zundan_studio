@@ -2,6 +2,7 @@ import streamlit as st
 import logging
 
 from src.services.video_generator import VideoGenerator
+from src.core.video_processor import VideoProcessor
 from config import APP_CONFIG, UI_CONFIG, Expressions, Backgrounds
 from src.ui.components.home.conversation_input import render_conversation_input
 from src.ui.components.home.sidebar import render_sidebar
@@ -12,6 +13,16 @@ from src.ui.components.home.background_gallery import render_background_gallery
 from config import Characters
 
 logger = logging.getLogger(__name__)
+
+
+@st.cache_data
+def get_background_names_cached():
+    """背景名を取得（キャッシュ版 - メモリリーク対策）"""
+    # VideoProcessorのみ使用してVideoGenerator全体を生成しない
+    processor = VideoProcessor()
+    names = processor.get_background_names()
+    del processor  # 即座に削除
+    return names
 
 
 def render_home_page():
@@ -35,10 +46,8 @@ def render_home_page():
         # デバッグ情報を表示
         st.info(f"🎬 JSONファイルから {len(json_backgrounds)} の背景を読み込みました: {', '.join(json_backgrounds)}")
     else:
-        # 従来通り画像ファイルから背景を取得
-        background_options = [
-            "default"
-        ] + VideoGenerator().video_processor.get_background_names()
+        # 従来通り画像ファイルから背景を取得（キャッシュ版を使用してメモリリーク防止）
+        background_options = ["default"] + get_background_names_cached()
         logger.info(f"Using backgrounds from image files: {background_options}")
 
     expression_options = Expressions.get_available_names()
@@ -91,6 +100,11 @@ def render_home_page():
                 if result:
                     st.session_state.generated_video_path = result
                     st.success("🎉 会話動画生成完了！")
+
+                    # メモリリーク対策：loaded_json_dataをクリア
+                    if 'loaded_json_data' in st.session_state:
+                        del st.session_state.loaded_json_data
+                        logger.info("Cleared loaded_json_data from session_state to prevent memory leak")
 
             finally:
                 st.session_state.generation_in_progress = False

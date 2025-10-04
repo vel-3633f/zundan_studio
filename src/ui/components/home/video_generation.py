@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import logging
+import gc
 from typing import List, Dict, Optional
 from src.core.voice_generator import VoiceGenerator
 from src.services.video_generator import VideoGenerator
@@ -18,6 +19,9 @@ def generate_conversation_video(
     conversation_mode: str = "duo",
 ) -> Optional[str]:
     """Generate conversation video"""
+    voice_gen = None
+    video_gen = None
+
     try:
         voice_gen = VoiceGenerator()
         video_gen = VideoGenerator()
@@ -74,3 +78,21 @@ def generate_conversation_video(
         logger.error(f"Video generation failed: {e}")
         st.error(f"エラーが発生しました: {str(e)}")
         return None
+
+    finally:
+        # メモリリーク対策：必ずクリーンアップを実行
+        try:
+            if video_gen is not None:
+                logger.info("Starting cleanup to prevent memory leaks...")
+                video_gen.cleanup()
+
+            # VoiceGeneratorも明示的に削除
+            del voice_gen
+            del video_gen
+
+            # 強制ガベージコレクション
+            collected = gc.collect()
+            logger.info(f"Final cleanup: collected {collected} objects")
+
+        except Exception as cleanup_error:
+            logger.warning(f"Cleanup warning: {cleanup_error}")

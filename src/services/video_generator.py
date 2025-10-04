@@ -1,5 +1,6 @@
 import os
 import logging
+import gc
 from typing import List, Dict, Optional
 from moviepy import VideoFileClip
 
@@ -158,4 +159,38 @@ class VideoGenerator:
         video_clip.close()
         final_clip.close()
 
+        # 明示的にメモリ解放
+        del video_clip
+        del final_clip
+
         return output_path
+
+    def cleanup(self):
+        """メモリリソースのクリーンアップ（メモリリーク対策）"""
+        try:
+            # 1. リサイズキャッシュをクリア
+            if hasattr(self.video_processor, '_resize_cache'):
+                cache_size = len(self.video_processor._resize_cache)
+                self.video_processor._resize_cache.clear()
+                logger.info(f"Cleared resize cache ({cache_size} entries)")
+
+            # 2. LRUキャッシュをクリア（グローバル関数）
+            try:
+                from src.core.video_processor import _load_character_images_cached
+                cache_info = _load_character_images_cached.cache_info()
+                _load_character_images_cached.cache_clear()
+                logger.info(f"Cleared LRU cache (hits: {cache_info.hits}, misses: {cache_info.misses}, size: {cache_info.currsize})")
+            except Exception as e:
+                logger.warning(f"Failed to clear LRU cache: {e}")
+
+            # 3. フォントキャッシュをクリア
+            if hasattr(self.video_processor, '_cached_font'):
+                self.video_processor._cached_font = None
+                logger.info("Cleared font cache")
+
+            # 4. 強制ガベージコレクション
+            collected = gc.collect()
+            logger.info(f"Garbage collection: collected {collected} objects")
+
+        except Exception as e:
+            logger.error(f"Cleanup failed: {e}")

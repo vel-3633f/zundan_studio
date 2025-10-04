@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 # LRUキャッシュ用のグローバル関数（メモリ効率化）
-@lru_cache(maxsize=50)
+# maxsize=10: 実際に使うキャラクター数は2-3程度なので10で十分（メモリリーク対策）
+@lru_cache(maxsize=10)
 def _load_character_images_cached(character_name: str, expression: str, base_path: str) -> tuple:
     """キャラクター画像を読み込み（キャッシュ機能付き）
 
