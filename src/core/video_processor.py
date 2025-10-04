@@ -3,6 +3,7 @@ import numpy as np
 import os
 import logging
 import random
+from functools import lru_cache
 from typing import List, Tuple, Optional, Dict
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,6 +19,65 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
+# LRUキャッシュ用のグローバル関数（メモリ効率化）
+@lru_cache(maxsize=50)
+def _load_character_images_cached(character_name: str, expression: str, base_path: str) -> tuple:
+    """キャラクター画像を読み込み（キャッシュ機能付き）
+
+    Args:
+        character_name: キャラクター名
+        expression: 表情名
+        base_path: ベースディレクトリパス
+
+    Returns:
+        tuple: (images_dict_items, target_size) のタプル
+               images_dict_items は (key, image_bytes) のタプルのリスト
+    """
+    expression_dir = os.path.join(base_path, expression)
+
+    images = {}
+    image_files = {
+        "closed": f"{expression}_closed.png",
+        "half": f"{expression}_half.png",
+        "open": f"{expression}_open.png",
+        "blink": f"{expression}_blink.png",
+    }
+
+    for key, filename in image_files.items():
+        path = os.path.join(expression_dir, filename)
+
+        if os.path.exists(path):
+            img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+            if img is not None:
+                images[key] = img
+        else:
+            # フォールバック：normal表情を試す
+            if expression != "normal":
+                fallback_path = os.path.join(base_path, "normal", f"normal_{key}.png")
+                if os.path.exists(fallback_path):
+                    img = cv2.imread(fallback_path, cv2.IMREAD_UNCHANGED)
+                    if img is not None:
+                        images[key] = img
+                        continue
+
+    if images:
+        # 全画像を同じサイズにリサイズ
+        target_size = images[list(images.keys())[0]].shape[:2]
+        for key in images:
+            images[key] = cv2.resize(images[key], (target_size[1], target_size[0]))
+
+        # numpy配列をbytesに変換してキャッシュ可能にする
+        # (shape, dtype, bytes) のタプルとして保存
+        cached_images = []
+        for key, img in images.items():
+            img_bytes = img.tobytes()
+            cached_images.append((key, img.shape, img.dtype.str, img_bytes))
+
+        return tuple(cached_images), target_size
+
+    return tuple(), None
+
+
 class VideoProcessor:
     def __init__(self):
         self.fps = APP_CONFIG.fps
@@ -27,6 +87,9 @@ class VideoProcessor:
 
         # フォントキャッシュ
         self._cached_font = None
+
+        # リサイズキャッシュ（メモリ効率化）
+        self._resize_cache = {}
 
         # 瞬き設定
         self.blink_config = {
@@ -38,42 +101,22 @@ class VideoProcessor:
     def load_character_images(
         self, character_name: str = "zundamon", expression: str = "normal"
     ) -> Dict[str, np.ndarray]:
-        """キャラクター画像を読み込み（特定の表情）"""
+        """キャラクター画像を読み込み（特定の表情）- LRUキャッシュ対応"""
         base_path = Paths.get_character_dir(character_name)
-        expression_dir = os.path.join(base_path, expression)
 
+        # キャッシュから取得
+        cached_data, target_size = _load_character_images_cached(
+            character_name, expression, base_path
+        )
+
+        if not cached_data:
+            return {}
+
+        # bytesからnumpy配列に復元
         images = {}
-        image_files = {
-            "closed": f"{expression}_closed.png",
-            "half": f"{expression}_half.png",
-            "open": f"{expression}_open.png",
-            "blink": f"{expression}_blink.png",  # 瞬き用画像
-        }
-
-        for key, filename in image_files.items():
-            path = os.path.join(expression_dir, filename)
-
-            if os.path.exists(path):
-                img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-                if img is not None:
-                    images[key] = img
-            else:
-                # フォールバック：normal表情を試す
-                if expression != "normal":
-                    fallback_path = os.path.join(
-                        base_path, "normal", f"normal_{key}.png"
-                    )
-                    if os.path.exists(fallback_path):
-                        img = cv2.imread(fallback_path, cv2.IMREAD_UNCHANGED)
-                        if img is not None:
-                            images[key] = img
-                            continue
-
-        if images:
-            # 全画像を同じサイズにリサイズ
-            target_size = images[list(images.keys())[0]].shape[:2]
-            for key in images:
-                images[key] = cv2.resize(images[key], (target_size[1], target_size[0]))
+        for key, shape, dtype_str, img_bytes in cached_data:
+            img = np.frombuffer(img_bytes, dtype=dtype_str).reshape(shape)
+            images[key] = img.copy()  # copy()で独立したメモリ領域を確保
 
         return images
 
@@ -245,6 +288,54 @@ class VideoProcessor:
                 "open", images.get("half", images[list(images.keys())[0]])
             )
 
+    def _get_mouth_state(self, intensity: float, is_blinking: bool) -> str:
+        """音声強度から口の状態を判定"""
+        if is_blinking:
+            return "blink"
+        elif intensity < 0.1:
+            return "closed"
+        elif intensity < 0.4:
+            return "half"
+        else:
+            return "open"
+
+    def _get_resized_image(
+        self,
+        original_img: np.ndarray,
+        char_name: str,
+        expression: str,
+        intensity: float,
+        is_blinking: bool,
+        target_width: int,
+        target_height: int,
+    ) -> np.ndarray:
+        """リサイズ画像をキャッシュから取得（メモリ効率化）"""
+        # 口の状態を判定
+        mouth_state = self._get_mouth_state(intensity, is_blinking)
+
+        # キャッシュキー
+        cache_key = (char_name, expression, mouth_state, target_width, target_height)
+
+        # キャッシュにあれば返す
+        if cache_key in self._resize_cache:
+            return self._resize_cache[cache_key]
+
+        # リサイズ実行
+        resized_img = cv2.resize(original_img, (target_width, target_height))
+
+        # キャッシュサイズ制限（最大100枚まで）
+        if len(self._resize_cache) >= 100:
+            # 最も古いエントリを削除（FIFO）
+            first_key = next(iter(self._resize_cache))
+            del self._resize_cache[first_key]
+
+        # キャッシュに保存
+        self._resize_cache[cache_key] = resized_img
+
+        logger.debug(f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}")
+
+        return resized_img
+
     def composite_frame(
         self,
         background: np.ndarray,
@@ -402,7 +493,11 @@ class VideoProcessor:
                 target_width = int(bg_w * 0.8)
                 target_height = int(char_h * target_width / char_w)
 
-            mouth_img = cv2.resize(mouth_img, (target_width, target_height))
+            # リサイズキャッシュを使用（メモリ効率化）
+            mouth_img = self._get_resized_image(
+                mouth_img, char_name, expression, intensity, is_blinking,
+                target_width, target_height
+            )
 
             margin = 10
             x = max(-target_width // 3, min(x, bg_w - target_width // 3 * 2))

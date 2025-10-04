@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict
 from moviepy import AudioFileClip, concatenate_audioclips
 from src.models.video_models import AudioSegmentInfo
 
@@ -16,20 +16,29 @@ class AudioCombiner:
 
     def combine_audio_files(
         self, audio_file_list: List[str]
-    ) -> Optional[AudioFileClip]:
-        """音声ファイルの結合"""
+    ) -> Tuple[Optional[AudioFileClip], List[AudioFileClip], Dict[str, float]]:
+        """音声ファイルの結合（duration情報も返す）
+
+        Returns:
+            tuple: (combined_audio, audio_clips, audio_durations)
+                   audio_durations は {audio_path: duration} の辞書
+        """
         audio_clips = []
+        audio_durations = {}
+
         for audio_path in audio_file_list:
             if os.path.exists(audio_path):
                 clip = AudioFileClip(audio_path)
                 audio_clips.append(clip)
+                audio_durations[audio_path] = clip.duration
+                logger.debug(f"Loaded audio: {audio_path}, duration: {clip.duration:.3f}s")
 
         if not audio_clips:
             logger.error("No valid audio clips")
-            return None, None
+            return None, None, {}
 
         combined_audio = concatenate_audioclips(audio_clips)
-        return combined_audio, audio_clips
+        return combined_audio, audio_clips, audio_durations
 
     def analyze_audio_segments(
         self, audio_file_list: List[str]
