@@ -8,6 +8,7 @@ from src.ui.components.home.sidebar import render_sidebar
 from src.ui.components.home.results import render_results
 from src.ui.components.home.video_generation import generate_conversation_video
 from src.ui.components.home.json_loader import render_json_selector, extract_backgrounds_from_json
+from src.ui.components.home.background_gallery import render_background_gallery
 from config import Characters
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,9 @@ def render_home_page():
 
     available_characters = list(Characters.get_all().keys())
     render_json_selector(available_characters, background_options, expression_options)
+
+    # 背景一覧を表示
+    render_background_gallery(background_options)
 
     render_conversation_input(background_options, expression_options)
 
