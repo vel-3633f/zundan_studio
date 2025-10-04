@@ -27,31 +27,10 @@ class DefaultConversations:
                 "visible_characters": ["zundamon", "metan"],
             },
             {
-                "speaker": "zundamon",
-                "text": "今日のゲストを紹介するのだ！",
-                "background": "default",
-                "expression": "happy",
-                "visible_characters": ["zundamon"],
-            },
-            {
                 "speaker": "tsumugi",
                 "text": "春日部つむぎです。よろしくお願いします！",
                 "background": "sakura",
                 "expression": "normal",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
-            {
-                "speaker": "zundamon",
-                "text": "今日は何をするのだ？",
-                "background": "default",
-                "expression": "thinking",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
-            {
-                "speaker": "tsumugi",
-                "text": "一緒にお散歩でもしませんか？",
-                "background": "sunset",
-                "expression": "happy",
                 "visible_characters": ["zundamon", "tsumugi"],
             },
         ]
@@ -99,10 +78,8 @@ class UIConfig:
         3,
         1,
         1,
-        1,
         2,
-        1,
-    ]  # 話者、テキスト、背景、表情、アイテム、表示キャラ、削除
+    ]  # 話者、テキスト、背景、表情、表示キャラ
     button_columns: List[int] = [1, 1, 1]
     generate_columns: List[int] = [1, 2, 1]
 

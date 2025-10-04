@@ -35,40 +35,21 @@ def display_search_results_debug(search_results):
 
 
 def display_scene_and_items_info(data: FoodOverconsumptionScript):
-    """シーンとアイテム情報を表示"""
-    st.markdown("### 🎨 シーン・アイテム情報")
+    """シーン情報を表示"""
+    st.markdown("### 🎨 シーン情報")
 
     if not data.sections:
-        st.info("シーン・アイテム情報が見つかりませんでした")
+        st.info("シーン情報が見つかりませんでした")
         return
 
     section_scenes = {}
-    character_items_all = {}
 
     for section in data.sections:
         section_scenes[section.section_name] = section.scene_background
 
-        for segment in section.segments:
-            if segment.character_items:
-                for char, item in segment.character_items.items():
-                    if char not in character_items_all:
-                        character_items_all[char] = set()
-                    character_items_all[char].add(item)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("🎬 セクション別シーン")
-        for section_name, scene in section_scenes.items():
-            st.write(f"**{section_name}**: {scene}")
-
-    with col2:
-        st.subheader("🎯 キャラクター別アイテム")
-        for char, items in character_items_all.items():
-            char_display = Characters.get_display_name(char)
-            st.write(f"**{char_display}**:")
-            for item in sorted(items):
-                st.write(f"  • {item}")
+    st.subheader("🎬 セクション別シーン")
+    for section_name, scene in section_scenes.items():
+        st.write(f"**{section_name}**: {scene}")
 
 
 def display_prompt_file_status():
@@ -135,10 +116,6 @@ def display_segment(segment, segment_index):
             st.markdown(f"**{segment.speaker}** {expression_emoji}")
             st.markdown(f"💬 {segment.text}")
 
-            if segment.character_items:
-                items = list(segment.character_items.values())
-                st.caption(f"📦 アイテム: {', '.join(items)}")
-
             if segment.visible_characters:
                 st.caption(f"👥 登場: {', '.join(segment.visible_characters)}")
 
@@ -204,84 +181,3 @@ def search_segments(all_segments, query):
             for field in ["text", "speaker", "expression"]
         )
     ]
-
-
-def display_food_script_preview(script_data: FoodOverconsumptionScript):
-    data = script_data
-    display_header(data)
-
-    with st.sidebar:
-        st.header("🎛️ コントロール")
-
-        section_names = [
-            f"{i+1}. {s.section_name}" for i, s in enumerate(data.sections)
-        ]
-        selected_section = st.selectbox("セクション選択", ["全て"] + section_names)
-
-        all_characters = list(set(seg.speaker for seg in data.all_segments))
-        selected_characters = st.multiselect(
-            "キャラクター", all_characters, default=all_characters
-        )
-
-        search_query = st.text_input("🔍 テキスト検索")
-
-        st.subheader("📁 データアップロード")
-        uploaded_file = st.file_uploader("JSONファイルをアップロード", type=["json"])
-
-        if uploaded_file:
-            try:
-                st.session_state.scenario_data = json.load(uploaded_file)
-                st.success("データが更新されました！")
-                st.rerun()
-            except Exception as e:
-                st.error(f"ファイル読み込みエラー: {e}")
-
-    tab1, tab2, tab3 = st.tabs(["📖 シナリオ表示", "📊 統計情報", "📋 概要"])
-
-    with tab1:
-        segments_to_show = data.all_segments
-
-        if selected_section != "全て":
-            section_index = int(selected_section.split(".")[0]) - 1
-            segments_to_show = data.sections[section_index].segments
-
-        if selected_characters:
-            segments_to_show = [
-                s for s in segments_to_show if s.speaker in selected_characters
-            ]
-
-        segments_to_show = search_segments(segments_to_show, search_query)
-
-        st.subheader(f"📝 セグメント表示 ({len(segments_to_show)}件)")
-
-        if segments_to_show:
-            progress = st.progress(0)
-            for i, segment in enumerate(segments_to_show):
-                display_segment(segment, i)
-                progress.progress((i + 1) / len(segments_to_show))
-        else:
-            st.info("条件に一致するセグメントがありません。")
-
-    with tab2:
-        if data.all_segments:
-            display_character_stats(data.all_segments)
-        else:
-            st.info("統計情報を表示するには all_segments データが必要です。")
-
-    with tab3:
-        display_section_overview(data.sections)
-
-        st.subheader("📤 エクスポート")
-        if st.button("テキストファイルとしてエクスポート"):
-            text_content = f"# {data.title}\n\n"
-            for section in data.sections:
-                text_content += f"## {section.section_name}\n\n"
-                for segment in section.segments:
-                    text_content += f"**{segment.speaker}**: {segment.text}\n\n"
-
-            st.download_button(
-                label="ダウンロード",
-                data=text_content,
-                file_name=f"{data.food_name}_scenario.txt",
-                mime="text/plain",
-            )

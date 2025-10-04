@@ -334,29 +334,3 @@ def split_long_text(text: str, max_length: int = 30) -> List[str]:
 
     logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
     return result
-
-
-def process_conversation_segments(
-    segments: List[ConversationSegment],
-) -> List[ConversationSegment]:
-    """会話セグメントの文字数チェックと分割処理"""
-    processed_segments = []
-    original_count = len(segments)
-
-    for segment in segments:
-        text_parts = split_long_text(segment.text, 30)
-
-        for i, text_part in enumerate(text_parts):
-            new_segment = ConversationSegment(
-                speaker=segment.speaker,
-                text=text_part,
-                expression=segment.expression,
-                visible_characters=segment.visible_characters,
-                character_items=segment.character_items,
-            )
-            processed_segments.append(new_segment)
-
-    logger.info(
-        f"会話セグメント処理完了: {original_count} → {len(processed_segments)}個"
-    )
-    return processed_segments

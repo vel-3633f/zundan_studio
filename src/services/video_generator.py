@@ -53,8 +53,8 @@ class VideoGenerator:
             ):
                 return None
 
-            # 音声結合
-            combined_audio, audio_clips = self.audio_combiner.combine_audio_files(
+            # 音声結合（duration情報も取得）
+            combined_audio, audio_clips, audio_durations = self.audio_combiner.combine_audio_files(
                 audio_file_list
             )
             if combined_audio is None:
@@ -68,9 +68,9 @@ class VideoGenerator:
                 f"Audio duration: {actual_total_duration:.3f}s, Total frames: {total_frames} at {self.fps} FPS"
             )
 
-            # 字幕作成
+            # 字幕作成（duration情報を再利用してメモリ削減）
             subtitle_lines = self.subtitle_generator.generate_subtitles(
-                conversations, audio_file_list, backgrounds, enable_subtitles
+                conversations, audio_file_list, backgrounds, enable_subtitles, audio_durations
             )
 
             # 音声解析
