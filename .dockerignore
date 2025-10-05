@@ -1,0 +1,18 @@
+*.pyc
+__pycache__/
+.git
+.gitignore
+README.md
+.env
+.DS_Store
+*.log
+temp/*
+outputs/*
+.vscode/
+*.md
+
+# Explicitly include assets (override .gitignore)
+!assets/
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.ttf
