@@ -2,8 +2,13 @@
 背景 + アイテム設定
 """
 
+import json
+import os
+import logging
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -19,79 +24,23 @@ class BackgroundConfig:
 class Backgrounds:
     """背景定義"""
 
-    DEFAULT = BackgroundConfig(
-        name="default",
-        display_name="デフォルト",
-        emoji="🖼️",
-        description="標準の背景画像",
-    )
+    _loaded_backgrounds: Dict[str, BackgroundConfig] = {}
+    _default_backgrounds = {
+        "default": BackgroundConfig(
+            name="default",
+            display_name="default",
+            emoji="",
+            description="標準の背景画像"
+        )
+    }
 
-    BLUE_SKY = BackgroundConfig(
-        name="blue_sky", display_name="青空", emoji="🌤️", description="青い空の背景"
-    )
-
-    SUNSET = BackgroundConfig(
-        name="sunset", display_name="夕日", emoji="🌅", description="夕焼けの背景"
-    )
-
-    NIGHT = BackgroundConfig(
-        name="night", display_name="夜空", emoji="🌃", description="夜の背景"
-    )
-
-    FOREST = BackgroundConfig(
-        name="forest", display_name="森", emoji="🌲", description="森の背景"
-    )
-
-    OCEAN = BackgroundConfig(
-        name="ocean", display_name="海", emoji="🌊", description="海の背景"
-    )
-
-    SAKURA = BackgroundConfig(
-        name="sakura", display_name="桜", emoji="🌸", description="桜の背景"
-    )
-
-    SNOW = BackgroundConfig(
-        name="snow", display_name="雪", emoji="❄️", description="雪の背景"
-    )
-
-    HOSPITAL_ROOM = BackgroundConfig(
-        name="hospital_room", display_name="病室", emoji="🏥", description="病院の病室"
-    )
-
-    SUPERMARKET_AISLE = BackgroundConfig(
-        name="supermarket_aisle", display_name="スーパー", emoji="🛒", description="スーパーマーケットの通路"
-    )
-
-    LIVING_ROOM = BackgroundConfig(
-        name="living_room", display_name="リビング", emoji="🛋️", description="リビングルーム"
-    )
-
-    BEDROOM = BackgroundConfig(
-        name="bedroom", display_name="寝室", emoji="🛏️", description="ベッドルーム"
-    )
-
-    LABORATORY = BackgroundConfig(
-        name="laboratory", display_name="研究室", emoji="🧪", description="実験室・研究室"
-    )
 
     @classmethod
     def get_all(cls) -> Dict[str, BackgroundConfig]:
-        """全背景設定を取得"""
-        return {
-            "default": cls.DEFAULT,
-            "blue_sky": cls.BLUE_SKY,
-            "sunset": cls.SUNSET,
-            "night": cls.NIGHT,
-            "forest": cls.FOREST,
-            "ocean": cls.OCEAN,
-            "sakura": cls.SAKURA,
-            "snow": cls.SNOW,
-            "hospital_room": cls.HOSPITAL_ROOM,
-            "supermarket_aisle": cls.SUPERMARKET_AISLE,
-            "living_room": cls.LIVING_ROOM,
-            "bedroom": cls.BEDROOM,
-            "laboratory": cls.LABORATORY,
-        }
+        """全背景設定を取得（デフォルト + 読み込まれた背景）"""
+        all_backgrounds = cls._default_backgrounds.copy()
+        all_backgrounds.update(cls._loaded_backgrounds)
+        return all_backgrounds
 
     @classmethod
     def get_display_name(cls, name: str) -> str:
@@ -99,13 +48,37 @@ class Backgrounds:
         backgrounds = cls.get_all()
         if name in backgrounds:
             bg = backgrounds[name]
-            return f"{bg.emoji} {bg.display_name}"
-        return f"🖼️ {name}"
+            return bg.display_name
+        return name
 
     @classmethod
     def get_supported_extensions(cls) -> set:
         """サポートされる画像拡張子を取得"""
         return {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
+
+    @classmethod
+    def is_valid_background(cls, name: str) -> bool:
+        """指定された背景名が有効かチェック"""
+        return name in cls.get_all()
+
+    @classmethod
+    def load_backgrounds_from_names(cls, background_names: List[str]) -> None:
+        """背景名のリストから背景設定を動的に作成"""
+        cls._loaded_backgrounds = {}
+
+        for bg_name in background_names:
+            if bg_name == "default":
+                continue  # デフォルトは既にある
+
+            config = BackgroundConfig(
+                name=bg_name,
+                display_name=bg_name,
+                emoji="",
+                description=f"背景: {bg_name}"
+            )
+            cls._loaded_backgrounds[bg_name] = config
+
+        logger.info(f"Created {len(cls._loaded_backgrounds)} background configurations from names")
 
 
 @dataclass
@@ -115,7 +88,6 @@ class ItemConfig:
     name: str
     display_name: str
     category: str
-    emoji: str = "📦"
     # キャラクターごとの位置調整（キャラクター名をキー）
     positions: Dict[str, Tuple[float, float]] = None  # (x_ratio, y_ratio)
     # キャラクターごとのサイズ調整
@@ -159,7 +131,6 @@ class Items:
         name="chocolate_bar",
         display_name="チョコレートバー",
         category="food",
-        emoji="🍫",
         description="チョコレートバー",
         positions={
             "zundamon": (0.1, 0.35),  # 右手

@@ -30,6 +30,9 @@ class CharacterConfig:
     display_name: str
     emoji: str
     display_position: str
+    default_speed: float = 1.0
+    default_pitch: float = 0.0
+    default_intonation: float = 1.0
 
 
 class Characters:
@@ -46,6 +49,9 @@ class Characters:
         display_name="ずんだもん",
         emoji="🟢",
         display_position="right",
+        default_speed=1.2,
+        default_pitch=0.0,
+        default_intonation=1.5,  # 抑揚を強めに
     )
 
     METAN = CharacterConfig(
@@ -59,19 +65,25 @@ class Characters:
         display_name="四国めたん",
         emoji="🩷",
         display_position="left",
+        default_speed=1.0,
+        default_pitch=0.0,
+        default_intonation=1.2,
     )
 
     TSUMUGI = CharacterConfig(
         name="tsumugi",
         speaker_id=8,
         position="left",
-        subtitle_color=(255, 215, 0),  # 黄色
+        subtitle_color=(255, 215, 0),
         size_ratio=1.5,
         x_offset_ratio=0.25,
         y_offset_ratio=0.2,
         display_name="春日部つむぎ",
         emoji="💛",
         display_position="left",
+        default_speed=1,
+        default_pitch=0.0,
+        default_intonation=1.2,
     )
 
     NARRATOR = CharacterConfig(
@@ -85,6 +97,9 @@ class Characters:
         display_name="ナレーター",
         emoji="🎙️",
         display_position="ナレーション",
+        default_speed=1,  # 落ち着いた感じで遅め
+        default_pitch=0.0,
+        default_intonation=1,  # 抑揚は控えめ
     )
 
     @classmethod
