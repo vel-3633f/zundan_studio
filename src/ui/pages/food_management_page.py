@@ -204,10 +204,12 @@ def render_food_management_page():
 
                 with col2:
                     if food.get("generated_at"):
+                        # UTCからJSTに変換
                         generated_date = datetime.fromisoformat(
                             food["generated_at"].replace("Z", "+00:00")
                         )
-                        st.markdown(f"{generated_date.strftime('%m/%d %H:%M')}")
+                        jst_date = generated_date.astimezone(JST)
+                        st.markdown(f"{jst_date.strftime('%m/%d %H:%M')}")
                     else:
                         st.markdown("—")
 
