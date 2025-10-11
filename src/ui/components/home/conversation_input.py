@@ -152,18 +152,5 @@ def render_conversation_input(
                 ):
                     line["visible_characters"].append(line["speaker"])
 
-            # Delete button
-            with cols[5]:
-                st.write("")
-                st.write("")
-                if st.button(
-                    "🗑️",
-                    key=f"delete_{i}",
-                    help="この行を削除",
-                    disabled=len(st.session_state.conversation_lines) <= 1,
-                ):
-                    st.session_state.conversation_lines.pop(i)
-                    st.rerun()
-
         if i < len(st.session_state.conversation_lines) - 1:
             st.markdown("---")
