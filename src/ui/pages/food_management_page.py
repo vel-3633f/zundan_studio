@@ -139,6 +139,15 @@ def render_food_management_page():
             )
             return
 
+        # 食べ物名の配列をコピー用に表示
+        import json
+        food_names = [food["name"] for food in foods]
+        food_names_json = json.dumps(food_names, ensure_ascii=False)
+
+        with st.expander("📋 食べ物リストをコピー", expanded=False):
+            st.code(food_names_json, language="json")
+            st.caption("👆 上のテキストを選択してコピーできます")
+
         # 並び替え: is_generated が False のものを上に、True のものを下に
         sorted_foods = sorted(foods, key=lambda x: (x["is_generated"], x["name"]))
 
