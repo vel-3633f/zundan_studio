@@ -69,6 +69,24 @@ class FoodRepository:
             logger.error(f"Failed to update generation status: {e}")
             raise
 
+    def update_food_name(self, food_id: str, name: str) -> Dict:
+        """Update food name."""
+        try:
+            data = {
+                "name": name,
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+            response = (
+                self.client.table(self.table_name)
+                .update(data)
+                .eq("id", food_id)
+                .execute()
+            )
+            return response.data[0] if response.data else {}
+        except Exception as e:
+            logger.error(f"Failed to update food name: {e}")
+            raise
+
     def delete_food(self, food_id: str) -> bool:
         """Delete food from database."""
         try:
