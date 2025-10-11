@@ -27,31 +27,10 @@ class DefaultConversations:
                 "visible_characters": ["zundamon", "metan"],
             },
             {
-                "speaker": "zundamon",
-                "text": "今日のゲストを紹介するのだ！",
-                "background": "default",
-                "expression": "happy",
-                "visible_characters": ["zundamon"],
-            },
-            {
                 "speaker": "tsumugi",
                 "text": "春日部つむぎです。よろしくお願いします！",
                 "background": "sakura",
                 "expression": "normal",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
-            {
-                "speaker": "zundamon",
-                "text": "今日は何をするのだ？",
-                "background": "default",
-                "expression": "thinking",
-                "visible_characters": ["zundamon", "tsumugi"],
-            },
-            {
-                "speaker": "tsumugi",
-                "text": "一緒にお散歩でもしませんか？",
-                "background": "sunset",
-                "expression": "happy",
                 "visible_characters": ["zundamon", "tsumugi"],
             },
         ]
