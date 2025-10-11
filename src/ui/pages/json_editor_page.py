@@ -127,30 +127,11 @@ def render_segment_editor(
             key=f"visible_{section_name}_{segment_index}",
         )
 
-    with col3:
-        # ずんだもんのアイテム設定のみ表示
-        zundamon_item = "none"
-        if "zundamon" in visible_characters:
-            zundamon_item = st.text_input(
-                "ずんだもんアイテム",
-                value=segment.get("character_items", {}).get("zundamon", "none"),
-                key=f"item_zundamon_{section_name}_{segment_index}",
-            )
-
-    # キャラクターアイテム辞書を構築（ずんだもん以外は自動でnone）
-    character_items = {}
-    for char in visible_characters:
-        if char == "zundamon":
-            character_items[char] = zundamon_item
-        else:
-            character_items[char] = "none"
-
     return {
         "speaker": speaker,
         "text": text,
         "expression": expression,
         "visible_characters": visible_characters,
-        "character_items": character_items,
     }
 
 
@@ -208,7 +189,6 @@ def render_section_editor(
                 "text": "",
                 "expression": "normal",
                 "visible_characters": ["zundamon"],
-                "character_items": {"zundamon": "none"},
             }
             segments.append(new_segment)
             st.rerun()

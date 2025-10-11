@@ -25,11 +25,6 @@ class VideoProcessor:
         self.characters = Characters.get_all()
         self.subtitle_config = SUBTITLE_CONFIG
 
-        # ItemManagerをimportして初期化（遅延import）
-        from src.services.item_manager import ItemManager
-
-        self.item_manager = ItemManager()
-
         # フォントキャッシュ
         self._cached_font = None
 
@@ -326,7 +321,6 @@ class VideoProcessor:
         conversation_mode: str = "duo",
         current_time: float = 0.0,
         blink_timings: List[Dict] = None,
-        character_items: Dict[str, str] = None,
     ) -> np.ndarray:
         """会話用のフレーム合成（表情対応）"""
         result = background.copy()
@@ -416,23 +410,6 @@ class VideoProcessor:
 
             # キャラクター合成
             result = self.composite_frame(result, mouth_img, (x, y))
-
-            # アイテム合成
-            if character_items and char_name in character_items:
-                item_name = character_items[char_name]
-                if item_name and item_name != "none":
-                    try:
-                        result = self.item_manager.composite_item_on_frame(
-                            result,
-                            item_name,
-                            char_name,
-                            (x, y),
-                            (target_width, target_height),
-                        )
-                    except Exception as e:
-                        logger.error(
-                            f"Failed to composite item {item_name} for {char_name}: {e}"
-                        )
 
         return result
 

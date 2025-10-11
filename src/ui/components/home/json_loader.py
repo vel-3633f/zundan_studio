@@ -58,7 +58,6 @@ def validate_json_structure(data: Dict[str, Any]) -> bool:
             "text",
             "expression",
             "visible_characters",
-            "character_items",
         ]
         if not all(field in segment for field in required_segment_fields):
             return False
@@ -99,19 +98,11 @@ def validate_and_clean_data(
         if speaker != "narrator" and speaker not in cleaned_visible_chars:
             cleaned_visible_chars.append(speaker)
 
-        # character_itemsのクリーニング
-        character_items = segment.get("character_items", {})
-        cleaned_items = {}
-        for char_name, item in character_items.items():
-            if char_name in available_characters and char_name != "narrator":
-                cleaned_items[char_name] = item if item else "none"
-
         cleaned_segment = {
             "speaker": speaker,
             "text": segment.get("text", ""),
             "expression": expression,
             "visible_characters": cleaned_visible_chars,
-            "character_items": cleaned_items,
         }
         cleaned_segments.append(cleaned_segment)
 
@@ -223,8 +214,6 @@ def convert_json_to_conversation_lines(
             "background": current_background,
             "expression": segment["expression"],
             "visible_characters": segment["visible_characters"].copy(),
-            "character_items": segment["character_items"].copy(),
-            "item": "none",  # 旧形式との互換性
         }
 
         conversation_lines.append(conversation_line)

@@ -2,7 +2,7 @@ import streamlit as st
 import logging
 
 from src.services.video_generator import VideoGenerator
-from config import APP_CONFIG, UI_CONFIG, Expressions, Items, Backgrounds
+from config import APP_CONFIG, UI_CONFIG, Expressions, Backgrounds
 from src.ui.components.home.conversation_input import render_conversation_input
 from src.ui.components.home.sidebar import render_sidebar
 from src.ui.components.home.results import render_results
@@ -42,27 +42,10 @@ def render_home_page():
 
     expression_options = Expressions.get_available_names()
 
-    # アイテムオプションを動的に生成（設定ファイル + JSONから読み込まれたアイテム）
-    item_options = ["none"] + list(Items.get_all().keys())
-
-    # JSONが読み込まれている場合、JSONからアイテムを追加
-    if hasattr(st.session_state, 'conversation_lines') and st.session_state.conversation_lines:
-        json_items = set()
-        for line in st.session_state.conversation_lines:
-            character_items = line.get("character_items", {})
-            for char, item in character_items.items():
-                if item and item != "none":
-                    json_items.add(item)
-
-        # 既存のアイテムリストに追加（重複は除外）
-        for item in json_items:
-            if item not in item_options:
-                item_options.append(item)
-
     available_characters = list(Characters.get_all().keys())
     render_json_selector(available_characters, background_options, expression_options)
 
-    render_conversation_input(background_options, expression_options, item_options)
+    render_conversation_input(background_options, expression_options)
 
     st.markdown("---")
 

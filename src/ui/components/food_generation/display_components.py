@@ -35,40 +35,21 @@ def display_search_results_debug(search_results):
 
 
 def display_scene_and_items_info(data: FoodOverconsumptionScript):
-    """シーンとアイテム情報を表示"""
-    st.markdown("### 🎨 シーン・アイテム情報")
+    """シーン情報を表示"""
+    st.markdown("### 🎨 シーン情報")
 
     if not data.sections:
-        st.info("シーン・アイテム情報が見つかりませんでした")
+        st.info("シーン情報が見つかりませんでした")
         return
 
     section_scenes = {}
-    character_items_all = {}
 
     for section in data.sections:
         section_scenes[section.section_name] = section.scene_background
 
-        for segment in section.segments:
-            if segment.character_items:
-                for char, item in segment.character_items.items():
-                    if char not in character_items_all:
-                        character_items_all[char] = set()
-                    character_items_all[char].add(item)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("🎬 セクション別シーン")
-        for section_name, scene in section_scenes.items():
-            st.write(f"**{section_name}**: {scene}")
-
-    with col2:
-        st.subheader("🎯 キャラクター別アイテム")
-        for char, items in character_items_all.items():
-            char_display = Characters.get_display_name(char)
-            st.write(f"**{char_display}**:")
-            for item in sorted(items):
-                st.write(f"  • {item}")
+    st.subheader("🎬 セクション別シーン")
+    for section_name, scene in section_scenes.items():
+        st.write(f"**{section_name}**: {scene}")
 
 
 def display_prompt_file_status():
@@ -134,10 +115,6 @@ def display_segment(segment, segment_index):
         with col2:
             st.markdown(f"**{segment.speaker}** {expression_emoji}")
             st.markdown(f"💬 {segment.text}")
-
-            if segment.character_items:
-                items = list(segment.character_items.values())
-                st.caption(f"📦 アイテム: {', '.join(items)}")
 
             if segment.visible_characters:
                 st.caption(f"👥 登場: {', '.join(segment.visible_characters)}")
