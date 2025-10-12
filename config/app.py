@@ -40,7 +40,7 @@ class SubtitleConfig:
     padding_top: int = 8
     padding_bottom: int = 21
     margin_bottom: int = 50
-    max_chars_per_line: int = 30
+    max_chars_per_line: int = 25
     border_radius: int = 18
 
 
