@@ -118,13 +118,18 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
 def create_llm_instance(model: str, temperature: float, model_config: Dict[str, Any]):
     """モデル設定に基づいてLLMインスタンスを生成する"""
     provider = model_config.get("provider", "openai")
+    max_tokens = model_config.get("max_tokens", 4096)
 
     if provider == "openai":
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY が設定されていません")
-        logger.info(f"OpenAI LLMインスタンス生成: model={model}")
-        return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
+        logger.info(
+            f"OpenAI LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
+        )
+        return ChatOpenAI(
+            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
+        )
 
     elif provider == "anthropic":
         try:
@@ -138,8 +143,12 @@ def create_llm_instance(model: str, temperature: float, model_config: Dict[str, 
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
-        logger.info(f"Anthropic LLMインスタンス生成: model={model}")
-        return ChatAnthropic(model=model, temperature=temperature, api_key=api_key)
+        logger.info(
+            f"Anthropic LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
+        )
+        return ChatAnthropic(
+            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
+        )
 
     else:
         raise ValueError(f"サポートされていないプロバイダー: {provider}")
@@ -160,8 +169,9 @@ def generate_food_overconsumption_script(
         temperature = model_config["default_temperature"]
 
     provider = model_config.get("provider", "openai")
+    max_tokens = model_config.get("max_tokens", 4096)
     logger.info(
-        f"脚本生成開始: 食べ物={food_name}, プロバイダー={provider}, モデル={model}, temperature={temperature}"
+        f"脚本生成開始: 食べ物={food_name}, プロバイダー={provider}, モデル={model}, temperature={temperature}, max_tokens={max_tokens}"
     )
 
     try:
