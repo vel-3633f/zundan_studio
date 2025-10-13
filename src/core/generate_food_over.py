@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
@@ -116,12 +117,33 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
     return formatted_text
 
 
+def create_llm_instance(model: str, temperature: float, model_config: Dict[str, Any]):
+    """モデル設定に基づいてLLMインスタンスを生成する"""
+    provider = model_config.get("provider", "openai")
+
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY が設定されていません")
+        logger.info(f"OpenAI LLMインスタンス生成: model={model}")
+        return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
+
+    elif provider == "anthropic":
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY が設定されていません")
+        logger.info(f"Anthropic LLMインスタンス生成: model={model}")
+        return ChatAnthropic(model=model, temperature=temperature, api_key=api_key)
+
+    else:
+        raise ValueError(f"サポートされていないプロバイダー: {provider}")
+
+
 def generate_food_overconsumption_script(
     food_name: str, model: str = None, temperature: float = None
 ) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
     """食べ物摂取過多動画脚本を生成する"""
 
-    # モデル設定をconfigから取得
     if model is None:
         model_config = get_default_model_config()
         model = model_config["id"]
@@ -131,13 +153,12 @@ def generate_food_overconsumption_script(
     if temperature is None:
         temperature = model_config["default_temperature"]
 
+    provider = model_config.get("provider", "openai")
     logger.info(
-        f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
+        f"脚本生成開始: 食べ物={food_name}, プロバイダー={provider}, モデル={model}, temperature={temperature}"
     )
 
     try:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-
         # Tavily検索を実行
         search_results = search_food_information(food_name)
         reference_information = format_search_results_for_prompt(search_results)
@@ -149,7 +170,8 @@ def generate_food_overconsumption_script(
         system_template = load_prompt_from_file(SYSTEM_PROMPT_FILE, "system")
         user_template = load_prompt_from_file(USER_PROMPT_FILE, "user")
 
-        llm = ChatOpenAI(model=model, temperature=temperature, api_key=openai_api_key)
+        # LLMインスタンスを生成
+        llm = create_llm_instance(model, temperature, model_config)
         parser = PydanticOutputParser(pydantic_object=FoodOverconsumptionScript)
 
         prompt = ChatPromptTemplate.from_messages(
