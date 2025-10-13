@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
@@ -20,7 +19,6 @@ from langchain_community.retrievers import TavilySearchAPIRetriever
 
 _prompt_cache = {}
 
-# ロガーの設定
 logger = get_logger(__name__)
 
 
@@ -129,6 +127,14 @@ def create_llm_instance(model: str, temperature: float, model_config: Dict[str, 
         return ChatOpenAI(model=model, temperature=temperature, api_key=api_key)
 
     elif provider == "anthropic":
+        try:
+            from langchain_anthropic import ChatAnthropic
+        except ImportError:
+            raise ImportError(
+                "langchain-anthropic パッケージがインストールされていません。\n"
+                "以下のコマンドでインストールしてください: pip install langchain-anthropic"
+            )
+
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY が設定されていません")
@@ -159,18 +165,14 @@ def generate_food_overconsumption_script(
     )
 
     try:
-        # Tavily検索を実行
         search_results = search_food_information(food_name)
         reference_information = format_search_results_for_prompt(search_results)
 
-        # 検索結果をセッション状態に保存（デバッグ用）
         st.session_state.last_search_results = search_results
 
-        # プロンプトファイルから読み込み
         system_template = load_prompt_from_file(SYSTEM_PROMPT_FILE, "system")
         user_template = load_prompt_from_file(USER_PROMPT_FILE, "user")
 
-        # LLMインスタンスを生成
         llm = create_llm_instance(model, temperature, model_config)
         parser = PydanticOutputParser(pydantic_object=FoodOverconsumptionScript)
 
@@ -188,14 +190,12 @@ def generate_food_overconsumption_script(
             {"food_name": food_name, "reference_information": reference_information}
         )
 
-        # all_segmentsを作成
         all_segments = []
         for section in response_object.sections:
             all_segments.extend(section.segments)
 
         logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
 
-        # all_segmentsを設定
         response_object.all_segments = all_segments
 
         logger.info("食べ物摂取過多動画脚本の生成に成功")

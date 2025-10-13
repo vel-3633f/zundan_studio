@@ -7,6 +7,7 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
     {
         "id": "gpt-4.1-mini",
         "name": "GPT-4.1-mini",
+        "provider": "openai",
         "temperature_range": (0.0, 1.0),
         "default_temperature": 0.8,
         "recommended": True,
@@ -14,6 +15,7 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
     {
         "id": "gpt-4.1",
         "name": "GPT-4.1",
+        "provider": "openai",
         "temperature_range": (0.0, 1.0),
         "default_temperature": 0.8,
         "recommended": True,
@@ -21,21 +23,23 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
     {
         "id": "gpt-5",
         "name": "GPT-5",
+        "provider": "openai",
         "temperature_range": (0.0, 1.0),
         "default_temperature": 0.8,
         "recommended": True,
     },
     {
-        "id": "gpt-5-mini",
-        "name": "GPT-5-mini",
+        "id": "claude-sonnet-4-5-20250929",
+        "name": "Claude Sonnet 4.5",
+        "provider": "anthropic",
         "temperature_range": (0.0, 1.0),
-        "default_temperature": 0.8,
+        "default_temperature": 1,
         "recommended": True,
     },
 ]
 
 # デフォルトモデル設定
-DEFAULT_MODEL_ID = "gpt-5-mini"
+DEFAULT_MODEL_ID = "Claude Sonnet 4.5"
 
 
 # モデル設定を取得する関数
