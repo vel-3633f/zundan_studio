@@ -101,6 +101,7 @@ def validate_and_clean_data(
         cleaned_segment = {
             "speaker": speaker,
             "text": segment.get("text", ""),
+            "text_for_voicevox": segment.get("text_for_voicevox", segment.get("text", "")),
             "expression": expression,
             "visible_characters": cleaned_visible_chars,
         }
@@ -211,6 +212,7 @@ def convert_json_to_conversation_lines(
         conversation_line = {
             "speaker": segment["speaker"],
             "text": segment["text"],
+            "text_for_voicevox": segment.get("text_for_voicevox", segment["text"]),
             "background": current_background,
             "expression": segment["expression"],
             "visible_characters": segment["visible_characters"].copy(),
