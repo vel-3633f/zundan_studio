@@ -152,7 +152,8 @@ class VoiceGenerator:
         # 会話順序に従って各セリフの音声を生成
         for i, conv in enumerate(conversations):
             speaker = conv.get("speaker", "zundamon")
-            text = conv.get("text", "").strip()
+            # VOICEVOX用のひらがなテキストを優先、なければ通常のテキストを使用
+            text = conv.get("text_for_voicevox", conv.get("text", "")).strip()
 
             if not text:
                 continue
