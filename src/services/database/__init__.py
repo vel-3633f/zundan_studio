@@ -1,0 +1,1 @@
+"""Database module for Supabase connection and operations."""

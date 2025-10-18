@@ -1,20 +1,16 @@
 import streamlit as st
 import os
 import logging
-
 from src.utils.utils import (
     setup_logging,
     ensure_directories,
 )
 from config import APP_CONFIG
-
 from src.ui.components.home.session_state import init_session_state
 
-# Setup
 setup_logging(debug=os.getenv("DEBUG_MODE", "false").lower() == "true")
 logger = logging.getLogger(__name__)
 ensure_directories()
-
 
 st.set_page_config(
     page_title=f"{APP_CONFIG.title}",
@@ -28,7 +24,6 @@ def main():
     """Main application"""
     init_session_state()
 
-    # ページ設定
     pages = {
         "🏠 ホーム": {
             "module": "src.ui.pages.home_page",
@@ -41,6 +36,10 @@ def main():
         "📝 JSON編集": {
             "module": "src.ui.pages.json_editor_page",
             "function": "render_json_editor_page",
+        },
+        "🍔 食べ物管理": {
+            "module": "src.ui.pages.food_management_page",
+            "function": "render_food_management_page",
         },
     }
 
