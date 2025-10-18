@@ -6,6 +6,7 @@ import random
 from functools import lru_cache
 from typing import List, Tuple, Optional, Dict
 from PIL import Image, ImageDraw, ImageFont
+from budoux import load_default_japanese_parser
 
 from config import (
     APP_CONFIG,
@@ -91,6 +92,9 @@ class VideoProcessor:
 
         # リサイズキャッシュ（メモリ効率化）
         self._resize_cache = {}
+
+        # budoux パーサー（自然な改行用）
+        self._budoux_parser = load_default_japanese_parser()
 
         # 瞬き設定
         self.blink_config = {
@@ -509,6 +513,49 @@ class VideoProcessor:
 
         return result
 
+    def _split_text_into_lines(self, text: str, max_chars_per_line: int) -> List[str]:
+        """budouxを使って自然な位置でテキストを複数行に分割
+
+        Args:
+            text: 分割するテキスト
+            max_chars_per_line: 1行あたりの最大文字数
+
+        Returns:
+            分割されたテキストの行リスト
+        """
+        if len(text) <= max_chars_per_line:
+            return [text]
+
+        # budouxで自然な区切り位置を取得
+        chunks = self._budoux_parser.parse(text)
+
+        lines = []
+        current_line = ""
+
+        for chunk in chunks:
+            # 現在の行に追加できるかチェック
+            if len(current_line + chunk) <= max_chars_per_line:
+                current_line += chunk
+            else:
+                # 現在の行が空でない場合は保存
+                if current_line:
+                    lines.append(current_line)
+                    current_line = chunk
+                else:
+                    # chunkが1行の最大文字数を超える場合は強制的に分割
+                    if len(chunk) > max_chars_per_line:
+                        # 強制分割
+                        for i in range(0, len(chunk), max_chars_per_line):
+                            lines.append(chunk[i:i + max_chars_per_line])
+                    else:
+                        current_line = chunk
+
+        # 最後の行を追加
+        if current_line:
+            lines.append(current_line)
+
+        return lines
+
     def get_japanese_font(self) -> Optional[ImageFont.FreeTypeFont]:
         """日本語フォントを取得（キャッシュ機能付き）"""
         if self._cached_font is not None:
@@ -581,7 +628,7 @@ class VideoProcessor:
         progress: float = 1.0,
         speaker: str = "zundamon",
     ) -> np.ndarray:
-        """字幕をフレームに描画"""
+        """字幕をフレームに描画（複数行対応、左揃え）"""
         if not text.strip():
             return frame
 
@@ -596,25 +643,39 @@ class VideoProcessor:
                 logger.warning("No font available")
                 return frame
 
-            # テキストサイズ計算
-            bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
+            # テキストを複数行に分割
+            max_chars = self.subtitle_config.max_chars_per_line
+            lines = self._split_text_into_lines(text, max_chars)
+
+            # 各行のサイズを計算
+            line_heights = []
+            line_widths = []
+            max_line_width = 0
+
+            for line in lines:
+                bbox = draw.textbbox((0, 0), line, font=font)
+                width = bbox[2] - bbox[0]
+                height = bbox[3] - bbox[1]
+                line_widths.append(width)
+                line_heights.append(height)
+                max_line_width = max(max_line_width, width)
+
+            # 行間スペース
+            line_spacing = 8
 
             # 背景サイズ計算
             padding_x = self.subtitle_config.padding_x
             padding_top = self.subtitle_config.padding_top
             padding_bottom = self.subtitle_config.padding_bottom
             border_width = self.subtitle_config.border_width
-            bg_width = text_width + (padding_x * 2)
-            bg_height = text_height + padding_top + padding_bottom
 
-            # 位置計算
+            total_text_height = sum(line_heights) + line_spacing * (len(lines) - 1)
+            bg_width = max_line_width + (padding_x * 2)
+            bg_height = total_text_height + padding_top + padding_bottom
+
+            # 位置計算（背景は中央揃え）
             bg_x = (self.resolution[0] - bg_width) // 2
             bg_y = self.resolution[1] - self.subtitle_config.margin_bottom - bg_height
-
-            text_x = bg_x + padding_x
-            text_y = bg_y + padding_top
 
             # RGBA変換
             if pil_image.mode != "RGBA":
@@ -660,24 +721,34 @@ class VideoProcessor:
                     [bg_x, bg_y, bg_x + bg_width, bg_y + bg_height], fill=bg_color
                 )
 
-            # テキスト描画
+            # テキスト描画（複数行、左揃え）
             outline_width = self.subtitle_config.outline_width
             outline_color = self.subtitle_config.outline_color
             text_color = self.subtitle_config.font_color
 
-            # アウトライン
-            for dx in range(-outline_width, outline_width + 1):
-                for dy in range(-outline_width, outline_width + 1):
-                    if dx != 0 or dy != 0:
-                        draw.text(
-                            (text_x + dx, text_y + dy),
-                            text,
-                            font=font,
-                            fill=outline_color,
-                        )
+            current_y = bg_y + padding_top
 
-            # メインテキスト
-            draw.text((text_x, text_y), text, font=font, fill=text_color)
+            for i, line in enumerate(lines):
+                # 左揃え（背景の左端からpadding_x分の位置）
+                text_x = bg_x + padding_x
+                text_y = current_y
+
+                # アウトライン
+                for dx in range(-outline_width, outline_width + 1):
+                    for dy in range(-outline_width, outline_width + 1):
+                        if dx != 0 or dy != 0:
+                            draw.text(
+                                (text_x + dx, text_y + dy),
+                                line,
+                                font=font,
+                                fill=outline_color,
+                            )
+
+                # メインテキスト
+                draw.text((text_x, text_y), line, font=font, fill=text_color)
+
+                # 次の行の位置を計算
+                current_y += line_heights[i] + line_spacing
 
             # BGR形式に戻す
             return cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)

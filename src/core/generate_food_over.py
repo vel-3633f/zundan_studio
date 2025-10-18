@@ -19,7 +19,6 @@ from langchain_community.retrievers import TavilySearchAPIRetriever
 
 _prompt_cache = {}
 
-# ロガーの設定
 logger = get_logger(__name__)
 
 
@@ -116,12 +115,50 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
     return formatted_text
 
 
+def create_llm_instance(model: str, temperature: float, model_config: Dict[str, Any]):
+    """モデル設定に基づいてLLMインスタンスを生成する"""
+    provider = model_config.get("provider", "openai")
+    max_tokens = model_config.get("max_tokens", 4096)
+
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY が設定されていません")
+        logger.info(
+            f"OpenAI LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
+        )
+        return ChatOpenAI(
+            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
+        )
+
+    elif provider == "anthropic":
+        try:
+            from langchain_anthropic import ChatAnthropic
+        except ImportError:
+            raise ImportError(
+                "langchain-anthropic パッケージがインストールされていません。\n"
+                "以下のコマンドでインストールしてください: pip install langchain-anthropic"
+            )
+
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY が設定されていません")
+        logger.info(
+            f"Anthropic LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
+        )
+        return ChatAnthropic(
+            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
+        )
+
+    else:
+        raise ValueError(f"サポートされていないプロバイダー: {provider}")
+
+
 def generate_food_overconsumption_script(
     food_name: str, model: str = None, temperature: float = None
 ) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
     """食べ物摂取過多動画脚本を生成する"""
 
-    # モデル設定をconfigから取得
     if model is None:
         model_config = get_default_model_config()
         model = model_config["id"]
@@ -131,25 +168,22 @@ def generate_food_overconsumption_script(
     if temperature is None:
         temperature = model_config["default_temperature"]
 
+    provider = model_config.get("provider", "openai")
+    max_tokens = model_config.get("max_tokens", 4096)
     logger.info(
-        f"脚本生成開始: 食べ物={food_name}, モデル={model}, temperature={temperature}"
+        f"脚本生成開始: 食べ物={food_name}, プロバイダー={provider}, モデル={model}, temperature={temperature}, max_tokens={max_tokens}"
     )
 
     try:
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-
-        # Tavily検索を実行
         search_results = search_food_information(food_name)
         reference_information = format_search_results_for_prompt(search_results)
 
-        # 検索結果をセッション状態に保存（デバッグ用）
         st.session_state.last_search_results = search_results
 
-        # プロンプトファイルから読み込み
         system_template = load_prompt_from_file(SYSTEM_PROMPT_FILE, "system")
         user_template = load_prompt_from_file(USER_PROMPT_FILE, "user")
 
-        llm = ChatOpenAI(model=model, temperature=temperature, api_key=openai_api_key)
+        llm = create_llm_instance(model, temperature, model_config)
         parser = PydanticOutputParser(pydantic_object=FoodOverconsumptionScript)
 
         prompt = ChatPromptTemplate.from_messages(
@@ -166,14 +200,12 @@ def generate_food_overconsumption_script(
             {"food_name": food_name, "reference_information": reference_information}
         )
 
-        # all_segmentsを作成
         all_segments = []
         for section in response_object.sections:
             all_segments.extend(section.segments)
 
         logger.info(f"LLMから受信したセグメント数: {len(all_segments)}")
 
-        # all_segmentsを設定
         response_object.all_segments = all_segments
 
         logger.info("食べ物摂取過多動画脚本の生成に成功")

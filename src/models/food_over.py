@@ -6,7 +6,8 @@ class ConversationSegment(BaseModel):
     """会話セグメントのモデル"""
 
     speaker: str = Field(description="話者名")
-    text: str = Field(description="セリフ内容")
+    text: str = Field(description="セリフ内容（字幕表示用・漢字カタカナ含む）")
+    text_for_voicevox: str = Field(description="VOICEVOX読み上げ用テキスト（完全ひらがな）")
     expression: str = Field(description="表情名")
     visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
 
