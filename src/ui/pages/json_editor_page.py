@@ -95,11 +95,11 @@ def render_segment_editor(
             height=60,
         )
 
-    # 表情・表示キャラクター・アイテムを横並びで表示
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # 表情・表示キャラクター
+    col1, col2 = st.columns([1, 2])
 
     with col1:
-        # 表情選択
+        # 表情選択（後方互換性のため維持）
         expressions = Expressions.get_all()
         expression_options = [
             (name, config.display_name) for name, config in expressions.items()
@@ -110,7 +110,7 @@ def render_segment_editor(
             expression_index = list(expressions.keys()).index(segment["expression"])
 
         expression = st.selectbox(
-            "表情",
+            "話者の表情",
             options=[name for name, _ in expression_options],
             format_func=lambda x: dict(expression_options)[x],
             index=expression_index,
@@ -127,11 +127,50 @@ def render_segment_editor(
             key=f"visible_{section_name}_{segment_index}",
         )
 
+    # 各キャラクターの表情を個別に設定
+    st.write("**各キャラクターの表情**")
+    character_expressions = segment.get("character_expressions", {})
+
+    # visible_charactersに基づいて表情選択UIを表示
+    if visible_characters:
+        expr_cols = st.columns(len(visible_characters))
+        updated_character_expressions = {}
+
+        for idx, char_name in enumerate(visible_characters):
+            with expr_cols[idx]:
+                char_display_name = dict(character_options).get(char_name, char_name)
+
+                # デフォルト値の決定
+                if char_name in character_expressions:
+                    default_expr = character_expressions[char_name]
+                elif char_name == speaker:
+                    default_expr = expression
+                else:
+                    default_expr = "normal"
+
+                # 表情選択
+                expr_index = 0
+                if default_expr in expressions:
+                    expr_index = list(expressions.keys()).index(default_expr)
+
+                selected_expr = st.selectbox(
+                    f"{char_display_name}",
+                    options=[name for name, _ in expression_options],
+                    format_func=lambda x: dict(expression_options)[x],
+                    index=expr_index,
+                    key=f"char_expr_{section_name}_{segment_index}_{char_name}",
+                )
+
+                updated_character_expressions[char_name] = selected_expr
+    else:
+        updated_character_expressions = {}
+
     return {
         "speaker": speaker,
         "text": text,
         "expression": expression,
         "visible_characters": visible_characters,
+        "character_expressions": updated_character_expressions,
     }
 
 
@@ -187,8 +226,10 @@ def render_section_editor(
             new_segment = {
                 "speaker": "zundamon",
                 "text": "",
+                "text_for_voicevox": "",
                 "expression": "normal",
                 "visible_characters": ["zundamon"],
+                "character_expressions": {"zundamon": "normal"},
             }
             segments.append(new_segment)
             st.rerun()
