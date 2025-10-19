@@ -97,8 +97,6 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
     if not track or not track.file_path:
         return None
 
-    # プロジェクトルートからの絶対パスを構築
-    # config.app.Pathsを使用して確実にプロジェクトルートを取得
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_path = os.path.join(project_root, track.file_path)
 
@@ -115,15 +113,15 @@ def get_all_bgm_ids() -> list[str]:
     return list(BGM_LIBRARY.keys())
 
 
-SECTION_BGM_MAP: Dict[str, Dict[str, any]] = {
-    "hook": {"bgm_id": "dramatic_1", "volume": 0.30},
-    "daily": {"bgm_id": "calm_1", "volume": 0.20},
-    "background": {"bgm_id": "curious_1", "volume": 0.22},
-    "crisis": {"bgm_id": "tense_1", "volume": 0.28},
-    "deterioration": {"bgm_id": "sad_1", "volume": 0.22},
-    "honeymoon": {"bgm_id": "hopeful_1", "volume": 0.25},
-    "recovery": {"bgm_id": "upbeat_1", "volume": 0.25},
-    "learning": {"bgm_id": "noraneko", "volume": 0.18},
+SECTION_BGM_MAP: Dict[str, str] = {
+    "hook": "dramatic_1",
+    "daily": "calm_1",
+    "background": "curious_1",
+    "crisis": "tense_1",
+    "deterioration": "sad_1",
+    "honeymoon": "hopeful_1",
+    "recovery": "upbeat_1",
+    "learning": "noraneko",
 }
 
 
@@ -136,7 +134,13 @@ def get_section_bgm(section_type: str) -> Dict[str, any]:
     Returns:
         Dict[str, any]: BGM設定 (bgm_id と volume)、存在しない場合はデフォルト
     """
-    return SECTION_BGM_MAP.get(section_type, {"bgm_id": "none", "volume": 0.0})
+    bgm_id = SECTION_BGM_MAP.get(section_type, "none")
+    track = get_bgm_track(bgm_id)
+
+    if track:
+        return {"bgm_id": bgm_id, "volume": track.default_volume}
+    else:
+        return {"bgm_id": "none", "volume": 0.0}
 
 
 def format_bgm_choices_for_prompt() -> str:
