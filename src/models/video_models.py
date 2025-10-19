@@ -21,6 +21,4 @@ class AudioSegmentInfo:
     start_time: float
     intensities: List[float]
     duration: float
-    actual_frame_count: int  # 実際のフレーム数（精密な同期用）
-
-
+    actual_frame_count: int

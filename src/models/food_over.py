@@ -1,5 +1,17 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict
+from typing import List, Dict, Optional
+
+
+class StoryOutline(BaseModel):
+    """ストーリー全体のアウトライン"""
+
+    title: str = Field(description="YouTubeタイトル")
+    hook_scene_summary: str = Field(description="冒頭で見せる決定的シーンの概要")
+    eating_reason: str = Field(description="毎日食べることになった理由")
+    symptom_progression: List[str] = Field(description="症状の段階的進行リスト")
+    critical_event: str = Field(description="決定的イベントの具体的内容")
+    medical_mechanism: str = Field(description="体内で起きる医学的メカニズム")
+    solution: str = Field(description="回復のための具体的解決策")
 
 
 class ConversationSegment(BaseModel):

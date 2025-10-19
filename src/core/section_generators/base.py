@@ -1,0 +1,200 @@
+"""セクション生成の基底クラス"""
+
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+
+from src.models.food_over import VideoSection, StoryOutline, ConversationSegment
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+COMMON_RULES_FILE = Path("src/prompts/sections/common_rules.md")
+
+
+@dataclass
+class SectionContext:
+    """セクション生成時のコンテキスト情報"""
+
+    outline: StoryOutline
+    food_name: str
+    reference_information: str
+    previous_sections: List[Dict[str, Any]]  # 前のセクションのサマリー
+
+
+class SectionGeneratorBase:
+    """セクション生成の基底クラス"""
+
+    def __init__(self, section_key: str, section_name: str, min_lines: int, max_lines: int):
+        """
+        Args:
+            section_key: セクションのキー（例: "hook", "background"）
+            section_name: セクションの表示名（例: "冒頭フック・危機の予告"）
+            min_lines: 最低セリフ数
+            max_lines: 最大セリフ数
+        """
+        self.section_key = section_key
+        self.section_name = section_name
+        self.min_lines = min_lines
+        self.max_lines = max_lines
+        self.prompt_file = Path(f"src/prompts/sections/section_{section_key}.md")
+
+    def load_common_rules(self) -> str:
+        """共通ルールを読み込む"""
+        try:
+            if not COMMON_RULES_FILE.exists():
+                raise FileNotFoundError(f"共通ルールファイルが見つかりません: {COMMON_RULES_FILE}")
+
+            with open(COMMON_RULES_FILE, "r", encoding="utf-8") as f:
+                return f.read().strip()
+
+        except Exception as e:
+            logger.error(f"共通ルール読み込みエラー: {str(e)}")
+            raise
+
+    def load_section_prompt(self) -> str:
+        """セクション固有のプロンプトを読み込む"""
+        try:
+            if not self.prompt_file.exists():
+                raise FileNotFoundError(f"プロンプトファイルが見つかりません: {self.prompt_file}")
+
+            with open(self.prompt_file, "r", encoding="utf-8") as f:
+                return f.read().strip()
+
+        except Exception as e:
+            logger.error(f"セクションプロンプト読み込みエラー ({self.section_key}): {str(e)}")
+            raise
+
+    def build_context_text(self, context: SectionContext) -> str:
+        """コンテキスト情報をテキスト化"""
+        context_text = f"""
+## 全体のアウトライン
+- YouTubeタイトル: {context.outline.title}
+- 食べ物: {context.food_name}
+- 毎日食べる理由: {context.outline.eating_reason}
+- 症状の進行: {', '.join(context.outline.symptom_progression)}
+- 決定的イベント: {context.outline.critical_event}
+- 医学的メカニズム: {context.outline.medical_mechanism}
+- 解決策: {context.outline.solution}
+"""
+
+        # 前のセクションのサマリー
+        if context.previous_sections:
+            context_text += "\n## 前のセクションまでの流れ\n"
+            for prev in context.previous_sections:
+                context_text += f"""
+### {prev['section_name']}（{prev['segment_count']}セリフ）
+- 最後の話者: {prev['last_speaker']}
+- 最後のセリフ: {prev['last_text']}
+- 要約: {prev['summary']}
+"""
+
+        return context_text
+
+    def generate(self, context: SectionContext, llm: Any) -> VideoSection:
+        """セクションを生成する
+
+        Args:
+            context: セクションコンテキスト
+            llm: LLMインスタンス
+
+        Returns:
+            VideoSection: 生成されたセクション
+        """
+        logger.info(f"セクション生成開始: {self.section_name} ({self.min_lines}-{self.max_lines}セリフ)")
+
+        try:
+            # プロンプト読み込み
+            common_rules = self.load_common_rules()
+            section_prompt = self.load_section_prompt()
+            context_text = self.build_context_text(context)
+
+            # パーサー設定
+            parser = PydanticOutputParser(pydantic_object=VideoSection)
+
+            # 完全なプロンプト構築
+            full_prompt = f"""
+{common_rules}
+
+---
+
+{section_prompt}
+
+---
+
+{context_text}
+
+## 参考情報
+{context.reference_information}
+"""
+
+            # プロンプトチェーン構築
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"),
+                ("user", full_prompt)
+            ]).partial(format_instructions=parser.get_format_instructions())
+
+            # LLMチェーン実行
+            chain = prompt | llm | parser
+
+            logger.info(f"{self.section_name} をLLMで生成中...")
+            section = chain.invoke({
+                "food_name": context.food_name
+            })
+
+            segment_count = len(section.segments)
+            logger.info(f"セクション生成成功: {self.section_name} - {segment_count}セリフ")
+
+            # セリフ数チェック
+            if segment_count < self.min_lines:
+                logger.warning(f"セリフ数が少なめ: {segment_count}/{self.min_lines}")
+            elif segment_count > self.max_lines:
+                logger.warning(f"セリフ数が多め: {segment_count}/{self.max_lines}")
+
+            return section
+
+        except Exception as e:
+            error_msg = f"セクション生成エラー ({self.section_name}): {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise
+
+    @staticmethod
+    def summarize_section(section: VideoSection) -> str:
+        """セクションを要約（次のセクションへの引き継ぎ用）"""
+        summary_parts = []
+
+        # 主要な展開
+        summary_parts.append(f"主な内容: {section.section_name}")
+
+        # ずんだもんの心理状態を抽出
+        zundamon_segments = [s for s in section.segments if s.speaker == "zundamon"]
+        if zundamon_segments:
+            last_zundamon = zundamon_segments[-1]
+            summary_parts.append(f"ずんだもんの状態: {last_zundamon.text[:30]}...")
+
+        # 症状キーワードを抽出
+        if "異変" in section.section_name or "危機" in section.section_name:
+            symptoms = SectionGeneratorBase._extract_symptoms(section.segments)
+            if symptoms:
+                summary_parts.append(f"現れた症状: {', '.join(symptoms[:3])}")
+
+        return " / ".join(summary_parts)
+
+    @staticmethod
+    def _extract_symptoms(segments: List[ConversationSegment]) -> List[str]:
+        """セグメントから症状キーワードを抽出"""
+        symptoms = []
+        symptom_keywords = [
+            "痛", "だるい", "眠れない", "集中できない", "肌荒れ",
+            "頭痛", "吐き気", "疲労", "動悸", "めまい", "不眠"
+        ]
+
+        for seg in segments:
+            for keyword in symptom_keywords:
+                if keyword in seg.text and keyword not in symptoms:
+                    symptoms.append(keyword)
+
+        return symptoms
