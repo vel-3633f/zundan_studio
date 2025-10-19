@@ -114,9 +114,9 @@ def get_all_bgm_ids() -> list[str]:
 
 
 SECTION_BGM_MAP: Dict[str, str] = {
-    "hook": "dramatic_1",
+    "hook": "hirusagari",
     "daily": "calm_1",
-    "background": "curious_1",
+    "background": "hirusagari",
     "crisis": "tense_1",
     "deterioration": "sad_1",
     "honeymoon": "hopeful_1",
