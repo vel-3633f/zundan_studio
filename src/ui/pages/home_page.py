@@ -13,6 +13,10 @@ from src.ui.components.home.json_loader import (
     extract_backgrounds_from_json,
 )
 from src.ui.components.home.background_gallery import render_background_gallery
+from src.ui.components.home.section_bgm_editor import (
+    render_section_bgm_editor,
+    apply_bgm_settings_to_sections,
+)
 from config import Characters
 
 logger = logging.getLogger(__name__)
@@ -67,6 +71,9 @@ def render_home_page():
     # 背景一覧を表示
     render_background_gallery(background_options)
 
+    # BGM編集UI（セクションがある場合のみ表示）
+    render_section_bgm_editor()
+
     render_conversation_input(background_options, expression_options)
 
     st.markdown("---")
@@ -103,6 +110,8 @@ def render_home_page():
                     from src.models.food_over import VideoSection
                     sections_data = st.session_state.loaded_json_data.get("sections", [])
                     if sections_data:
+                        # BGM設定を適用
+                        sections_data = apply_bgm_settings_to_sections(sections_data)
                         sections = [VideoSection(**section_data) for section_data in sections_data]
                         logger.info(f"セクション情報を使用: {len(sections)}セクション")
 
