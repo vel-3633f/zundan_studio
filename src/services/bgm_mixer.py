@@ -9,7 +9,7 @@ from typing import List, Optional
 from moviepy.audio.AudioClip import CompositeAudioClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 
-from src.config.bgm_library import get_bgm_file_path, get_bgm_track
+from config.bgm_library import get_bgm_file_path, get_bgm_track
 from src.models.food_over import VideoSection
 
 logger = logging.getLogger(__name__)

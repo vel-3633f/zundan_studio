@@ -8,7 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
 from src.models.food_over import VideoSection, StoryOutline, ConversationSegment
-from src.config.bgm_library import format_bgm_choices_for_prompt
+from config.bgm_library import format_bgm_choices_for_prompt, get_section_bgm
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,13 +23,15 @@ class SectionContext:
     outline: StoryOutline
     food_name: str
     reference_information: str
-    previous_sections: List[Dict[str, Any]]  # 前のセクションのサマリー
+    previous_sections: List[Dict[str, Any]]
 
 
 class SectionGeneratorBase:
     """セクション生成の基底クラス"""
 
-    def __init__(self, section_key: str, section_name: str, min_lines: int, max_lines: int):
+    def __init__(
+        self, section_key: str, section_name: str, min_lines: int, max_lines: int
+    ):
         """
         Args:
             section_key: セクションのキー（例: "hook", "background"）
@@ -47,7 +49,9 @@ class SectionGeneratorBase:
         """共通ルールを読み込む"""
         try:
             if not COMMON_RULES_FILE.exists():
-                raise FileNotFoundError(f"共通ルールファイルが見つかりません: {COMMON_RULES_FILE}")
+                raise FileNotFoundError(
+                    f"共通ルールファイルが見つかりません: {COMMON_RULES_FILE}"
+                )
 
             with open(COMMON_RULES_FILE, "r", encoding="utf-8") as f:
                 return f.read().strip()
@@ -60,13 +64,17 @@ class SectionGeneratorBase:
         """セクション固有のプロンプトを読み込む"""
         try:
             if not self.prompt_file.exists():
-                raise FileNotFoundError(f"プロンプトファイルが見つかりません: {self.prompt_file}")
+                raise FileNotFoundError(
+                    f"プロンプトファイルが見つかりません: {self.prompt_file}"
+                )
 
             with open(self.prompt_file, "r", encoding="utf-8") as f:
                 return f.read().strip()
 
         except Exception as e:
-            logger.error(f"セクションプロンプト読み込みエラー ({self.section_key}): {str(e)}")
+            logger.error(
+                f"セクションプロンプト読み込みエラー ({self.section_key}): {str(e)}"
+            )
             raise
 
     def build_context_text(self, context: SectionContext) -> str:
@@ -82,7 +90,6 @@ class SectionGeneratorBase:
 - 解決策: {context.outline.solution}
 """
 
-        # 前のセクションのサマリー
         if context.previous_sections:
             context_text += "\n## 前のセクションまでの流れ\n"
             for prev in context.previous_sections:
@@ -105,52 +112,64 @@ class SectionGeneratorBase:
         Returns:
             VideoSection: 生成されたセクション
         """
-        logger.info(f"セクション生成開始: {self.section_name} ({self.min_lines}-{self.max_lines}セリフ)")
+        logger.info(
+            f"セクション生成開始: {self.section_name} ({self.min_lines}-{self.max_lines}セリフ)"
+        )
 
         try:
-            # プロンプト読み込み
             common_rules = self.load_common_rules()
             section_prompt = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
-            # パーサー設定
             parser = PydanticOutputParser(pydantic_object=VideoSection)
 
-            # 完全なプロンプト構築
             full_prompt = f"""
-{common_rules}
+                {common_rules}
 
----
+                ---
 
-{section_prompt}
+                {section_prompt}
 
----
+                ---
 
-{context_text}
+                {context_text}
 
-## 参考情報
-{context.reference_information}
-"""
+                ## 参考情報
+                {context.reference_information}
+                """
 
             # プロンプトチェーン構築
-            prompt = ChatPromptTemplate.from_messages([
-                ("system", "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"),
-                ("user", full_prompt)
-            ]).partial(
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    (
+                        "system",
+                        "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。",
+                    ),
+                    ("user", full_prompt),
+                ]
+            ).partial(
                 format_instructions=parser.get_format_instructions(),
-                bgm_choices=format_bgm_choices_for_prompt()
+                bgm_choices=format_bgm_choices_for_prompt(),
             )
 
             # LLMチェーン実行
             chain = prompt | llm | parser
 
             logger.info(f"{self.section_name} をLLMで生成中...")
-            section = chain.invoke({
-                "food_name": context.food_name
-            })
+            section = chain.invoke({"food_name": context.food_name})
+
+            # セクションタイプに応じた固定BGMを設定
+            bgm_config = get_section_bgm(self.section_key)
+            section.bgm_id = bgm_config["bgm_id"]
+            section.bgm_volume = bgm_config["volume"]
+            logger.info(
+                f"BGM設定: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
+            )
 
             segment_count = len(section.segments)
-            logger.info(f"セクション生成成功: {self.section_name} - {segment_count}セリフ")
+            logger.info(
+                f"セクション生成成功: {self.section_name} - {segment_count}セリフ"
+            )
 
             # セリフ数チェック
             if segment_count < self.min_lines:
@@ -170,16 +189,13 @@ class SectionGeneratorBase:
         """セクションを要約（次のセクションへの引き継ぎ用）"""
         summary_parts = []
 
-        # 主要な展開
         summary_parts.append(f"主な内容: {section.section_name}")
 
-        # ずんだもんの心理状態を抽出
         zundamon_segments = [s for s in section.segments if s.speaker == "zundamon"]
         if zundamon_segments:
             last_zundamon = zundamon_segments[-1]
             summary_parts.append(f"ずんだもんの状態: {last_zundamon.text[:30]}...")
 
-        # 症状キーワードを抽出
         if "異変" in section.section_name or "危機" in section.section_name:
             symptoms = SectionGeneratorBase._extract_symptoms(section.segments)
             if symptoms:
@@ -192,8 +208,17 @@ class SectionGeneratorBase:
         """セグメントから症状キーワードを抽出"""
         symptoms = []
         symptom_keywords = [
-            "痛", "だるい", "眠れない", "集中できない", "肌荒れ",
-            "頭痛", "吐き気", "疲労", "動悸", "めまい", "不眠"
+            "痛",
+            "だるい",
+            "眠れない",
+            "集中できない",
+            "肌荒れ",
+            "頭痛",
+            "吐き気",
+            "疲労",
+            "動悸",
+            "めまい",
+            "不眠",
         ]
 
         for seg in segments:

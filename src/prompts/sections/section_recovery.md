@@ -81,12 +81,6 @@
 - アウトラインの「solution」を必ず反映
 - 明るく締めくくる
 
-## BGM 選択
-
-このセクションの雰囲気に合わせて適切な BGM を選択してください:
-
-{bgm_choices}
-
 ## 出力形式
 
 {format_instructions}
