@@ -69,7 +69,7 @@ class VideoGenerator:
             if sections:
                 logger.info("BGMをミキシング中...")
                 section_durations = self._calculate_section_durations(
-                    sections, audio_durations
+                    sections, audio_durations, audio_file_list
                 )
                 combined_audio = self.bgm_mixer.mix_bgm_with_voiceover(
                     combined_audio, sections, section_durations
@@ -180,13 +180,14 @@ class VideoGenerator:
         return output_path
 
     def _calculate_section_durations(
-        self, sections: List[VideoSection], audio_durations: List[float]
+        self, sections: List[VideoSection], audio_durations: Dict[str, float], audio_file_list: List[str]
     ) -> List[float]:
         """各セクションの長さを計算
 
         Args:
             sections: ビデオセクションのリスト
-            audio_durations: 各セグメントの音声長さのリスト
+            audio_durations: {audio_path: duration}の辞書
+            audio_file_list: 音声ファイルパスのリスト
 
         Returns:
             List[float]: 各セクションの長さ（秒）のリスト
@@ -196,9 +197,11 @@ class VideoGenerator:
 
         for section in sections:
             segment_count = len(section.segments)
+            # このセクションに属する音声ファイルのパスを取得
+            section_audio_files = audio_file_list[current_segment_index : current_segment_index + segment_count]
             # このセクションに属する音声の長さを合計
             section_duration = sum(
-                audio_durations[current_segment_index : current_segment_index + segment_count]
+                audio_durations.get(audio_path, 0.0) for audio_path in section_audio_files
             )
             section_durations.append(section_duration)
             current_segment_index += segment_count

@@ -128,11 +128,10 @@ def render_home_page():
                     st.session_state.generated_video_path = result
                     st.success("🎉 会話動画生成完了！")
 
-                    if "loaded_json_data" in st.session_state:
-                        del st.session_state.loaded_json_data
-                        logger.info(
-                            "Cleared loaded_json_data from session_state to prevent memory leak"
-                        )
+                    # 動画生成後はBGM設定をクリア（次回生成時のため）
+                    if "section_bgm_settings" in st.session_state:
+                        del st.session_state.section_bgm_settings
+                        logger.info("Cleared section_bgm_settings from session_state")
 
             finally:
                 st.session_state.generation_in_progress = False

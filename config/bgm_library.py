@@ -6,6 +6,10 @@
 from dataclasses import dataclass
 from typing import Dict, Optional
 from pathlib import Path
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -94,8 +98,12 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
         return None
 
     # プロジェクトルートからの絶対パスを構築
-    project_root = Path(__file__).parent.parent.parent
-    return str(project_root / track.file_path)
+    # config.app.Pathsを使用して確実にプロジェクトルートを取得
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    full_path = os.path.join(project_root, track.file_path)
+
+    logger.debug(f"BGMファイルパス解決: {bgm_id} -> {full_path}")
+    return full_path
 
 
 def get_all_bgm_ids() -> list[str]:
