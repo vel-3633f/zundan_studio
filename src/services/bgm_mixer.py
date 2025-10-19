@@ -8,6 +8,7 @@ import logging
 from typing import List, Optional
 from moviepy.audio.AudioClip import CompositeAudioClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
+from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
 from config.bgm_library import get_bgm_file_path, get_bgm_track
 from src.models.food_over import VideoSection
@@ -66,7 +67,10 @@ class BGMMixer:
 
             # フェードイン・フェードアウト（0.5秒）
             fade_duration = min(0.5, duration / 4)  # 最大0.5秒、短いセクションは1/4
-            bgm_clip = bgm_clip.audio_fadein(fade_duration).audio_fadeout(fade_duration)
+            bgm_clip = bgm_clip.with_effects([
+                AudioFadeIn(fade_duration),
+                AudioFadeOut(fade_duration)
+            ])
 
             # タイムライン上の位置を設定
             bgm_clip = bgm_clip.with_start(start_time)

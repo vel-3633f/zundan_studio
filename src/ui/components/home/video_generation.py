@@ -28,11 +28,9 @@ def generate_conversation_video(
         video_gen = VideoGenerator()
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # Generate audio
         progress_bar.progress(0.1)
         status_text.text("会話音声を生成中...")
 
-        # キャラクター個別設定を使用（パラメータはNoneを渡す）
         audio_files = voice_gen.generate_conversation_voices(
             conversations=conversations,
             speed=None,
@@ -45,7 +43,6 @@ def generate_conversation_video(
             st.error("音声生成に失敗しました")
             return None
 
-        # Generate video
         progress_bar.progress(0.5)
         status_text.text("会話動画を生成中...")
 
@@ -82,17 +79,14 @@ def generate_conversation_video(
         return None
 
     finally:
-        # メモリリーク対策：必ずクリーンアップを実行
         try:
             if video_gen is not None:
                 logger.info("Starting cleanup to prevent memory leaks...")
                 video_gen.cleanup()
 
-            # VoiceGeneratorも明示的に削除
             del voice_gen
             del video_gen
 
-            # 強制ガベージコレクション
             collected = gc.collect()
             logger.info(f"Final cleanup: collected {collected} objects")
 

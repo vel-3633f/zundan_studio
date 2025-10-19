@@ -20,8 +20,6 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
-# LRUキャッシュ用のグローバル関数（メモリ効率化）
-# maxsize=10: 実際に使うキャラクター数は2-3程度なので10で十分（メモリリーク対策）
 @lru_cache(maxsize=10)
 def _load_character_images_cached(character_name: str, expression: str, base_path: str) -> tuple:
     """キャラクター画像を読み込み（キャッシュ機能付き）
@@ -53,7 +51,6 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
             if img is not None:
                 images[key] = img
         else:
-            # フォールバック：normal表情を試す
             if expression != "normal":
                 fallback_path = os.path.join(base_path, "normal", f"normal_{key}.png")
                 if os.path.exists(fallback_path):
@@ -63,13 +60,10 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
                         continue
 
     if images:
-        # 全画像を同じサイズにリサイズ
         target_size = images[list(images.keys())[0]].shape[:2]
         for key in images:
             images[key] = cv2.resize(images[key], (target_size[1], target_size[0]))
 
-        # numpy配列をbytesに変換してキャッシュ可能にする
-        # (shape, dtype, bytes) のタプルとして保存
         cached_images = []
         for key, img in images.items():
             img_bytes = img.tobytes()
@@ -87,29 +81,22 @@ class VideoProcessor:
         self.characters = Characters.get_all()
         self.subtitle_config = SUBTITLE_CONFIG
 
-        # フォントキャッシュ
         self._cached_font = None
-
-        # リサイズキャッシュ（メモリ効率化）
         self._resize_cache = {}
-
-        # budoux パーサー（自然な改行用）
         self._budoux_parser = load_default_japanese_parser()
 
-        # 瞬き設定
         self.blink_config = {
-            "min_interval": 2.0,  # 最小瞬き間隔（秒）
-            "max_interval": 6.0,  # 最大瞬き間隔（秒）
-            "duration": 0.15,  # 瞬きの長さ（秒）
+            "min_interval": 2.0,
+            "max_interval": 6.0,
+            "duration": 0.15,
         }
 
     def load_character_images(
         self, character_name: str = "zundamon", expression: str = "normal"
     ) -> Dict[str, np.ndarray]:
-        """キャラクター画像を読み込み（特定の表情）- LRUキャッシュ対応"""
+        """キャラクター画像を読み込み（特定の表情）"""
         base_path = Paths.get_character_dir(character_name)
 
-        # キャッシュから取得
         cached_data, target_size = _load_character_images_cached(
             character_name, expression, base_path
         )
@@ -117,11 +104,10 @@ class VideoProcessor:
         if not cached_data:
             return {}
 
-        # bytesからnumpy配列に復元
         images = {}
         for key, shape, dtype_str, img_bytes in cached_data:
             img = np.frombuffer(img_bytes, dtype=dtype_str).reshape(shape)
-            images[key] = img.copy()  # copy()で独立したメモリ領域を確保
+            images[key] = img.copy()
 
         return images
 
@@ -133,11 +119,9 @@ class VideoProcessor:
 
         expressions = set()
 
-        # フォルダ構造から表情を取得
         for item in os.listdir(base_path):
             item_path = os.path.join(base_path, item)
             if os.path.isdir(item_path):
-                # フォルダ内に必要なファイルが存在するかチェック
                 required_files = [
                     f"{item}_closed.png",
                     f"{item}_half.png",
@@ -149,7 +133,6 @@ class VideoProcessor:
                 ):
                     expressions.add(item)
 
-        # config.pyで定義された表情のみを返す
         available_expressions = Expressions.get_available_names()
         return [expr for expr in available_expressions if expr in expressions]
 
@@ -189,26 +172,21 @@ class VideoProcessor:
             logger.error(f"Background directory not found: {bg_dir}")
             return backgrounds
 
-        # サポートする画像拡張子
         supported_extensions = Backgrounds.get_supported_extensions()
 
         for filename in os.listdir(bg_dir):
             file_path = os.path.join(bg_dir, filename)
 
-            # ファイルかどうかチェック
             if not os.path.isfile(file_path):
                 continue
 
-            # 拡張子チェック
             _, ext = os.path.splitext(filename.lower())
             if ext not in supported_extensions:
                 continue
 
             try:
-                # 画像読み込み
                 bg = cv2.imread(file_path)
                 if bg is not None:
-                    # リサイズ
                     bg = cv2.resize(bg, self.resolution)
 
                     bg_name = os.path.splitext(filename)[0]
@@ -242,7 +220,6 @@ class VideoProcessor:
         current_time = random.uniform(1.0, 3.0)
 
         while current_time < total_duration - self.blink_config["duration"]:
-            # 瞬きの開始と終了時間
             blink_start = current_time
             blink_end = current_time + self.blink_config["duration"]
 
@@ -250,7 +227,6 @@ class VideoProcessor:
                 {"start": blink_start, "end": blink_end, "character": character_name}
             )
 
-            # 次の瞬きまでの間隔をランダムに決定
             interval = random.uniform(
                 self.blink_config["min_interval"], self.blink_config["max_interval"]
             )
@@ -314,27 +290,19 @@ class VideoProcessor:
         target_width: int,
         target_height: int,
     ) -> np.ndarray:
-        """リサイズ画像をキャッシュから取得（メモリ効率化）"""
-        # 口の状態を判定
+        """リサイズ画像をキャッシュから取得"""
         mouth_state = self._get_mouth_state(intensity, is_blinking)
-
-        # キャッシュキー
         cache_key = (char_name, expression, mouth_state, target_width, target_height)
 
-        # キャッシュにあれば返す
         if cache_key in self._resize_cache:
             return self._resize_cache[cache_key]
 
-        # リサイズ実行
         resized_img = cv2.resize(original_img, (target_width, target_height))
 
-        # キャッシュサイズ制限（最大100枚まで）
         if len(self._resize_cache) >= 100:
-            # 最も古いエントリを削除（FIFO）
             first_key = next(iter(self._resize_cache))
             del self._resize_cache[first_key]
 
-        # キャッシュに保存
         self._resize_cache[cache_key] = resized_img
 
         logger.debug(f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}")
@@ -363,7 +331,6 @@ class VideoProcessor:
             char_h, char_w = character.shape[:2]
             bg_h, bg_w = background.shape[:2]
 
-            # 境界チェック - 位置が負の値になる場合も考慮
             if y < 0:
                 char_rgb = char_rgb[-y:, :]
                 char_alpha = char_alpha[-y:, :]
@@ -388,14 +355,12 @@ class VideoProcessor:
                     char_rgb = char_rgb[:, :char_w]
                     char_alpha = char_alpha[:, :char_w]
 
-            # 有効な領域がある場合のみ合成
             if (
                 char_h > 0
                 and char_w > 0
                 and char_rgb.shape[0] > 0
                 and char_rgb.shape[1] > 0
             ):
-                # アルファチャンネルの次元を拡張
                 char_alpha_expanded = char_alpha[:, :, np.newaxis]
                 for c in range(3):
                     result[y : y + char_h, x : x + char_w, c] = (
@@ -422,7 +387,6 @@ class VideoProcessor:
         result = background.copy()
 
         if conversation_mode == "solo":
-            # ソロモード：話しているキャラクターのみ表示
             sorted_chars = []
             for char_name, speaker_data in active_speakers.items():
                 intensity = 0
@@ -431,7 +395,7 @@ class VideoProcessor:
                 else:
                     intensity = float(speaker_data) if speaker_data else 0
 
-                if intensity > 0.1:  # 実際に話している場合のみ
+                if intensity > 0.1:
                     sorted_chars.append((char_name, speaker_data))
         else:
             sorted_chars = sorted(
@@ -445,22 +409,18 @@ class VideoProcessor:
             if char_name not in character_images or char_name not in self.characters:
                 continue
 
-            # 表情データの取得（後方互換性を考慮）
             if isinstance(speaker_data, dict):
                 intensity = speaker_data.get("intensity", 0.0)
                 expression = speaker_data.get("expression", "normal")
             else:
-                # 旧形式（float）の場合
                 intensity = float(speaker_data)
                 expression = "normal"
 
-            # 表情画像セットの取得
             if expression in character_images[char_name]:
                 char_imgs = character_images[char_name][expression]
             elif "normal" in character_images[char_name]:
                 char_imgs = character_images[char_name]["normal"]
             else:
-                # 最初に見つかった表情を使用
                 available_expressions = list(character_images[char_name].keys())
                 if available_expressions:
                     char_imgs = character_images[char_name][available_expressions[0]]
@@ -468,37 +428,31 @@ class VideoProcessor:
                     logger.error(f"No expressions available for {char_name}")
                     continue
 
-            # 瞬きチェック
             is_blinking = False
             if blink_timings:
                 is_blinking = self.is_character_blinking(
                     current_time, blink_timings, char_name
                 )
 
-            # 口画像選択（瞬きを考慮）
             mouth_img = self.select_mouth_image(intensity, char_imgs, is_blinking)
 
             bg_h, bg_w = background.shape[:2]
             char_h, char_w = mouth_img.shape[:2]
 
-            # キャラクター設定からサイズ比率を取得
             char_config = self.characters.get(char_name, Characters.ZUNDAMON)
             unified_size_ratio = char_config.size_ratio
             target_height = int(bg_h * unified_size_ratio)
             target_width = int(char_w * target_height / char_h)
 
-            # 位置計算：常にconfig.pyの設定を使用
             x_offset_ratio = char_config.x_offset_ratio
             x = int(bg_w * x_offset_ratio - target_width // 2)
 
             y = int(bg_h * char_config.y_offset_ratio)
 
-            # サイズ制限
             if target_width > bg_w * 0.8:
                 target_width = int(bg_w * 0.8)
                 target_height = int(char_h * target_width / char_w)
 
-            # リサイズキャッシュを使用（メモリ効率化）
             mouth_img = self._get_resized_image(
                 mouth_img, char_name, expression, intensity, is_blinking,
                 target_width, target_height
@@ -508,7 +462,6 @@ class VideoProcessor:
             x = max(-target_width // 3, min(x, bg_w - target_width // 3 * 2))
             y = max(margin, min(y, bg_h - target_height - margin))
 
-            # キャラクター合成
             result = self.composite_frame(result, mouth_img, (x, y))
 
         return result
@@ -526,31 +479,25 @@ class VideoProcessor:
         if len(text) <= max_chars_per_line:
             return [text]
 
-        # budouxで自然な区切り位置を取得
         chunks = self._budoux_parser.parse(text)
 
         lines = []
         current_line = ""
 
         for chunk in chunks:
-            # 現在の行に追加できるかチェック
             if len(current_line + chunk) <= max_chars_per_line:
                 current_line += chunk
             else:
-                # 現在の行が空でない場合は保存
                 if current_line:
                     lines.append(current_line)
                     current_line = chunk
                 else:
-                    # chunkが1行の最大文字数を超える場合は強制的に分割
                     if len(chunk) > max_chars_per_line:
-                        # 強制分割
                         for i in range(0, len(chunk), max_chars_per_line):
                             lines.append(chunk[i:i + max_chars_per_line])
                     else:
                         current_line = chunk
 
-        # 最後の行を追加
         if current_line:
             lines.append(current_line)
 
@@ -563,7 +510,6 @@ class VideoProcessor:
 
         local_fonts_dir = Paths.get_fonts_dir()
 
-        # 優先順位付きフォントリスト
         priority_fonts = [
             "NotoSansJP-Black.ttf",
         ]
@@ -592,11 +538,9 @@ class VideoProcessor:
                             except (OSError, IOError, ValueError):
                                 continue
                     else:
-                        # TTF/OTFファイルの場合
                         font = ImageFont.truetype(
                             font_path, self.subtitle_config.font_size
                         )
-                        # 日本語文字でテスト
                         try:
                             self._cached_font = font
                             logger.info(f"Successfully loaded font: {font_path}")
@@ -633,21 +577,17 @@ class VideoProcessor:
             return frame
 
         try:
-            # PIL形式に変換
             pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             draw = ImageDraw.Draw(pil_image)
 
-            # フォント取得
             font = self.get_japanese_font()
             if font is None:
                 logger.warning("No font available")
                 return frame
 
-            # テキストを複数行に分割
             max_chars = self.subtitle_config.max_chars_per_line
             lines = self._split_text_into_lines(text, max_chars)
 
-            # 各行のサイズを計算
             line_heights = []
             line_widths = []
             max_line_width = 0
@@ -660,10 +600,8 @@ class VideoProcessor:
                 line_heights.append(height)
                 max_line_width = max(max_line_width, width)
 
-            # 行間スペース
             line_spacing = 8
 
-            # 背景サイズ計算
             padding_x = self.subtitle_config.padding_x
             padding_top = self.subtitle_config.padding_top
             padding_bottom = self.subtitle_config.padding_bottom
@@ -673,23 +611,19 @@ class VideoProcessor:
             bg_width = max_line_width + (padding_x * 2)
             bg_height = total_text_height + padding_top + padding_bottom
 
-            # 位置計算（背景は中央揃え）
             bg_x = (self.resolution[0] - bg_width) // 2
             bg_y = self.resolution[1] - self.subtitle_config.margin_bottom - bg_height
 
-            # RGBA変換
             if pil_image.mode != "RGBA":
                 pil_image = pil_image.convert("RGBA")
                 draw = ImageDraw.Draw(pil_image)
 
-            # 話者に応じた色設定
             radius = self.subtitle_config.border_radius
             bg_color = self.subtitle_config.background_color
             border_color = self.characters.get(
                 speaker, Characters.ZUNDAMON
             ).subtitle_color
 
-            # 背景描画
             try:
                 draw.rounded_rectangle(
                     [
@@ -707,7 +641,6 @@ class VideoProcessor:
                     fill=bg_color,
                 )
             except AttributeError:
-                # フォールバック
                 draw.rectangle(
                     [
                         bg_x - border_width,
@@ -721,7 +654,6 @@ class VideoProcessor:
                     [bg_x, bg_y, bg_x + bg_width, bg_y + bg_height], fill=bg_color
                 )
 
-            # テキスト描画（複数行、左揃え）
             outline_width = self.subtitle_config.outline_width
             outline_color = self.subtitle_config.outline_color
             text_color = self.subtitle_config.font_color
@@ -729,11 +661,9 @@ class VideoProcessor:
             current_y = bg_y + padding_top
 
             for i, line in enumerate(lines):
-                # 左揃え（背景の左端からpadding_x分の位置）
                 text_x = bg_x + padding_x
                 text_y = current_y
 
-                # アウトライン
                 for dx in range(-outline_width, outline_width + 1):
                     for dy in range(-outline_width, outline_width + 1):
                         if dx != 0 or dy != 0:
@@ -744,13 +674,10 @@ class VideoProcessor:
                                 fill=outline_color,
                             )
 
-                # メインテキスト
                 draw.text((text_x, text_y), line, font=font, fill=text_color)
 
-                # 次の行の位置を計算
                 current_y += line_heights[i] + line_spacing
 
-            # BGR形式に戻す
             return cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
 
         except Exception as e:

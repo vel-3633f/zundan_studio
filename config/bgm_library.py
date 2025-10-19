@@ -115,16 +115,15 @@ def get_all_bgm_ids() -> list[str]:
     return list(BGM_LIBRARY.keys())
 
 
-# セクションごとの固定BGM設定
 SECTION_BGM_MAP: Dict[str, Dict[str, any]] = {
-    "hook": {"bgm_id": "dramatic_1", "volume": 0.30},  # 冒頭フック - ドラマチック
-    "daily": {"bgm_id": "calm_1", "volume": 0.20},  # 日常導入 - 落ち着いた
-    "background": {"bgm_id": "curious_1", "volume": 0.22},  # 背景説明 - 興味深い
-    "crisis": {"bgm_id": "tense_1", "volume": 0.28},  # 危機の発生 - 緊迫感
-    "deterioration": {"bgm_id": "sad_1", "volume": 0.22},  # 悪化 - 悲しい
-    "honeymoon": {"bgm_id": "hopeful_1", "volume": 0.25},  # ハネムーン期 - 希望
-    "recovery": {"bgm_id": "upbeat_1", "volume": 0.25},  # 回復 - 明るく軽快
-    "learning": {"bgm_id": "noraneko", "volume": 0.18},  # 教訓 - リラックス
+    "hook": {"bgm_id": "dramatic_1", "volume": 0.30},
+    "daily": {"bgm_id": "calm_1", "volume": 0.20},
+    "background": {"bgm_id": "curious_1", "volume": 0.22},
+    "crisis": {"bgm_id": "tense_1", "volume": 0.28},
+    "deterioration": {"bgm_id": "sad_1", "volume": 0.22},
+    "honeymoon": {"bgm_id": "hopeful_1", "volume": 0.25},
+    "recovery": {"bgm_id": "upbeat_1", "volume": 0.25},
+    "learning": {"bgm_id": "noraneko", "volume": 0.18},
 }
 
 

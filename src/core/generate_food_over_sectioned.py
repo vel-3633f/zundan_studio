@@ -64,10 +64,6 @@ def generate_food_overconsumption_script_sectioned(
             f"プロバイダー={provider}, モデル={model}, temperature={temperature}"
         )
 
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # Phase 0: 初期準備
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
         st.info("🔍 食べ物情報を検索中...")
         search_results = search_food_information(food_name)
         reference_info = format_search_results_for_prompt(search_results)
@@ -80,14 +76,9 @@ def generate_food_overconsumption_script_sectioned(
         st.success(f"✅ タイトル決定: {outline.title}")
         logger.info(f"アウトライン生成完了: {outline.title}")
 
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # Phase 1-8: セクション順次生成
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
         sections = []
         previous_sections_summary = []
 
-        # プログレスバー
         progress_bar = st.progress(0)
         status_text = st.empty()
 
@@ -97,7 +88,6 @@ def generate_food_overconsumption_script_sectioned(
                 f"({config['min']}-{config['max']}セリフ)"
             )
 
-            # セクション生成器を作成
             generator = SectionGeneratorBase(
                 section_key=config["key"],
                 section_name=config["name"],
@@ -105,7 +95,6 @@ def generate_food_overconsumption_script_sectioned(
                 max_lines=config["max"]
             )
 
-            # コンテキスト構築
             context = SectionContext(
                 outline=outline,
                 food_name=food_name,
@@ -113,12 +102,10 @@ def generate_food_overconsumption_script_sectioned(
                 previous_sections=previous_sections_summary
             )
 
-            # セクション生成
             try:
                 section = generator.generate(context, llm)
                 sections.append(section)
 
-                # サマリーを作成して保存
                 section_summary = {
                     "section_name": section.section_name,
                     "segment_count": len(section.segments),
@@ -128,15 +115,13 @@ def generate_food_overconsumption_script_sectioned(
                 }
                 previous_sections_summary.append(section_summary)
 
-                # プログレス更新
                 progress_bar.progress((i + 1) / len(SECTION_CONFIGS))
 
-                # リアルタイムプレビュー
                 with st.expander(
                     f"✅ {config['name']} ({len(section.segments)}セリフ)",
                     expanded=False
                 ):
-                    for seg in section.segments[:3]:  # 最初の3セリフだけ表示
+                    for seg in section.segments[:3]:
                         st.write(f"**{seg.speaker}**: {seg.text}")
                     if len(section.segments) > 3:
                         st.write(f"... 他 {len(section.segments) - 3} セリフ")
@@ -155,13 +140,8 @@ def generate_food_overconsumption_script_sectioned(
                     "details": str(e)
                 }
 
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # Phase 9: 統合・品質チェック
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
         st.info("🔍 品質チェック中...")
 
-        # 全セグメント統合
         all_segments = []
         for section in sections:
             all_segments.extend(section.segments)
@@ -169,7 +149,6 @@ def generate_food_overconsumption_script_sectioned(
         total_segments = len(all_segments)
         logger.info(f"全セグメント数: {total_segments}")
 
-        # セリフ数チェック
         if total_segments < 130:
             st.warning(f"⚠️ セリフ数が少なめです（{total_segments}/130）")
             logger.warning(f"セリフ数が目標より少ない: {total_segments}/130")
@@ -180,7 +159,6 @@ def generate_food_overconsumption_script_sectioned(
             st.success(f"✅ セリフ数OK: {total_segments}セリフ")
             logger.info(f"セリフ数が適正範囲: {total_segments}")
 
-        # セクション別セリフ数の表示
         with st.expander("📊 セクション別セリフ数", expanded=False):
             for i, section in enumerate(sections):
                 config = SECTION_CONFIGS[i]
@@ -191,8 +169,7 @@ def generate_food_overconsumption_script_sectioned(
                     f"(目標: {config['min']}-{config['max']})"
                 )
 
-        # 最終オブジェクト作成
-        estimated_duration_sec = total_segments * 4  # 1セリフ約4秒
+        estimated_duration_sec = total_segments * 4
         estimated_duration = f"{estimated_duration_sec // 60}分{estimated_duration_sec % 60}秒"
 
         script = FoodOverconsumptionScript(
@@ -203,7 +180,6 @@ def generate_food_overconsumption_script_sectioned(
             all_segments=all_segments
         )
 
-        # セッションステートに保存
         st.session_state.last_generated_json = script
         st.session_state.last_llm_output = f"セクション分割方式で生成成功: {total_segments}セリフ"
 

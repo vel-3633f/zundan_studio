@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 @st.cache_data
 def get_background_names_cached():
-    """背景名を取得（キャッシュ版 - メモリリーク対策）"""
+    """背景名を取得（キャッシュ版）"""
     processor = VideoProcessor()
     names = processor.get_background_names()
     del processor
@@ -33,17 +33,13 @@ def get_background_names_cached():
 
 def render_home_page():
     """ホームページをレンダリング"""
-    # Header
     st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
 
-    # Sidebar
     enable_subtitles, conversation_mode = render_sidebar()
 
-    # 背景オプションの初期化（デフォルト値）
     background_options = ["default"] + get_background_names_cached()
 
-    # JSONから背景情報を読み込む（既に読み込まれている場合）
     if (
         hasattr(st.session_state, "loaded_json_data")
         and st.session_state.loaded_json_data
@@ -64,14 +60,11 @@ def render_home_page():
 
     available_characters = list(Characters.get_all().keys())
 
-    # JSON読み込み前は常に最新の背景オプションを取得して渡す
     current_background_options = background_options
     render_json_selector(available_characters, current_background_options, expression_options)
 
-    # 背景一覧を表示
     render_background_gallery(background_options)
 
-    # BGM編集UI（セクションがある場合のみ表示）
     render_section_bgm_editor()
 
     render_conversation_input(background_options, expression_options)
@@ -104,13 +97,11 @@ def render_home_page():
                 status_text = st.empty()
                 status_text.text("生成中...")
 
-                # セクション情報を取得（JSONから読み込まれている場合）
                 sections = None
                 if hasattr(st.session_state, "loaded_json_data") and st.session_state.loaded_json_data:
                     from src.models.food_over import VideoSection
                     sections_data = st.session_state.loaded_json_data.get("sections", [])
                     if sections_data:
-                        # BGM設定を適用
                         sections_data = apply_bgm_settings_to_sections(sections_data)
                         sections = [VideoSection(**section_data) for section_data in sections_data]
                         logger.info(f"セクション情報を使用: {len(sections)}セクション")
@@ -128,7 +119,6 @@ def render_home_page():
                     st.session_state.generated_video_path = result
                     st.success("🎉 会話動画生成完了！")
 
-                    # 動画生成後はBGM設定をクリア（次回生成時のため）
                     if "section_bgm_settings" in st.session_state:
                         del st.session_state.section_bgm_settings
                         logger.info("Cleared section_bgm_settings from session_state")
@@ -136,5 +126,4 @@ def render_home_page():
             finally:
                 st.session_state.generation_in_progress = False
 
-    # Results
     render_results()
