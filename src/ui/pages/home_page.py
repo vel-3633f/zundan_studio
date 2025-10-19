@@ -36,7 +36,10 @@ def render_home_page():
     # Sidebar
     enable_subtitles, conversation_mode = render_sidebar()
 
-    background_options = ["default"]
+    # 背景オプションの初期化（デフォルト値）
+    background_options = ["default"] + get_background_names_cached()
+
+    # JSONから背景情報を読み込む（既に読み込まれている場合）
     if (
         hasattr(st.session_state, "loaded_json_data")
         and st.session_state.loaded_json_data
@@ -51,13 +54,15 @@ def render_home_page():
             f"🎬 JSONファイルから {len(json_backgrounds)} の背景を読み込みました: {', '.join(json_backgrounds)}"
         )
     else:
-        background_options = ["default"] + get_background_names_cached()
         logger.info(f"Using backgrounds from image files: {background_options}")
 
     expression_options = Expressions.get_available_names()
 
     available_characters = list(Characters.get_all().keys())
-    render_json_selector(available_characters, background_options, expression_options)
+
+    # JSON読み込み前は常に最新の背景オプションを取得して渡す
+    current_background_options = background_options
+    render_json_selector(available_characters, current_background_options, expression_options)
 
     # 背景一覧を表示
     render_background_gallery(background_options)

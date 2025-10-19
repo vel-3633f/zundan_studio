@@ -1,11 +1,14 @@
 import streamlit as st
 from typing import List
+import logging
 from config import (
     UI_CONFIG,
     Characters,
     Backgrounds,
     Expressions,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def render_conversation_input(
@@ -78,11 +81,24 @@ def render_conversation_input(
 
             with cols[2]:
                 st.write("背景")
-                current_bg_index = (
-                    background_options.index(line["background"])
-                    if line["background"] in background_options
-                    else 0
-                )
+                # 背景が利用可能なオプションに存在するかチェック
+                if line["background"] in background_options:
+                    current_bg_index = background_options.index(line["background"])
+                else:
+                    # 存在しない場合はdefaultを探す、なければ0
+                    current_bg_index = (
+                        background_options.index("default")
+                        if "default" in background_options
+                        else 0
+                    )
+                    # 存在しない背景の場合は警告をログに出力
+                    if line["background"] != "default":
+                        logger.warning(
+                            f"Background '{line['background']}' not found in available options. "
+                            f"Available: {background_options}. Using index {current_bg_index}."
+                        )
+                    # 背景をリセット
+                    line["background"] = background_options[current_bg_index]
 
                 line["background"] = st.selectbox(
                     "背景選択",
@@ -111,10 +127,8 @@ def render_conversation_input(
                     label_visibility="collapsed",
                 )
 
-            # Visible characters selection
             with cols[4]:
                 st.write("表示キャラクター")
-                # ナレーター以外のキャラクターのみを表示選択肢に含める
                 char_options = [
                     opt
                     for opt in Characters.get_display_options()
@@ -125,9 +139,7 @@ def render_conversation_input(
                     opt[0]: opt[1].split(" ")[1] for opt in char_options
                 }
 
-                # ナレーターの場合、話者を自動追加しない
                 if line["speaker"] == "narrator":
-                    # visible_charactersからnarratorを除外
                     line["visible_characters"] = [
                         char
                         for char in line["visible_characters"]
@@ -176,7 +188,9 @@ def render_conversation_input(
                     with expr_cols[idx]:
                         char_display = characters.get(char_name)
                         if char_display:
-                            display_name = f"{char_display.emoji} {char_display.display_name}"
+                            display_name = (
+                                f"{char_display.emoji} {char_display.display_name}"
+                            )
                         else:
                             display_name = char_name
 
