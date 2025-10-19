@@ -107,6 +107,12 @@ zundamon: ...うん、そうするのだ。ちゃんと治すのだ
 - 友人の支援的な態度を描写
 - 次のセクション（真相解明）への繋ぎを意識
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -114,4 +120,6 @@ zundamon: ...うん、そうするのだ。ちゃんと治すのだ
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "危機・転機となる決定的イベント"
 - scene_background: hospital, clinic など適切な背景
+- bgm_id: セクションの雰囲気に合ったBGMのID（深刻な危機のシーンなので dramatic_1 や sad_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.25-0.30 推奨）
 - segments: 20-30個

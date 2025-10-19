@@ -85,6 +85,12 @@ narrator: では、次に回復のための方法を見ていきましょう
 - めたんとナレーターの会話を交互に配置
 - 次のセクション（回復）への橋渡しを意識
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -92,4 +98,6 @@ narrator: では、次に回復のための方法を見ていきましょう
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "真相解明・学習フェーズ"
 - scene_background: library, laboratory, classroom のいずれか
+- bgm_id: セクションの雰囲気に合ったBGMのID（学習・理解を深めるシーンなので calm_1 や curious_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.20-0.25 推奨）
 - segments: 15-25個

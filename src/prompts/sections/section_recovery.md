@@ -96,6 +96,12 @@ zundamon: 任せるのだ！健康第一なのだ！
 - アウトラインの「solution」を必ず反映
 - 明るく締めくくる
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -103,4 +109,6 @@ zundamon: 任せるのだ！健康第一なのだ！
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "回復・新しい習慣"
 - scene_background: home, park, cafe など明るい背景
+- bgm_id: セクションの雰囲気に合ったBGMのID（回復と希望のシーンなので hopeful_1 や upbeat_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.23-0.25 推奨）
 - segments: 10-20個

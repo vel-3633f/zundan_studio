@@ -52,6 +52,12 @@ narrator: 事態はここに至るまで、どのような経緯を辿ったの�
 - 次のセクションへスムーズに繋がる終わり方
 - めたんの心配する表情と態度を丁寧に描写
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -59,4 +65,6 @@ narrator: 事態はここに至るまで、どのような経緯を辿ったの�
 必ずVideoSectionオブジェクトとして出力してください:
 - section_name: "冒頭フック・危機の予告"
 - scene_background: 適切な英語の背景名（hospital, home など）
+- bgm_id: セクションの雰囲気に合ったBGMのID（緊迫した冒頭シーンなので dramatic_1 や tense_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.25-0.30 推奨）
 - segments: ConversationSegmentの配列（6-10個）

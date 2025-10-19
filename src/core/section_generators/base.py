@@ -8,6 +8,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
 from src.models.food_over import VideoSection, StoryOutline, ConversationSegment
+from src.config.bgm_library import format_bgm_choices_for_prompt
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -135,7 +136,10 @@ class SectionGeneratorBase:
             prompt = ChatPromptTemplate.from_messages([
                 ("system", "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"),
                 ("user", full_prompt)
-            ]).partial(format_instructions=parser.get_format_instructions())
+            ]).partial(
+                format_instructions=parser.get_format_instructions(),
+                bgm_choices=format_bgm_choices_for_prompt()
+            )
 
             # LLMチェーン実行
             chain = prompt | llm | parser

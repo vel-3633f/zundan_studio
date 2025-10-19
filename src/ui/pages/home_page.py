@@ -97,12 +97,22 @@ def render_home_page():
                 status_text = st.empty()
                 status_text.text("生成中...")
 
+                # セクション情報を取得（JSONから読み込まれている場合）
+                sections = None
+                if hasattr(st.session_state, "loaded_json_data") and st.session_state.loaded_json_data:
+                    from src.models.food_over import VideoSection
+                    sections_data = st.session_state.loaded_json_data.get("sections", [])
+                    if sections_data:
+                        sections = [VideoSection(**section_data) for section_data in sections_data]
+                        logger.info(f"セクション情報を使用: {len(sections)}セクション")
+
                 result = generate_conversation_video(
                     conversations=valid_lines,
                     progress_bar=progress_bar,
                     status_text=status_text,
                     enable_subtitles=enable_subtitles,
                     conversation_mode=conversation_mode,
+                    sections=sections,
                 )
 
                 if result:

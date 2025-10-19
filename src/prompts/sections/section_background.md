@@ -67,6 +67,12 @@ narrator: では、その点について見ていきましょう...
 - 視聴者が理解しやすい平易な言葉で
 - 次のセクション（日常導入）への橋渡しを意識
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -74,4 +80,6 @@ narrator: では、その点について見ていきましょう...
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "食品解説・背景情報"
 - scene_background: library, classroom, laboratory のいずれか
+- bgm_id: セクションの雰囲気に合ったBGMのID（落ち着いた説明シーンなので calm_1 や curious_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.20-0.25 推奨）
 - segments: 10-15個（最初はナレーターのシーン導入から）

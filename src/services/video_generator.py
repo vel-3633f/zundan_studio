@@ -11,6 +11,8 @@ from src.services.resource_manager import ResourceManager
 from src.services.audio_combiner import AudioCombiner
 from src.services.subtitle_generator import SubtitleGenerator
 from src.services.frame_generator import FrameGenerator
+from src.services.bgm_mixer import BGMMixer
+from src.models.food_over import VideoSection
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,7 @@ class VideoGenerator:
         self.audio_combiner = AudioCombiner(self.audio_processor, self.fps)
         self.subtitle_generator = SubtitleGenerator()
         self.frame_generator = FrameGenerator(self.video_processor, self.fps)
+        self.bgm_mixer = BGMMixer()
 
     def generate_conversation_video(
         self,
@@ -35,6 +38,7 @@ class VideoGenerator:
         progress_callback=None,
         enable_subtitles: bool = True,
         conversation_mode: str = "duo",
+        sections: Optional[List[VideoSection]] = None,
     ) -> Optional[str]:
         """会話動画生成（メイン機能）"""
         if not output_path:
@@ -60,6 +64,16 @@ class VideoGenerator:
             )
             if combined_audio is None:
                 return None
+
+            # BGMミキシング（sectionsが提供されている場合）
+            if sections:
+                logger.info("BGMをミキシング中...")
+                section_durations = self._calculate_section_durations(
+                    sections, audio_durations
+                )
+                combined_audio = self.bgm_mixer.mix_bgm_with_voiceover(
+                    combined_audio, sections, section_durations
+                )
 
             # 実際の音声時間を基準にフレーム数を計算
             actual_total_duration = combined_audio.duration
@@ -164,6 +178,37 @@ class VideoGenerator:
         del final_clip
 
         return output_path
+
+    def _calculate_section_durations(
+        self, sections: List[VideoSection], audio_durations: List[float]
+    ) -> List[float]:
+        """各セクションの長さを計算
+
+        Args:
+            sections: ビデオセクションのリスト
+            audio_durations: 各セグメントの音声長さのリスト
+
+        Returns:
+            List[float]: 各セクションの長さ（秒）のリスト
+        """
+        section_durations = []
+        current_segment_index = 0
+
+        for section in sections:
+            segment_count = len(section.segments)
+            # このセクションに属する音声の長さを合計
+            section_duration = sum(
+                audio_durations[current_segment_index : current_segment_index + segment_count]
+            )
+            section_durations.append(section_duration)
+            current_segment_index += segment_count
+
+        logger.info(
+            f"セクション長さ計算完了: {len(sections)}セクション, "
+            f"合計 {sum(section_durations):.2f}秒"
+        )
+
+        return section_durations
 
     def cleanup(self):
         """メモリリソースのクリーンアップ（メモリリーク対策）"""

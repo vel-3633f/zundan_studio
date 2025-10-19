@@ -17,6 +17,7 @@ def generate_conversation_video(
     status_text,
     enable_subtitles: bool = True,
     conversation_mode: str = "duo",
+    sections=None,
 ) -> Optional[str]:
     """Generate conversation video"""
     voice_gen = None
@@ -64,6 +65,7 @@ def generate_conversation_video(
             progress_callback=progress_callback,
             enable_subtitles=enable_subtitles,
             conversation_mode=conversation_mode,
+            sections=sections,
         )
 
         if result:

@@ -79,6 +79,12 @@ zundamon: 任せるのだ！これからも{food_name}生活を続けるのだ�
 - 友人の軽い心配を一蹴するずんだもんの強気な態度
 - 次のセクション（楽観期）へスムーズに繋がる前向きな終わり方
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -86,4 +92,6 @@ zundamon: 任せるのだ！これからも{food_name}生活を続けるのだ�
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "日常導入・理由付け"
 - scene_background: home, kitchen, cafe のいずれか
+- bgm_id: セクションの雰囲気に合ったBGMのID（楽観的で明るいシーンなので upbeat_1 や relaxed_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.22-0.25 推奨）
 - segments: 12-18個

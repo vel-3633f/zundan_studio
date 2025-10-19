@@ -121,6 +121,12 @@ zundamon: まだ大丈夫なのだ...
 - 医学的に正確な症状（アウトラインと参考情報を活用）
 - セリフ数は25-35の範囲で、自然な会話の流れを優先
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -128,4 +134,6 @@ zundamon: まだ大丈夫なのだ...
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "異変期・段階的悪化"
 - scene_background: home, office など適切な背景
+- bgm_id: セクションの雰囲気に合ったBGMのID（徐々に悪化していくシーンなので tense_1 や curious_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.22-0.28 推奨）
 - segments: 25-35個

@@ -85,6 +85,12 @@ zundamon: 任せるのだ！めたんの心配は杞憂だったのだ！
 - プラシーボ効果的な「良い変化」の報告
 - 次のセクション（異変期）への伏線として、友人の心配を残す
 
+## BGM選択
+
+このセクションの雰囲気に合わせて適切なBGMを選択してください:
+
+{bgm_choices}
+
 ## 出力形式
 
 {format_instructions}
@@ -92,4 +98,6 @@ zundamon: 任せるのだ！めたんの心配は杞憂だったのだ！
 必ずVideoSectionオブジェクトとして出力:
 - section_name: "楽観期・ハネムーン期"
 - scene_background: home, park, cafe のいずれか
+- bgm_id: セクションの雰囲気に合ったBGMのID（明るく楽観的なシーンなので upbeat_1 や relaxed_1 を推奨）
+- bgm_volume: BGMの音量（デフォルト: 0.22-0.25 推奨）
 - segments: 15-25個
