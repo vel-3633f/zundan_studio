@@ -9,9 +9,8 @@
 - **セリフ数**: 最低 15 セリフ、最大 25 セリフ
 - **キャラクター構成**: narrator + metan（2 人のみ）
 - **背景**: 医学的・科学的な解説に適した教育的な背景を動的に選択
-  - 学習場所（library, classroom, study_room など）
-  - 医療・科学的な場所（laboratory, medical_office, research_room など）
-  - 健康教育に適した場所（health_center, nutrition_center など）
+  - 医療・科学的な場所
+  - 健康教育に適した場所
   - 解説の内容に最も適した具体的な背景を選択
 
 ## 【重要】シーン導入文章
