@@ -8,7 +8,11 @@
 
 - **セリフ数**: 最低 10 セリフ、最大 20 セリフ
 - **キャラクター構成**: zundamon + (metan or tsumugi) 2 人のみ
-- **背景**: home, park, cafe など明るい日常背景
+- **背景**: 回復と希望を表現する明るく前向きな背景を選択
+  - 自宅での健康的な生活（kitchen, dining_table, living_room など）
+  - 外出先での元気な様子（park, cafe, restaurant など）
+  - 健康的な活動場所（gym, outdoor, market など）
+  - 明るく希望のある雰囲気を出すため、複数の背景を使い分けることを推奨
 
 ## 【重要】シーン導入文章
 

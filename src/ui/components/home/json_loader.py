@@ -276,6 +276,11 @@ def load_json_to_session_state(
         st.session_state.conversation_lines = conversation_lines
         st.session_state.loaded_json_data = data  # 背景抽出用にJSONデータを保存
 
+        # section_bgm_settingsをクリアして再初期化を促す
+        if "section_bgm_settings" in st.session_state:
+            del st.session_state.section_bgm_settings
+            logger.info("Cleared section_bgm_settings to trigger re-initialization")
+
         # メタデータも保存（オプション）
         metadata = {
             "title": data.get("title", "Untitled"),

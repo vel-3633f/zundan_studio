@@ -8,7 +8,11 @@
 
 - **セリフ数**: 最低 12 セリフ、最大 18 セリフ
 - **キャラクター構成**: zundamon + (metan or tsumugi) 2 人のみ
-- **背景**: home, kitchen, cafe など日常的な背景
+- **背景**: 会話の流れやシーンに応じて具体的な背景を動的に選択
+  - 自宅シーン（living_room, kitchen, dining_table など）
+  - 外出先（cafe, restaurant, park など）
+  - 食べ物を食べる場所（その食品の種類に応じて、ramen_shop, convenience_store, fast_food など）
+  - シーンの展開に合わせて、複数の背景を使い分けることを推奨
 
 ## 【重要】シーン導入文章
 

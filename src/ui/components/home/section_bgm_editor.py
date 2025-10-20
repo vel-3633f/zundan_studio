@@ -35,8 +35,20 @@ def render_section_bgm_editor() -> None:
 
     st.subheader("🎵 セクションBGM設定")
 
-    # セクションBGM設定を初期化（まだ無い場合）
+    # セクションBGM設定を初期化（まだ無い場合、またはセクション数が変わった場合）
+    current_section_count = len(data["sections"])
+    need_reinit = False
+
     if "section_bgm_settings" not in st.session_state:
+        need_reinit = True
+    else:
+        # 既存の設定があるセクション数を確認
+        existing_section_count = len([k for k in st.session_state.section_bgm_settings.keys() if k.startswith("section_")])
+        if existing_section_count != current_section_count:
+            need_reinit = True
+            logger.info(f"Section count changed from {existing_section_count} to {current_section_count}, re-initializing")
+
+    if need_reinit:
         st.session_state.section_bgm_settings = {}
         for idx, section in enumerate(data["sections"]):
             section_key = f"section_{idx}"
@@ -44,6 +56,7 @@ def render_section_bgm_editor() -> None:
                 "bgm_id": section.get("bgm_id", "none"),
                 "bgm_volume": section.get("bgm_volume", 0.25),
             }
+        logger.info(f"Initialized section_bgm_settings for {current_section_count} sections")
 
     bgm_options = get_bgm_options()
 
