@@ -66,6 +66,30 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         mood="dramatic",
         description="ドラマチックなシーン、重要な転機に適したBGM",
     ),
+    "mayonaka_omocha": BGMTrack(
+        id="mayonaka_omocha",
+        name="真夜中のおもちゃ箱",
+        file_path="assets/bgm/真夜中のおもちゃ箱.mp3",
+        default_volume=0.30,
+        mood="mysterious",
+        description="ミステリアスで少し不思議な雰囲気のBGM",
+    ),
+    "maou_piano25": BGMTrack(
+        id="maou_piano25",
+        name="日常ピアノ25",
+        file_path="assets/bgm/maou_日常_piano25.mp3",
+        default_volume=0.30,
+        mood="peaceful",
+        description="穏やかな日常シーン、落ち着いた雰囲気のピアノBGM",
+    ),
+    "2_23_am": BGMTrack(
+        id="2_23_am",
+        name="2:23 AM",
+        file_path="assets/bgm/2_23_AM_2.mp3",
+        default_volume=0.30,
+        mood="ambient",
+        description="深夜の静かな雰囲気、アンビエントな背景音楽",
+    ),
 }
 
 
@@ -114,14 +138,14 @@ def get_all_bgm_ids() -> list[str]:
 
 
 SECTION_BGM_MAP: Dict[str, str] = {
-    "hook": "hirusagari",
-    "daily": "calm_1",
-    "background": "hirusagari",
-    "crisis": "tense_1",
-    "deterioration": "sad_1",
-    "honeymoon": "hopeful_1",
-    "recovery": "upbeat_1",
-    "learning": "noraneko",
+    "hook": "mayonaka_omocha",
+    "daily": "honwaka",
+    "background": "maou_piano25",
+    "crisis": "mayonaka_omocha",
+    "deterioration": "nandesho",
+    "honeymoon": "hirusagari",
+    "recovery": "noraneko",
+    "learning": "2_23_am",
 }
 
 
