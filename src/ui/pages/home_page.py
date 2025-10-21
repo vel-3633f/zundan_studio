@@ -12,7 +12,7 @@ from src.ui.components.home.json_loader import (
     render_json_selector,
     extract_backgrounds_from_json,
 )
-from src.ui.components.home.background_gallery import render_background_gallery
+from src.ui.components.home.background_gallery import render_background_status_check
 from src.ui.components.home.section_bgm_editor import (
     render_section_bgm_editor,
     apply_bgm_settings_to_sections,
@@ -63,7 +63,7 @@ def render_home_page():
     current_background_options = background_options
     render_json_selector(available_characters, current_background_options, expression_options)
 
-    render_background_gallery(background_options)
+    render_background_status_check(background_options)
 
     render_section_bgm_editor()
 
