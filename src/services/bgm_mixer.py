@@ -5,8 +5,8 @@
 
 import os
 import logging
-from typing import List, Optional
-from moviepy.audio.AudioClip import CompositeAudioClip
+from typing import List, Optional, Dict
+from moviepy.audio.AudioClip import CompositeAudioClip, concatenate_audioclips
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
@@ -20,7 +20,8 @@ class BGMMixer:
     """BGMミキサークラス"""
 
     def __init__(self):
-        pass
+        # BGMファイルのキャッシュ（デッドロック回避のため）
+        self._bgm_cache: Dict[str, AudioFileClip] = {}
 
     def create_section_bgm_track(
         self,
@@ -50,14 +51,22 @@ class BGMMixer:
             return None
 
         try:
-            # BGMファイルを読み込み
-            bgm_clip = AudioFileClip(bgm_file_path)
+            # BGMファイルを読み込み（キャッシュから取得またはロード）
+            if bgm_file_path not in self._bgm_cache:
+                self._bgm_cache[bgm_file_path] = AudioFileClip(bgm_file_path)
+
+            base_bgm_clip = self._bgm_cache[bgm_file_path]
 
             # BGMをループさせて必要な長さに調整
-            if bgm_clip.duration < duration:
+            if base_bgm_clip.duration < duration:
                 # ループ回数を計算
-                loop_count = int(duration / bgm_clip.duration) + 1
-                bgm_clip = bgm_clip.loop(n=loop_count)
+                loop_count = int(duration / base_bgm_clip.duration) + 1
+                # moviepy 2.2.1では loop() メソッドが存在しないため、
+                # concatenate_audioclips を使用してループを実装
+                bgm_clip = concatenate_audioclips([base_bgm_clip] * loop_count)
+            else:
+                # subclipped()は元のクリップを変更しないので、そのまま使用可能
+                bgm_clip = base_bgm_clip
 
             # 必要な長さにトリミング
             bgm_clip = bgm_clip.subclipped(0, duration)
@@ -148,3 +157,14 @@ class BGMMixer:
                     clip.close()
             except Exception as e:
                 logger.warning(f"BGMクリップのクリーンアップエラー: {e}")
+
+    def clear_cache(self):
+        """BGMキャッシュをクリアする"""
+        for bgm_file_path, clip in self._bgm_cache.items():
+            try:
+                if clip:
+                    clip.close()
+            except Exception as e:
+                logger.warning(f"BGMキャッシュのクリーンアップエラー ({bgm_file_path}): {e}")
+        self._bgm_cache.clear()
+        logger.info("BGMキャッシュをクリアしました")

@@ -117,6 +117,10 @@ class VideoGenerator:
 
             self.audio_combiner.cleanup_audio_clips(combined_audio, audio_clips)
 
+            # BGMキャッシュのクリア
+            if sections:
+                self.bgm_mixer.clear_cache()
+
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
@@ -125,6 +129,12 @@ class VideoGenerator:
 
         except Exception as e:
             logger.error(f"Video generation failed: {e}")
+            # エラー時もBGMキャッシュをクリア
+            if sections:
+                try:
+                    self.bgm_mixer.clear_cache()
+                except Exception:
+                    pass
             return None
 
     def _combine_video_with_audio(
@@ -202,6 +212,10 @@ class VideoGenerator:
     def cleanup(self):
         """メモリリソースのクリーンアップ"""
         try:
+            # BGMキャッシュのクリア
+            if hasattr(self, 'bgm_mixer') and self.bgm_mixer:
+                self.bgm_mixer.clear_cache()
+
             if hasattr(self.video_processor, '_resize_cache'):
                 cache_size = len(self.video_processor._resize_cache)
                 self.video_processor._resize_cache.clear()
