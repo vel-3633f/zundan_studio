@@ -20,8 +20,8 @@ class BGMMixer:
     """BGMミキサークラス"""
 
     def __init__(self):
-        # BGMファイルのキャッシュ（デッドロック回避のため）
-        self._bgm_cache: Dict[str, AudioFileClip] = {}
+        # 使用中のBGMクリップを追跡（クリーンアップ用）
+        self._active_clips: List[AudioFileClip] = []
 
     def create_section_bgm_track(
         self,
@@ -51,11 +51,9 @@ class BGMMixer:
             return None
 
         try:
-            # BGMファイルを読み込み（キャッシュから取得またはロード）
-            if bgm_file_path not in self._bgm_cache:
-                self._bgm_cache[bgm_file_path] = AudioFileClip(bgm_file_path)
-
-            base_bgm_clip = self._bgm_cache[bgm_file_path]
+            # 各セクションで新しいクリップインスタンスを作成（デッドロック回避）
+            base_bgm_clip = AudioFileClip(bgm_file_path)
+            self._active_clips.append(base_bgm_clip)
 
             # BGMをループさせて必要な長さに調整
             if base_bgm_clip.duration < duration:
@@ -64,8 +62,8 @@ class BGMMixer:
                 # moviepy 2.2.1では loop() メソッドが存在しないため、
                 # concatenate_audioclips を使用してループを実装
                 bgm_clip = concatenate_audioclips([base_bgm_clip] * loop_count)
+                self._active_clips.append(bgm_clip)
             else:
-                # subclipped()は元のクリップを変更しないので、そのまま使用可能
                 bgm_clip = base_bgm_clip
 
             # 必要な長さにトリミング
@@ -159,12 +157,14 @@ class BGMMixer:
                 logger.warning(f"BGMクリップのクリーンアップエラー: {e}")
 
     def clear_cache(self):
-        """BGMキャッシュをクリアする"""
-        for bgm_file_path, clip in self._bgm_cache.items():
+        """使用中のBGMクリップをクリーンアップする"""
+        closed_count = 0
+        for clip in self._active_clips:
             try:
                 if clip:
                     clip.close()
+                    closed_count += 1
             except Exception as e:
-                logger.warning(f"BGMキャッシュのクリーンアップエラー ({bgm_file_path}): {e}")
-        self._bgm_cache.clear()
-        logger.info("BGMキャッシュをクリアしました")
+                logger.warning(f"BGMクリップのクリーンアップエラー: {e}")
+        self._active_clips.clear()
+        logger.info(f"BGMクリップをクリアしました ({closed_count}個のクリップをクローズ)")
