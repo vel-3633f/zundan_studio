@@ -13,6 +13,10 @@ from src.ui.components.home.json_loader import (
     extract_backgrounds_from_json,
 )
 from src.ui.components.home.background_gallery import render_background_gallery
+from src.ui.components.home.section_bgm_editor import (
+    render_section_bgm_editor,
+    apply_bgm_settings_to_sections,
+)
 from config import Characters
 
 logger = logging.getLogger(__name__)
@@ -20,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 @st.cache_data
 def get_background_names_cached():
-    """背景名を取得（キャッシュ版 - メモリリーク対策）"""
+    """背景名を取得（キャッシュ版）"""
     processor = VideoProcessor()
     names = processor.get_background_names()
     del processor
@@ -29,14 +33,13 @@ def get_background_names_cached():
 
 def render_home_page():
     """ホームページをレンダリング"""
-    # Header
     st.title(f"🏠 {APP_CONFIG.title}")
     st.markdown(APP_CONFIG.description)
 
-    # Sidebar
     enable_subtitles, conversation_mode = render_sidebar()
 
-    background_options = ["default"]
+    background_options = ["default"] + get_background_names_cached()
+
     if (
         hasattr(st.session_state, "loaded_json_data")
         and st.session_state.loaded_json_data
@@ -51,16 +54,18 @@ def render_home_page():
             f"🎬 JSONファイルから {len(json_backgrounds)} の背景を読み込みました: {', '.join(json_backgrounds)}"
         )
     else:
-        background_options = ["default"] + get_background_names_cached()
         logger.info(f"Using backgrounds from image files: {background_options}")
 
     expression_options = Expressions.get_available_names()
 
     available_characters = list(Characters.get_all().keys())
-    render_json_selector(available_characters, background_options, expression_options)
 
-    # 背景一覧を表示
+    current_background_options = background_options
+    render_json_selector(available_characters, current_background_options, expression_options)
+
     render_background_gallery(background_options)
+
+    render_section_bgm_editor()
 
     render_conversation_input(background_options, expression_options)
 
@@ -92,26 +97,33 @@ def render_home_page():
                 status_text = st.empty()
                 status_text.text("生成中...")
 
+                sections = None
+                if hasattr(st.session_state, "loaded_json_data") and st.session_state.loaded_json_data:
+                    from src.models.food_over import VideoSection
+                    sections_data = st.session_state.loaded_json_data.get("sections", [])
+                    if sections_data:
+                        sections_data = apply_bgm_settings_to_sections(sections_data)
+                        sections = [VideoSection(**section_data) for section_data in sections_data]
+                        logger.info(f"セクション情報を使用: {len(sections)}セクション")
+
                 result = generate_conversation_video(
                     conversations=valid_lines,
                     progress_bar=progress_bar,
                     status_text=status_text,
                     enable_subtitles=enable_subtitles,
                     conversation_mode=conversation_mode,
+                    sections=sections,
                 )
 
                 if result:
                     st.session_state.generated_video_path = result
                     st.success("🎉 会話動画生成完了！")
 
-                    if "loaded_json_data" in st.session_state:
-                        del st.session_state.loaded_json_data
-                        logger.info(
-                            "Cleared loaded_json_data from session_state to prevent memory leak"
-                        )
+                    if "section_bgm_settings" in st.session_state:
+                        del st.session_state.section_bgm_settings
+                        logger.info("Cleared section_bgm_settings from session_state")
 
             finally:
                 st.session_state.generation_in_progress = False
 
-    # Results
     render_results()

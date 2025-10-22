@@ -11,6 +11,8 @@ from src.services.resource_manager import ResourceManager
 from src.services.audio_combiner import AudioCombiner
 from src.services.subtitle_generator import SubtitleGenerator
 from src.services.frame_generator import FrameGenerator
+from src.services.bgm_mixer import BGMMixer
+from src.models.food_over import VideoSection
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,7 @@ class VideoGenerator:
         self.audio_combiner = AudioCombiner(self.audio_processor, self.fps)
         self.subtitle_generator = SubtitleGenerator()
         self.frame_generator = FrameGenerator(self.video_processor, self.fps)
+        self.bgm_mixer = BGMMixer()
 
     def generate_conversation_video(
         self,
@@ -35,6 +38,7 @@ class VideoGenerator:
         progress_callback=None,
         enable_subtitles: bool = True,
         conversation_mode: str = "duo",
+        sections: Optional[List[VideoSection]] = None,
     ) -> Optional[str]:
         """会話動画生成（メイン機能）"""
         if not output_path:
@@ -45,7 +49,6 @@ class VideoGenerator:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         try:
-            # リソース読み込み
             character_images = self.resource_manager.load_character_images()
             backgrounds = self.resource_manager.load_backgrounds()
 
@@ -54,14 +57,21 @@ class VideoGenerator:
             ):
                 return None
 
-            # 音声結合（duration情報も取得）
             combined_audio, audio_clips, audio_durations = self.audio_combiner.combine_audio_files(
                 audio_file_list
             )
             if combined_audio is None:
                 return None
 
-            # 実際の音声時間を基準にフレーム数を計算
+            if sections:
+                logger.info("BGMをミキシング中...")
+                section_durations = self._calculate_section_durations(
+                    sections, audio_durations, audio_file_list
+                )
+                combined_audio = self.bgm_mixer.mix_bgm_with_voiceover(
+                    combined_audio, sections, section_durations
+                )
+
             actual_total_duration = combined_audio.duration
             total_frames = int(actual_total_duration * self.fps)
 
@@ -69,22 +79,18 @@ class VideoGenerator:
                 f"Audio duration: {actual_total_duration:.3f}s, Total frames: {total_frames} at {self.fps} FPS"
             )
 
-            # 字幕作成（duration情報を再利用してメモリ削減）
             subtitle_lines = self.subtitle_generator.generate_subtitles(
                 conversations, audio_file_list, backgrounds, enable_subtitles, audio_durations
             )
 
-            # 音声解析
             segment_audio_intensities = self.audio_combiner.analyze_audio_segments(
                 audio_file_list
             )
 
-            # 瞬きタイミング生成
             blink_timings = self.resource_manager.generate_blink_timings(
                 actual_total_duration
             )
 
-            # 動画書き出し
             temp_video_path = output_path.replace(".mp4", "_temp.mp4")
 
             success = self.frame_generator.generate_video_frames(
@@ -104,13 +110,11 @@ class VideoGenerator:
             if not success:
                 return None
 
-            # 音声付加
             logger.info("Adding audio to video...")
             final_output_path = self._combine_video_with_audio(
                 temp_video_path, combined_audio, output_path
             )
 
-            # クリーンアップ
             self.audio_combiner.cleanup_audio_clips(combined_audio, audio_clips)
 
             if os.path.exists(temp_video_path):
@@ -129,7 +133,6 @@ class VideoGenerator:
         """動画と音声の結合（精密な同期）"""
         video_clip = VideoFileClip(temp_video_path)
 
-        # 映像の長さを音声に正確に合わせる
         video_duration = video_clip.duration
         audio_duration = combined_audio.duration
         duration_diff = abs(video_duration - audio_duration)
@@ -138,7 +141,6 @@ class VideoGenerator:
             f"Video duration: {video_duration:.3f}s, Audio duration: {audio_duration:.3f}s, Diff: {duration_diff:.3f}s"
         )
 
-        # 1ms以上の差がある場合は映像の長さを調整
         if duration_diff > 0.001:
             logger.info(
                 f"Adjusting video duration from {video_duration:.3f}s to {audio_duration:.3f}s"
@@ -147,7 +149,6 @@ class VideoGenerator:
 
         final_clip = video_clip.with_audio(combined_audio)
 
-        # より精密なエンコーディング設定
         final_clip.write_videofile(
             output_path,
             codec="libx264",
@@ -159,22 +160,53 @@ class VideoGenerator:
         video_clip.close()
         final_clip.close()
 
-        # 明示的にメモリ解放
         del video_clip
         del final_clip
 
         return output_path
 
+    def _calculate_section_durations(
+        self, sections: List[VideoSection], audio_durations: Dict[str, float], audio_file_list: List[str]
+    ) -> List[float]:
+        """各セクションの長さを計算
+
+        Args:
+            sections: ビデオセクションのリスト
+            audio_durations: {audio_path: duration}の辞書
+            audio_file_list: 音声ファイルパスのリスト
+
+        Returns:
+            List[float]: 各セクションの長さ（秒）のリスト
+        """
+        section_durations = []
+        current_segment_index = 0
+
+        for section in sections:
+            segment_count = len(section.segments)
+            # このセクションに属する音声ファイルのパスを取得
+            section_audio_files = audio_file_list[current_segment_index : current_segment_index + segment_count]
+            # このセクションに属する音声の長さを合計
+            section_duration = sum(
+                audio_durations.get(audio_path, 0.0) for audio_path in section_audio_files
+            )
+            section_durations.append(section_duration)
+            current_segment_index += segment_count
+
+        logger.info(
+            f"セクション長さ計算完了: {len(sections)}セクション, "
+            f"合計 {sum(section_durations):.2f}秒"
+        )
+
+        return section_durations
+
     def cleanup(self):
-        """メモリリソースのクリーンアップ（メモリリーク対策）"""
+        """メモリリソースのクリーンアップ"""
         try:
-            # 1. リサイズキャッシュをクリア
             if hasattr(self.video_processor, '_resize_cache'):
                 cache_size = len(self.video_processor._resize_cache)
                 self.video_processor._resize_cache.clear()
                 logger.info(f"Cleared resize cache ({cache_size} entries)")
 
-            # 2. LRUキャッシュをクリア（グローバル関数）
             try:
                 from src.core.video_processor import _load_character_images_cached
                 cache_info = _load_character_images_cached.cache_info()
@@ -183,12 +215,10 @@ class VideoGenerator:
             except Exception as e:
                 logger.warning(f"Failed to clear LRU cache: {e}")
 
-            # 3. フォントキャッシュをクリア
             if hasattr(self.video_processor, '_cached_font'):
                 self.video_processor._cached_font = None
                 logger.info("Cleared font cache")
 
-            # 4. 強制ガベージコレクション
             collected = gc.collect()
             logger.info(f"Garbage collection: collected {collected} objects")
 

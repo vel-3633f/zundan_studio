@@ -29,6 +29,8 @@ class AudioCombiner:
         for audio_path in audio_file_list:
             if os.path.exists(audio_path):
                 clip = AudioFileClip(audio_path)
+                # キャラクター音声の音量を2倍に調整
+                clip = clip.with_volume_scaled(2.0)
                 audio_clips.append(clip)
                 audio_durations[audio_path] = clip.duration
                 logger.debug(f"Loaded audio: {audio_path}, duration: {clip.duration:.3f}s")

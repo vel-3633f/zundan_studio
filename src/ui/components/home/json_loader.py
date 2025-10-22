@@ -210,16 +210,8 @@ def convert_json_to_conversation_lines(
             section = sections[current_section_idx]
             section_segments = section.get("segments", [])
 
-            if segments_processed >= len(section_segments):
-                current_section_idx += 1
-                segments_processed = 0
-                if current_section_idx < len(sections):
-                    current_background = sections[current_section_idx].get(
-                        "scene_background", "default"
-                    )
-            else:
-                current_background = section.get("scene_background", "default")
-                segments_processed += 1
+            # 現在のセクションの背景を使用
+            current_background = section.get("scene_background", "default")
 
         # セグメントを変換
         conversation_line = {
@@ -233,6 +225,17 @@ def convert_json_to_conversation_lines(
         }
 
         conversation_lines.append(conversation_line)
+
+        # セグメントを処理した後にカウントアップし、次のセクションに移るか判定
+        if sections and current_section_idx < len(sections):
+            segments_processed += 1
+            section = sections[current_section_idx]
+            section_segments = section.get("segments", [])
+
+            # このセクションの全セグメントを処理し終えたら次のセクションへ
+            if segments_processed >= len(section_segments):
+                current_section_idx += 1
+                segments_processed = 0
 
     return conversation_lines
 
@@ -256,6 +259,14 @@ def load_json_to_session_state(
             st.error("JSONファイルの構造が正しくありません。required: all_segments")
             return None
 
+        # JSONから背景情報を抽出
+        json_backgrounds = extract_backgrounds_from_json(data)
+
+        # 抽出した背景をavailable_backgroundsとして使用
+        if json_backgrounds:
+            available_backgrounds = json_backgrounds
+            logger.info(f"Extracted {len(json_backgrounds)} backgrounds from JSON: {json_backgrounds}")
+
         # 会話データに変換（利用可能なオプションを渡す）
         conversation_lines = convert_json_to_conversation_lines(
             data, available_characters, available_backgrounds, available_expressions
@@ -264,6 +275,11 @@ def load_json_to_session_state(
         # セッション状態に設定
         st.session_state.conversation_lines = conversation_lines
         st.session_state.loaded_json_data = data  # 背景抽出用にJSONデータを保存
+
+        # section_bgm_settingsをクリアして再初期化を促す
+        if "section_bgm_settings" in st.session_state:
+            del st.session_state.section_bgm_settings
+            logger.info("Cleared section_bgm_settings to trigger re-initialization")
 
         # メタデータも保存（オプション）
         metadata = {
