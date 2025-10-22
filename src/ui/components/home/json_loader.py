@@ -98,12 +98,25 @@ def validate_and_clean_data(
         if speaker != "narrator" and speaker not in cleaned_visible_chars:
             cleaned_visible_chars.append(speaker)
 
+        # character_expressionsの処理（後方互換性）
+        character_expressions = segment.get("character_expressions", {})
+
+        # character_expressionsが空の場合、expressionから自動生成
+        if not character_expressions and cleaned_visible_chars:
+            character_expressions = {}
+            for char in cleaned_visible_chars:
+                if char == speaker:
+                    character_expressions[char] = expression
+                else:
+                    character_expressions[char] = "normal"
+
         cleaned_segment = {
             "speaker": speaker,
             "text": segment.get("text", ""),
             "text_for_voicevox": segment.get("text_for_voicevox", segment.get("text", "")),
             "expression": expression,
             "visible_characters": cleaned_visible_chars,
+            "character_expressions": character_expressions,
         }
         cleaned_segments.append(cleaned_segment)
 
@@ -216,6 +229,7 @@ def convert_json_to_conversation_lines(
             "background": current_background,
             "expression": segment["expression"],
             "visible_characters": segment["visible_characters"].copy(),
+            "character_expressions": segment.get("character_expressions", {}).copy(),
         }
 
         conversation_lines.append(conversation_line)

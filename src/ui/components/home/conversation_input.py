@@ -22,6 +22,8 @@ def render_conversation_input(
             line["expression"] = "normal"
         if "visible_characters" not in line:
             line["visible_characters"] = ["zundamon", line.get("speaker", "zundamon")]
+        if "character_expressions" not in line:
+            line["character_expressions"] = {}
 
         # Get character info from config
         characters = Characters.get_all()
@@ -151,6 +153,67 @@ def render_conversation_input(
                     and line["speaker"] not in line["visible_characters"]
                 ):
                     line["visible_characters"].append(line["speaker"])
+
+            # 各キャラクターの表情選択（2人以上の場合のみ表示）
+            if line["visible_characters"] and len(line["visible_characters"]) >= 2:
+                st.write("**各キャラクターの表情**")
+
+                # visible_charactersの数に応じて列数を決定
+                num_chars = len(line["visible_characters"])
+                expr_cols = st.columns(num_chars)
+
+                # character_expressionsがない場合の初期化
+                if not line["character_expressions"]:
+                    line["character_expressions"] = {}
+                    for char in line["visible_characters"]:
+                        if char == line["speaker"]:
+                            line["character_expressions"][char] = line["expression"]
+                        else:
+                            line["character_expressions"][char] = "normal"
+
+                # 各キャラクターの表情選択UI
+                for idx, char_name in enumerate(line["visible_characters"]):
+                    with expr_cols[idx]:
+                        char_display = characters.get(char_name)
+                        if char_display:
+                            display_name = f"{char_display.emoji} {char_display.display_name}"
+                        else:
+                            display_name = char_name
+
+                        # デフォルト値の決定
+                        if char_name in line["character_expressions"]:
+                            default_expr = line["character_expressions"][char_name]
+                        elif char_name == line["speaker"]:
+                            default_expr = line["expression"]
+                        else:
+                            default_expr = "normal"
+
+                        # 表情選択
+                        current_expr_index = (
+                            expression_options.index(default_expr)
+                            if default_expr in expression_options
+                            else 0
+                        )
+
+                        selected_expr = st.selectbox(
+                            display_name,
+                            options=expression_options,
+                            key=f"char_expr_{i}_{char_name}",
+                            index=current_expr_index,
+                            format_func=Expressions.get_display_name,
+                        )
+
+                        line["character_expressions"][char_name] = selected_expr
+
+                        # 話者の表情と同期（話者の場合のみ）
+                        if char_name == line["speaker"]:
+                            line["expression"] = selected_expr
+            elif line["visible_characters"] and len(line["visible_characters"]) == 1:
+                # 1人の場合はcharacter_expressionsを自動設定（UIは表示しない）
+                char_name = line["visible_characters"][0]
+                if not line["character_expressions"]:
+                    line["character_expressions"] = {}
+                line["character_expressions"][char_name] = line["expression"]
 
         if i < len(st.session_state.conversation_lines) - 1:
             st.markdown("---")

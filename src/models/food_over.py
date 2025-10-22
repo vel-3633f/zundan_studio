@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict
 
 
 class ConversationSegment(BaseModel):
@@ -8,8 +8,12 @@ class ConversationSegment(BaseModel):
     speaker: str = Field(description="話者名")
     text: str = Field(description="セリフ内容（字幕表示用・漢字カタカナ含む）")
     text_for_voicevox: str = Field(description="VOICEVOX読み上げ用テキスト（完全ひらがな）")
-    expression: str = Field(description="表情名")
+    expression: str = Field(description="話者の表情名（後方互換性のため維持）")
     visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
+    character_expressions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="各キャラクターの表情を個別に指定 {キャラクター名: 表情名}"
+    )
 
 
 class VideoSection(BaseModel):

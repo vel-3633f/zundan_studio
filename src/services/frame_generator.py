@@ -141,6 +141,7 @@ class FrameGenerator:
 
                     speaker = conv.get("speaker", "zundamon")
                     expression = conv.get("expression", "normal")
+                    character_expressions = conv.get("character_expressions", {})
 
                     # 現在のセリフの背景を取得
                     background_name = conv.get("background", "default")
@@ -152,6 +153,8 @@ class FrameGenerator:
         # 表示するキャラクターを決定
         if current_conversation:
             speaker = current_conversation.get("speaker", "zundamon")
+            expression = current_conversation.get("expression", "normal")
+            character_expressions = current_conversation.get("character_expressions", {})
             visible_chars = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
@@ -164,9 +167,11 @@ class FrameGenerator:
                         char_name in self.video_processor.characters
                         and char_name != "narrator"
                     ):
+                        # character_expressionsから表情を取得、なければnormal
+                        char_expression = character_expressions.get(char_name, "normal")
                         active_speakers[char_name] = {
                             "intensity": 0,  # ナレーション中なので動きなし
-                            "expression": "normal",
+                            "expression": char_expression,
                         }
             else:
                 # 通常のキャラクター会話の場合
@@ -176,15 +181,25 @@ class FrameGenerator:
                         char_name in self.video_processor.characters
                         and char_name != "narrator"
                     ):
+                        # character_expressionsから表情を取得
+                        # 優先順位: character_expressions > expression(話者の場合) > normal
+                        if char_name in character_expressions:
+                            char_expression = character_expressions[char_name]
+                        elif char_name == speaker:
+                            # 後方互換性: character_expressionsがない場合、話者はexpressionを使用
+                            char_expression = expression
+                        else:
+                            char_expression = "normal"
+
                         if char_name == speaker:
                             active_speakers[char_name] = {
                                 "intensity": intensity,
-                                "expression": expression,
+                                "expression": char_expression,
                             }
                         else:
                             active_speakers[char_name] = {
                                 "intensity": 0,
-                                "expression": "normal",
+                                "expression": char_expression,
                             }
         else:
             active_speakers = {"zundamon": {"intensity": 0, "expression": "normal"}}
