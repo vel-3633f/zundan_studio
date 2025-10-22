@@ -5,8 +5,11 @@
 
 import os
 import logging
+import threading
+import time
+import gc
 from typing import List, Optional, Dict
-from moviepy.audio.AudioClip import CompositeAudioClip, concatenate_audioclips
+from moviepy.audio.AudioClip import CompositeAudioClip, concatenate_audioclips, AudioClip
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
@@ -22,13 +25,67 @@ class BGMMixer:
     def __init__(self):
         # 使用中のBGMクリップを追跡（クリーンアップ用）
         self._active_clips: List[AudioFileClip] = []
+        # BGMファイルのキャッシュ（音声データをメモリに保持）
+        self._bgm_cache: Dict[str, AudioFileClip] = {}
+        # ファイル読み込みを直列化するためのロック（ffmpegのデッドロック回避）
+        self._load_lock = threading.Lock()
+
+    def _load_bgm_file(self, bgm_file_path: str, max_retries: int = 3) -> Optional[AudioFileClip]:
+        """BGMファイルを読み込む（キャッシュ使用、スレッドセーフ、リトライ機能付き）
+
+        Args:
+            bgm_file_path: BGMファイルのパス
+            max_retries: 最大リトライ回数
+
+        Returns:
+            AudioFileClip: BGM音声クリップ、失敗時はNone
+        """
+        # キャッシュチェックはロック外で実行（読み取りのみなので安全）
+        if bgm_file_path in self._bgm_cache:
+            logger.debug(f"BGMキャッシュから取得: {bgm_file_path}")
+            return self._bgm_cache[bgm_file_path]
+
+        # ファイル読み込みは完全に直列化（ffmpegのデッドロック回避）
+        with self._load_lock:
+            # ダブルチェック: ロック取得中に他スレッドが読み込んだ可能性
+            if bgm_file_path in self._bgm_cache:
+                logger.debug(f"BGMキャッシュから取得（ロック後）: {bgm_file_path}")
+                return self._bgm_cache[bgm_file_path]
+
+            # リトライ機構
+            for attempt in range(max_retries):
+                try:
+                    if attempt > 0:
+                        wait_time = attempt * 0.5  # 0.5秒、1.0秒、1.5秒...
+                        logger.warning(f"BGMファイル読み込みリトライ ({attempt + 1}/{max_retries}): {bgm_file_path}")
+                        time.sleep(wait_time)
+                        # ガベージコレクションを実行してファイルハンドルを解放
+                        gc.collect()
+
+                    logger.info(f"BGMファイルを読み込み中: {bgm_file_path}")
+                    bgm_clip = AudioFileClip(bgm_file_path)
+                    self._bgm_cache[bgm_file_path] = bgm_clip
+                    self._active_clips.append(bgm_clip)
+                    logger.info(f"BGMファイル読み込み完了: {bgm_file_path}")
+                    return bgm_clip
+
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(f"BGMファイルの読み込み失敗 (試行 {attempt + 1}/{max_retries}): {bgm_file_path} - {str(e)[:100]}")
+                        # 失敗時のクリーンアップ
+                        gc.collect()
+                    else:
+                        logger.error(f"BGMファイルの読み込みエラー ({bgm_file_path}): {e}")
+                        return None
+
+            return None
 
     def create_section_bgm_track(
         self,
         section: VideoSection,
         start_time: float,
         duration: float
-    ) -> Optional[AudioFileClip]:
+    ) -> Optional[AudioClip]:
         """セクション用のBGMトラックを作成
 
         Args:
@@ -37,7 +94,7 @@ class BGMMixer:
             duration: セクションの長さ（秒）
 
         Returns:
-            AudioFileClip: BGM音声クリップ、BGMがない場合はNone
+            AudioClip: BGM音声クリップ、BGMがない場合はNone
         """
         if section.bgm_id == "none" or not section.bgm_id:
             return None
@@ -51,23 +108,31 @@ class BGMMixer:
             return None
 
         try:
-            # 各セクションで新しいクリップインスタンスを作成（デッドロック回避）
-            base_bgm_clip = AudioFileClip(bgm_file_path)
-            self._active_clips.append(base_bgm_clip)
+            # キャッシュからBGMファイルを取得（初回のみファイルを開く）
+            base_bgm_clip = self._load_bgm_file(bgm_file_path)
+            if base_bgm_clip is None:
+                return None
 
             # BGMをループさせて必要な長さに調整
+            # 注意: base_bgm_clipを直接使用せず、subclipped()で新しいクリップを作成
             if base_bgm_clip.duration < duration:
                 # ループ回数を計算
                 loop_count = int(duration / base_bgm_clip.duration) + 1
-                # moviepy 2.2.1では loop() メソッドが存在しないため、
-                # concatenate_audioclips を使用してループを実装
-                bgm_clip = concatenate_audioclips([base_bgm_clip] * loop_count)
-                self._active_clips.append(bgm_clip)
+                # 各ループで新しいsubclipを作成（ファイルハンドルの競合を回避）
+                loop_clips = []
+                for i in range(loop_count):
+                    # subclipped()は新しいクリップインスタンスを返す
+                    if i == 0:
+                        loop_clips.append(base_bgm_clip.subclipped(0, base_bgm_clip.duration))
+                    else:
+                        loop_clips.append(base_bgm_clip.subclipped(0, base_bgm_clip.duration))
+                bgm_clip = concatenate_audioclips(loop_clips)
             else:
-                bgm_clip = base_bgm_clip
+                bgm_clip = base_bgm_clip.subclipped(0, min(duration, base_bgm_clip.duration))
 
-            # 必要な長さにトリミング
-            bgm_clip = bgm_clip.subclipped(0, duration)
+            # 必要な長さに正確にトリミング
+            if bgm_clip.duration > duration:
+                bgm_clip = bgm_clip.subclipped(0, duration)
 
             # 音量を調整
             bgm_clip = bgm_clip.with_volume_scaled(section.bgm_volume)
@@ -118,6 +183,34 @@ class BGMMixer:
             )
             return voiceover_audio
 
+        # 事前にすべての必要なBGMファイルを読み込む（デッドロック回避）
+        logger.info("=" * 60)
+        logger.info("BGM事前読み込み開始")
+        unique_bgm_ids = set()
+        for section in sections:
+            if section.bgm_id and section.bgm_id != "none":
+                bgm_file_path = get_bgm_file_path(section.bgm_id)
+                if bgm_file_path and os.path.exists(bgm_file_path):
+                    unique_bgm_ids.add(bgm_file_path)
+                    logger.info(f"  セクション BGM: {section.bgm_id} -> {os.path.basename(bgm_file_path)}")
+
+        logger.info(f"読み込む必要があるBGMファイル数: {len(unique_bgm_ids)}")
+        logger.info(f"現在のキャッシュ数: {len(self._bgm_cache)}")
+
+        # すべてのBGMファイルを順次読み込み
+        success_count = 0
+        for idx, bgm_path in enumerate(unique_bgm_ids, 1):
+            logger.info(f"[{idx}/{len(unique_bgm_ids)}] BGMファイル読み込み開始: {os.path.basename(bgm_path)}")
+            result = self._load_bgm_file(bgm_path)
+            if result:
+                success_count += 1
+            # ファイル間で少し待機（ffmpegプロセスのクリーンアップ時間を確保）
+            if idx < len(unique_bgm_ids):
+                time.sleep(0.2)
+
+        logger.info(f"BGM事前読み込み完了: {success_count}/{len(unique_bgm_ids)}個成功")
+        logger.info("=" * 60)
+
         bgm_clips = []
         current_time = 0.0
 
@@ -157,14 +250,19 @@ class BGMMixer:
                 logger.warning(f"BGMクリップのクリーンアップエラー: {e}")
 
     def clear_cache(self):
-        """使用中のBGMクリップをクリーンアップする"""
+        """使用中のBGMクリップとキャッシュをクリーンアップする"""
         closed_count = 0
-        for clip in self._active_clips:
+
+        # キャッシュされたBGMクリップをクローズ
+        for bgm_path, clip in self._bgm_cache.items():
             try:
                 if clip:
                     clip.close()
                     closed_count += 1
+                    logger.debug(f"BGMクリップをクローズ: {bgm_path}")
             except Exception as e:
-                logger.warning(f"BGMクリップのクリーンアップエラー: {e}")
+                logger.warning(f"BGMキャッシュのクリーンアップエラー ({bgm_path}): {e}")
+
+        self._bgm_cache.clear()
         self._active_clips.clear()
-        logger.info(f"BGMクリップをクリアしました ({closed_count}個のクリップをクローズ)")
+        logger.info(f"BGMキャッシュをクリアしました ({closed_count}個のクリップをクローズ)")

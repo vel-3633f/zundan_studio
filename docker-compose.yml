@@ -8,7 +8,9 @@ services:
     volumes:
       - ./outputs:/app/outputs
       - ./temp:/app/temp
-      - ./assets:/app/assets
+      # assets/bgmはコンテナイメージ内のファイルを使用（ボリュームマウントの競合を回避）
+      - ./assets/zundamon:/app/assets/zundamon
+      - ./assets/backgrounds:/app/assets/backgrounds
       - ./src:/app/src
       - ./main.py:/app/main.py
       - ./config:/app/config
