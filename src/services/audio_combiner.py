@@ -56,6 +56,11 @@ class AudioCombiner:
                     audio_path
                 )
                 if intensities and actual_duration > 0:
+                    # 強度値の統計情報をログ出力
+                    max_intensity = max(intensities)
+                    avg_intensity = sum(intensities) / len(intensities)
+                    non_zero_count = sum(1 for i in intensities if i > 0.1)
+
                     segment_audio_intensities.append(
                         AudioSegmentInfo(
                             start_time=current_time,
@@ -65,7 +70,12 @@ class AudioCombiner:
                         )
                     )
                     current_time += actual_duration  # 実時間で累積
-                    logger.debug(f"Added segment: {audio_path}, start: {current_time - actual_duration:.3f}s, duration: {actual_duration:.3f}s, frames: {len(intensities)}")
+                    logger.info(
+                        f"Added segment: start={current_time - actual_duration:.3f}s, "
+                        f"duration={actual_duration:.3f}s, frames={len(intensities)}, "
+                        f"max_intensity={max_intensity:.3f}, avg_intensity={avg_intensity:.3f}, "
+                        f"active_frames={non_zero_count}/{len(intensities)}"
+                    )
                 else:
                     logger.warning(f"Failed to analyze audio segment: {audio_path}")
 

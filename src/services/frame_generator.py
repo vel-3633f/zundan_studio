@@ -98,6 +98,7 @@ class FrameGenerator:
         active_speakers = {}
         current_background = backgrounds["default"]
         current_conversation = None
+        intensity = 0.0  # 強度値を初期化
 
         # 現在の話者と強度、背景、表情を特定
         for i, (conv, audio_path) in enumerate(zip(conversations, audio_file_list)):
@@ -133,9 +134,14 @@ class FrameGenerator:
                             )
 
                         current_frame_idx = int(current_time * self.fps)
-                        logger.debug(
-                            f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}"
-                        )
+                        # 1秒ごとまたは高い強度値のときにログ出力
+                        if current_frame_idx % self.fps == 0 or intensity > 0.5:
+                            logger.info(
+                                f"Frame {current_frame_idx} (time={current_time:.3f}s): "
+                                f"segment[{i}], local_time={local_time:.3f}s, "
+                                f"progress={frame_progress:.3f}, idx={exact_frame_index:.2f}, "
+                                f"intensity={intensity:.3f}"
+                            )
                     else:
                         intensity = 0
 
@@ -196,6 +202,13 @@ class FrameGenerator:
                                 "intensity": intensity,
                                 "expression": char_expression,
                             }
+                            # 話者の強度値を常に記録（重要な情報）
+                            current_frame_idx = int(current_time * self.fps)
+                            if current_frame_idx % (self.fps * 2) == 0:  # 2秒ごと
+                                logger.info(
+                                    f"Active speaker: {char_name}, time={current_time:.3f}s, "
+                                    f"intensity={intensity:.3f}, expression={char_expression}"
+                                )
                         else:
                             active_speakers[char_name] = {
                                 "intensity": 0,

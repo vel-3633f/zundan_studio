@@ -50,6 +50,7 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
             img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
             if img is not None:
                 images[key] = img
+                logger.info(f"Loaded {character_name}/{expression}/{key}: {filename}")
         else:
             if expression != "normal":
                 fallback_path = os.path.join(base_path, "normal", f"normal_{key}.png")
@@ -57,7 +58,9 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
                     img = cv2.imread(fallback_path, cv2.IMREAD_UNCHANGED)
                     if img is not None:
                         images[key] = img
+                        logger.info(f"Loaded {character_name}/{expression}/{key} (fallback): normal_{key}.png")
                         continue
+            logger.warning(f"Image not found: {character_name}/{expression}/{key} - {filename}")
 
     if images:
         target_size = images[list(images.keys())[0]].shape[:2]
@@ -251,20 +254,42 @@ class VideoProcessor:
         self, intensity: float, images: dict, is_blinking: bool = False
     ) -> np.ndarray:
         """音声強度に基づく口画像選択（瞬き対応）"""
+        # デバッグ: 利用可能な画像キーをログ出力（初回のみ）
+        if not hasattr(self, '_logged_image_keys'):
+            print(f"[MOUTH_SYNC_DEBUG] Available image keys: {list(images.keys())}")
+            logger.warning(f"[MOUTH_SYNC] Available image keys: {list(images.keys())}")
+            self._logged_image_keys = True
+
+        # デバッグ: intensity値を出力（サンプリング）
+        if not hasattr(self, '_mouth_call_count'):
+            self._mouth_call_count = 0
+        self._mouth_call_count += 1
+        if self._mouth_call_count % 30 == 1:  # 30フレームごと（約1秒ごと）
+            print(f"[MOUTH_SYNC_DEBUG] Call #{self._mouth_call_count}: intensity={intensity:.3f}, blinking={is_blinking}")
+            logger.warning(f"[MOUTH_SYNC] Call #{self._mouth_call_count}: intensity={intensity:.3f}")
+
         # 瞬き中は目を閉じた画像を優先（瞬き専用画像がなければclosedを使用）
         if is_blinking:
+            selected_key = "blink" if "blink" in images else "closed" if "closed" in images else list(images.keys())[0]
+            logger.debug(f"Blinking: selected key={selected_key}")
             return images.get(
                 "blink", images.get("closed", images[list(images.keys())[0]])
             )
 
         # 通常の口パクアニメーション
         if intensity < 0.1:
+            selected_key = "closed" if "closed" in images else list(images.keys())[0]
+            logger.debug(f"intensity={intensity:.3f} < 0.1: selected key={selected_key}")
             return images.get("closed", images[list(images.keys())[0]])
         elif intensity < 0.4:
+            selected_key = "half" if "half" in images else "closed" if "closed" in images else list(images.keys())[0]
+            logger.debug(f"0.1 <= intensity={intensity:.3f} < 0.4: selected key={selected_key}")
             return images.get(
                 "half", images.get("closed", images[list(images.keys())[0]])
             )
         else:
+            selected_key = "open" if "open" in images else "half" if "half" in images else list(images.keys())[0]
+            logger.debug(f"intensity={intensity:.3f} >= 0.4: selected key={selected_key}")
             return images.get(
                 "open", images.get("half", images[list(images.keys())[0]])
             )
@@ -435,6 +460,14 @@ class VideoProcessor:
                 )
 
             mouth_img = self.select_mouth_image(intensity, char_imgs, is_blinking)
+
+            # デバッグ用ログ: 口パク状態を記録
+            mouth_state = self._get_mouth_state(intensity, is_blinking)
+            if current_time % 1.0 < (1.0 / self.fps):  # 1秒ごとにログ出力
+                logger.debug(
+                    f"Mouth sync - char: {char_name}, time: {current_time:.2f}s, "
+                    f"intensity: {intensity:.3f}, mouth: {mouth_state}, blinking: {is_blinking}"
+                )
 
             bg_h, bg_w = background.shape[:2]
             char_h, char_w = mouth_img.shape[:2]

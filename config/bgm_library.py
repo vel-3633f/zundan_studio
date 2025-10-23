@@ -8,6 +8,7 @@ from typing import Dict, Optional
 from pathlib import Path
 import logging
 import os
+import unicodedata
 
 logger = logging.getLogger(__name__)
 
@@ -119,12 +120,25 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
 
     track = get_bgm_track(bgm_id)
     if not track or not track.file_path:
+        logger.warning(f"BGMトラックが見つかりません: {bgm_id}")
         return None
 
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_path = os.path.join(project_root, track.file_path)
 
-    logger.debug(f"BGMファイルパス解決: {bgm_id} -> {full_path}")
+    # Unicode正規化を適用（NFD形式に変換してファイルシステムと一致させる）
+    # macOS/Dockerではファイル名がNFD形式で保存される場合がある
+    full_path_nfd = unicodedata.normalize('NFD', full_path)
+
+    # 両方の形式で存在チェック
+    exists_nfc = os.path.exists(full_path)
+    exists_nfd = os.path.exists(full_path_nfd)
+
+    if exists_nfd and not exists_nfc:
+        logger.info(f"BGMファイルパス解決（NFD正規化）: {bgm_id} -> {full_path_nfd}")
+        return full_path_nfd
+
+    logger.info(f"BGMファイルパス解決: {bgm_id} -> {full_path} (exists: {exists_nfc})")
     return full_path
 
 
