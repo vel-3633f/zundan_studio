@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=10)
-def _load_character_images_cached(character_name: str, expression: str, base_path: str) -> tuple:
+def _load_character_images_cached(
+    character_name: str, expression: str, base_path: str
+) -> tuple:
     """キャラクター画像を読み込み（キャッシュ機能付き）
 
     Args:
@@ -31,7 +33,7 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
 
     Returns:
         tuple: (images_dict_items, target_size) のタプル
-               images_dict_items は (key, image_bytes) のタプルのリスト
+            images_dict_items は (key, image_bytes) のタプルのリスト
     """
     expression_dir = os.path.join(base_path, expression)
 
@@ -58,9 +60,13 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
                     img = cv2.imread(fallback_path, cv2.IMREAD_UNCHANGED)
                     if img is not None:
                         images[key] = img
-                        logger.info(f"Loaded {character_name}/{expression}/{key} (fallback): normal_{key}.png")
+                        logger.info(
+                            f"Loaded {character_name}/{expression}/{key} (fallback): normal_{key}.png"
+                        )
                         continue
-            logger.warning(f"Image not found: {character_name}/{expression}/{key} - {filename}")
+            logger.warning(
+                f"Image not found: {character_name}/{expression}/{key} - {filename}"
+            )
 
     if images:
         target_size = images[list(images.keys())[0]].shape[:2]
@@ -261,7 +267,7 @@ class VideoProcessor:
             return None
 
         # デバッグ情報を常にログ出力（INFO レベル）
-        if not hasattr(self, '_mouth_call_count'):
+        if not hasattr(self, "_mouth_call_count"):
             self._mouth_call_count = 0
             logger.info(f"[MOUTH_SYNC] Available image keys: {list(images.keys())}")
 
@@ -269,10 +275,10 @@ class VideoProcessor:
 
         # 瞬き中の処理
         if is_blinking:
-            if 'blink' in images:
-                return images['blink']
-            elif 'closed' in images:
-                return images['closed']
+            if "blink" in images:
+                return images["blink"]
+            elif "closed" in images:
+                return images["closed"]
             else:
                 # フォールバック: 最初の利用可能な画像
                 fallback_key = list(images.keys())[0]
@@ -282,34 +288,44 @@ class VideoProcessor:
         # 通常の口パクアニメーション
         # 30フレームごと（約1秒ごと）にログ出力
         if self._mouth_call_count % 30 == 1:
-            logger.info(f"[MOUTH_SYNC] Frame #{self._mouth_call_count}: intensity={intensity:.3f}, available_keys={list(images.keys())}")
+            logger.info(
+                f"[MOUTH_SYNC] Frame #{self._mouth_call_count}: intensity={intensity:.3f}, available_keys={list(images.keys())}"
+            )
 
         # intensity値に基づいて適切な画像を選択
         if intensity < 0.1:
             # 優先順位: closed > blink > half > open > 最初の画像
-            for key in ['closed', 'blink', 'half', 'open']:
+            for key in ["closed", "blink", "half", "open"]:
                 if key in images:
                     if self._mouth_call_count % 30 == 1:
-                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
                     return images[key]
         elif intensity < 0.4:
             # 優先順位: half > closed > open > 最初の画像
-            for key in ['half', 'closed', 'open']:
+            for key in ["half", "closed", "open"]:
                 if key in images:
                     if self._mouth_call_count % 30 == 1:
-                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
                     return images[key]
         else:
             # 優先順位: open > half > closed > 最初の画像
-            for key in ['open', 'half', 'closed']:
+            for key in ["open", "half", "closed"]:
                 if key in images:
                     if self._mouth_call_count % 30 == 1:
-                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
                     return images[key]
 
         # フォールバック
         fallback_key = list(images.keys())[0]
-        logger.warning(f"[MOUTH_SYNC] Fallback to '{fallback_key}' for intensity={intensity:.3f}")
+        logger.warning(
+            f"[MOUTH_SYNC] Fallback to '{fallback_key}' for intensity={intensity:.3f}"
+        )
         return images[fallback_key]
 
     def _get_mouth_state(self, intensity: float, is_blinking: bool) -> str:
@@ -348,7 +364,9 @@ class VideoProcessor:
 
         self._resize_cache[cache_key] = resized_img
 
-        logger.debug(f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}")
+        logger.debug(
+            f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}"
+        )
 
         return resized_img
 
@@ -429,6 +447,15 @@ class VideoProcessor:
         """会話用のフレーム合成（表情対応）"""
         result = background.copy()
 
+        # デバッグ: active_speakers の内容をログ出力（サンプリング）
+        if not hasattr(self, "_composite_call_count"):
+            self._composite_call_count = 0
+        self._composite_call_count += 1
+        if self._composite_call_count % 30 == 1:  # 30フレームごと
+            logger.info(
+                f"[COMPOSITE] Frame #{self._composite_call_count}, time={current_time:.3f}s, active_speakers={active_speakers}"
+            )
+
         if conversation_mode == "solo":
             sorted_chars = []
             for char_name, speaker_data in active_speakers.items():
@@ -459,14 +486,22 @@ class VideoProcessor:
                 intensity = float(speaker_data)
                 expression = "normal"
 
+            # デバッグ: 各キャラクターの intensity をログ出力
+            if self._composite_call_count % 30 == 1:
+                logger.info(
+                    f"[COMPOSITE] Processing {char_name}: intensity={intensity:.3f}, expression={expression}"
+                )
+
             if expression in character_images[char_name]:
                 char_imgs = character_images[char_name][expression]
             elif "normal" in character_images[char_name]:
                 char_imgs = character_images[char_name]["normal"]
+                logger.warning(f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'")
             else:
                 available_expressions = list(character_images[char_name].keys())
                 if available_expressions:
                     char_imgs = character_images[char_name][available_expressions[0]]
+                    logger.warning(f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'")
                 else:
                     logger.error(f"No expressions available for {char_name}")
                     continue
@@ -477,7 +512,24 @@ class VideoProcessor:
                     current_time, blink_timings, char_name
                 )
 
-            mouth_img = self.select_mouth_image(intensity, char_imgs, is_blinking)
+            # デバッグ: 重要なフレームで詳細ログを出力
+            if intensity > 0.1 and expression == "sick":
+                logger.info(f"[MOUTH_SELECT] {char_name}(sick): intensity={intensity:.3f}, is_blinking={is_blinking}, images={list(char_imgs.keys())}")
+
+            # キャラクター別の口パク感度調整
+            adjusted_intensity = intensity
+            if char_name == "zundamon":
+                # ずんだもんは口の動きを大きくする
+                adjusted_intensity = intensity * 1.5  # 1.5倍にして感度を上げる
+                if intensity > 0.1:
+                    logger.debug(f"[MOUTH_ADJUST] {char_name}: {intensity:.3f} -> {adjusted_intensity:.3f}")
+
+            mouth_img = self.select_mouth_image(adjusted_intensity, char_imgs, is_blinking)
+
+            # デバッグ: 選択された画像を確認
+            if intensity > 0.1 and expression == "sick":
+                mouth_state = self._get_mouth_state(adjusted_intensity, is_blinking)
+                logger.info(f"[MOUTH_SELECT] {char_name}(sick): selected mouth_state={mouth_state}")
 
             # デバッグ用ログ: 口パク状態を記録
             mouth_state = self._get_mouth_state(intensity, is_blinking)
@@ -505,8 +557,13 @@ class VideoProcessor:
                 target_height = int(char_h * target_width / char_w)
 
             mouth_img = self._get_resized_image(
-                mouth_img, char_name, expression, intensity, is_blinking,
-                target_width, target_height
+                mouth_img,
+                char_name,
+                expression,
+                intensity,
+                is_blinking,
+                target_width,
+                target_height,
             )
 
             margin = 10
@@ -545,7 +602,7 @@ class VideoProcessor:
                 else:
                     if len(chunk) > max_chars_per_line:
                         for i in range(0, len(chunk), max_chars_per_line):
-                            lines.append(chunk[i:i + max_chars_per_line])
+                            lines.append(chunk[i : i + max_chars_per_line])
                     else:
                         current_line = chunk
 
