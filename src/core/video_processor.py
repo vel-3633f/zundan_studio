@@ -254,45 +254,63 @@ class VideoProcessor:
         self, intensity: float, images: dict, is_blinking: bool = False
     ) -> np.ndarray:
         """音声強度に基づく口画像選択（瞬き対応）"""
-        # デバッグ: 利用可能な画像キーをログ出力（初回のみ）
-        if not hasattr(self, '_logged_image_keys'):
-            print(f"[MOUTH_SYNC_DEBUG] Available image keys: {list(images.keys())}")
-            logger.warning(f"[MOUTH_SYNC] Available image keys: {list(images.keys())}")
-            self._logged_image_keys = True
 
-        # デバッグ: intensity値を出力（サンプリング）
+        # 利用可能な画像キーを確認
+        if not images:
+            logger.error("No images available for mouth selection")
+            return None
+
+        # デバッグ情報を常にログ出力（INFO レベル）
         if not hasattr(self, '_mouth_call_count'):
             self._mouth_call_count = 0
-        self._mouth_call_count += 1
-        if self._mouth_call_count % 30 == 1:  # 30フレームごと（約1秒ごと）
-            print(f"[MOUTH_SYNC_DEBUG] Call #{self._mouth_call_count}: intensity={intensity:.3f}, blinking={is_blinking}")
-            logger.warning(f"[MOUTH_SYNC] Call #{self._mouth_call_count}: intensity={intensity:.3f}")
+            logger.info(f"[MOUTH_SYNC] Available image keys: {list(images.keys())}")
 
-        # 瞬き中は目を閉じた画像を優先（瞬き専用画像がなければclosedを使用）
+        self._mouth_call_count += 1
+
+        # 瞬き中の処理
         if is_blinking:
-            selected_key = "blink" if "blink" in images else "closed" if "closed" in images else list(images.keys())[0]
-            logger.debug(f"Blinking: selected key={selected_key}")
-            return images.get(
-                "blink", images.get("closed", images[list(images.keys())[0]])
-            )
+            if 'blink' in images:
+                return images['blink']
+            elif 'closed' in images:
+                return images['closed']
+            else:
+                # フォールバック: 最初の利用可能な画像
+                fallback_key = list(images.keys())[0]
+                logger.warning(f"[MOUTH_SYNC] Blinking fallback to '{fallback_key}'")
+                return images[fallback_key]
 
         # 通常の口パクアニメーション
+        # 30フレームごと（約1秒ごと）にログ出力
+        if self._mouth_call_count % 30 == 1:
+            logger.info(f"[MOUTH_SYNC] Frame #{self._mouth_call_count}: intensity={intensity:.3f}, available_keys={list(images.keys())}")
+
+        # intensity値に基づいて適切な画像を選択
         if intensity < 0.1:
-            selected_key = "closed" if "closed" in images else list(images.keys())[0]
-            logger.debug(f"intensity={intensity:.3f} < 0.1: selected key={selected_key}")
-            return images.get("closed", images[list(images.keys())[0]])
+            # 優先順位: closed > blink > half > open > 最初の画像
+            for key in ['closed', 'blink', 'half', 'open']:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                    return images[key]
         elif intensity < 0.4:
-            selected_key = "half" if "half" in images else "closed" if "closed" in images else list(images.keys())[0]
-            logger.debug(f"0.1 <= intensity={intensity:.3f} < 0.4: selected key={selected_key}")
-            return images.get(
-                "half", images.get("closed", images[list(images.keys())[0]])
-            )
+            # 優先順位: half > closed > open > 最初の画像
+            for key in ['half', 'closed', 'open']:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                    return images[key]
         else:
-            selected_key = "open" if "open" in images else "half" if "half" in images else list(images.keys())[0]
-            logger.debug(f"intensity={intensity:.3f} >= 0.4: selected key={selected_key}")
-            return images.get(
-                "open", images.get("half", images[list(images.keys())[0]])
-            )
+            # 優先順位: open > half > closed > 最初の画像
+            for key in ['open', 'half', 'closed']:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}")
+                    return images[key]
+
+        # フォールバック
+        fallback_key = list(images.keys())[0]
+        logger.warning(f"[MOUTH_SYNC] Fallback to '{fallback_key}' for intensity={intensity:.3f}")
+        return images[fallback_key]
 
     def _get_mouth_state(self, intensity: float, is_blinking: bool) -> str:
         """音声強度から口の状態を判定"""
