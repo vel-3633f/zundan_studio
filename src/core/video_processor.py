@@ -496,12 +496,16 @@ class VideoProcessor:
                 char_imgs = character_images[char_name][expression]
             elif "normal" in character_images[char_name]:
                 char_imgs = character_images[char_name]["normal"]
-                logger.warning(f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'")
+                logger.warning(
+                    f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'"
+                )
             else:
                 available_expressions = list(character_images[char_name].keys())
                 if available_expressions:
                     char_imgs = character_images[char_name][available_expressions[0]]
-                    logger.warning(f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'")
+                    logger.warning(
+                        f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'"
+                    )
                 else:
                     logger.error(f"No expressions available for {char_name}")
                     continue
@@ -514,22 +518,30 @@ class VideoProcessor:
 
             # デバッグ: 重要なフレームで詳細ログを出力
             if intensity > 0.1 and expression == "sick":
-                logger.info(f"[MOUTH_SELECT] {char_name}(sick): intensity={intensity:.3f}, is_blinking={is_blinking}, images={list(char_imgs.keys())}")
+                logger.info(
+                    f"[MOUTH_SELECT] {char_name}(sick): intensity={intensity:.3f}, is_blinking={is_blinking}, images={list(char_imgs.keys())}"
+                )
 
             # キャラクター別の口パク感度調整
             adjusted_intensity = intensity
             if char_name == "zundamon":
                 # ずんだもんは口の動きを大きくする
-                adjusted_intensity = intensity * 1.5  # 1.5倍にして感度を上げる
+                adjusted_intensity = intensity * 1.7
                 if intensity > 0.1:
-                    logger.debug(f"[MOUTH_ADJUST] {char_name}: {intensity:.3f} -> {adjusted_intensity:.3f}")
+                    logger.debug(
+                        f"[MOUTH_ADJUST] {char_name}: {intensity:.3f} -> {adjusted_intensity:.3f}"
+                    )
 
-            mouth_img = self.select_mouth_image(adjusted_intensity, char_imgs, is_blinking)
+            mouth_img = self.select_mouth_image(
+                adjusted_intensity, char_imgs, is_blinking
+            )
 
             # デバッグ: 選択された画像を確認
             if intensity > 0.1 and expression == "sick":
                 mouth_state = self._get_mouth_state(adjusted_intensity, is_blinking)
-                logger.info(f"[MOUTH_SELECT] {char_name}(sick): selected mouth_state={mouth_state}")
+                logger.info(
+                    f"[MOUTH_SELECT] {char_name}(sick): selected mouth_state={mouth_state}"
+                )
 
             # デバッグ用ログ: 口パク状態を記録
             mouth_state = self._get_mouth_state(intensity, is_blinking)
