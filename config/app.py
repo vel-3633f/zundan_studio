@@ -15,11 +15,9 @@ class AppConfig:
     page_icon: str = "🎭"
     layout: str = "wide"
 
-    # 動画設定
     fps: int = 30
     resolution: Tuple[int, int] = (1280, 720)
 
-    # 音声パラメータデフォルト値
     default_speed: float = 1.0
     default_pitch: float = 0.0
     default_intonation: float = 1.0

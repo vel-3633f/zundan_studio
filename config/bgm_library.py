@@ -39,7 +39,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="nandesho",
         name="なんでしょう？",
         file_path="assets/bgm/なんでしょう？.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="curious",
         description="好奇心を刺激する、探求的な雰囲気のBGM",
     ),
@@ -47,7 +47,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="honwaka",
         name="ほんわかぷっぷー",
         file_path="assets/bgm/ほんわかぷっぷー.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="cheerful",
         description="明るく楽しいシーン、ポジティブな雰囲気に適したBGM",
     ),
@@ -55,7 +55,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="hirusagari",
         name="昼下がり気分",
         file_path="assets/bgm/昼下がり気分.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="calm",
         description="落ち着いた説明シーン、穏やかな雰囲気に適したBGM",
     ),
@@ -63,7 +63,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="noraneko",
         name="野良猫は宇宙を目指した",
         file_path="assets/bgm/野良猫は宇宙を目指した_2.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="dramatic",
         description="ドラマチックなシーン、重要な転機に適したBGM",
     ),
@@ -71,7 +71,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="mayonaka_omocha",
         name="真夜中のおもちゃ箱",
         file_path="assets/bgm/真夜中のおもちゃ箱.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="mysterious",
         description="ミステリアスで少し不思議な雰囲気のBGM",
     ),
@@ -79,7 +79,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="maou_piano25",
         name="日常ピアノ25",
         file_path="assets/bgm/maou_日常_piano25.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="peaceful",
         description="穏やかな日常シーン、落ち着いた雰囲気のピアノBGM",
     ),
@@ -87,7 +87,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="2_23_am",
         name="2:23 AM",
         file_path="assets/bgm/2_23_AM_2.mp3",
-        default_volume=0.30,
+        default_volume=0.20,
         mood="ambient",
         description="深夜の静かな雰囲気、アンビエントな背景音楽",
     ),
@@ -126,11 +126,8 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_path = os.path.join(project_root, track.file_path)
 
-    # Unicode正規化を適用（NFD形式に変換してファイルシステムと一致させる）
-    # macOS/Dockerではファイル名がNFD形式で保存される場合がある
     full_path_nfd = unicodedata.normalize('NFD', full_path)
 
-    # 両方の形式で存在チェック
     exists_nfc = os.path.exists(full_path)
     exists_nfd = os.path.exists(full_path_nfd)
 
