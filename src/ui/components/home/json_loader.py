@@ -3,6 +3,9 @@ import streamlit as st
 from typing import Dict, List, Any, Optional
 import logging
 import os
+import time
+import shutil
+import tempfile
 from pathlib import Path
 from config import Paths
 
@@ -27,17 +30,80 @@ def get_json_files_list() -> List[str]:
         return []
 
 
-def load_json_file(filename: str) -> Optional[Dict[str, Any]]:
-    """outputs/jsonディレクトリからJSONファイルを読み込み"""
-    try:
-        json_dir = os.path.join(Paths.get_outputs_dir(), "json")
-        file_path = os.path.join(json_dir, filename)
+def load_json_file(filename: str, max_retries: int = 3, retry_delay: float = 0.2, use_temp_copy: bool = True) -> Optional[Dict[str, Any]]:
+    """outputs/jsonディレクトリからJSONファイルを読み込み（リトライ＋一時ファイルコピー機能付き）
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load JSON file {filename}: {e}")
+    Args:
+        filename: JSONファイル名
+        max_retries: 最大リトライ回数（デフォルト: 3）
+        retry_delay: リトライ間隔（秒、デフォルト: 0.2）
+        use_temp_copy: 一時ファイルにコピーしてから読み込むか（デフォルト: True、デッドロック回避）
+
+    Returns:
+        JSONデータ（Dict）または失敗時にNone
+    """
+    json_dir = os.path.join(Paths.get_outputs_dir(), "json")
+    file_path = os.path.join(json_dir, filename)
+
+    # ファイルが存在するか確認
+    if not os.path.exists(file_path):
+        logger.error(f"File not found: {file_path}")
         return None
+
+    for attempt in range(max_retries):
+        tmp_path = None
+        try:
+            if use_temp_copy:
+                # 一時ファイルにコピーしてから読み込む（デッドロック回避）
+                with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False, encoding='utf-8') as tmp_file:
+                    tmp_path = tmp_file.name
+
+                # ファイルをコピー（バイナリモードで高速コピー）
+                shutil.copy2(file_path, tmp_path)
+                logger.debug(f"Copied {filename} to temporary file: {tmp_path}")
+
+                # 一時ファイルから読み込み
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    logger.info(f"Successfully loaded JSON file via temp copy: {filename}")
+                    return data
+            else:
+                # 直接読み込み
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    logger.info(f"Successfully loaded JSON file: {filename}")
+                    return data
+
+        except (OSError, IOError) as e:
+            # Errno 35 (Resource deadlock avoided) や他のIOエラーをキャッチ
+            if attempt < max_retries - 1:
+                logger.warning(
+                    f"File read attempt {attempt + 1}/{max_retries} failed for {filename}: {e}. Retrying in {retry_delay}s..."
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(f"Failed to load JSON file {filename} after {max_retries} attempts: {e}")
+                return None
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error in {filename}: {e}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Unexpected error loading {filename}: {e}", exc_info=True)
+            return None
+
+        finally:
+            # 一時ファイルをクリーンアップ
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                    logger.debug(f"Cleaned up temporary file: {tmp_path}")
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to cleanup temp file {tmp_path}: {cleanup_error}")
+
+    return None
 
 
 def validate_json_structure(data: Dict[str, Any]) -> bool:
