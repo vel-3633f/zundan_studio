@@ -91,6 +91,14 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         mood="ambient",
         description="深夜の静かな雰囲気、アンビエントな背景音楽",
     ),
+    "summer_triangle": BGMTrack(
+        id="summer_triangle",
+        name="SUMMER TRIANGLE",
+        file_path="assets/bgm/SUMMER_TRIANGLE.mp3",
+        default_volume=0.20,
+        mood="uplifting",
+        description="爽やかで前向きな雰囲気、夏の明るいイメージのBGM",
+    ),
 }
 
 
@@ -126,7 +134,7 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     full_path = os.path.join(project_root, track.file_path)
 
-    full_path_nfd = unicodedata.normalize('NFD', full_path)
+    full_path_nfd = unicodedata.normalize("NFD", full_path)
 
     exists_nfc = os.path.exists(full_path)
     exists_nfd = os.path.exists(full_path_nfd)
