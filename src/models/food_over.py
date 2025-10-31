@@ -26,6 +26,10 @@ class ConversationSegment(BaseModel):
         default_factory=dict,
         description="各キャラクターの表情を個別に指定 {キャラクター名: 表情名}"
     )
+    display_item: Optional[str] = Field(
+        default=None,
+        description="このセリフで表示する教育アイテム画像のID（ナレーター+めたんセクション専用）"
+    )
 
 
 class VideoSection(BaseModel):

@@ -57,6 +57,7 @@ class VideoGenerator:
         try:
             character_images = self.resource_manager.load_character_images()
             backgrounds = self.resource_manager.load_backgrounds()
+            item_images = self.resource_manager.load_item_images()
 
             if not self.resource_manager.validate_resources(
                 character_images, backgrounds
@@ -110,6 +111,7 @@ class VideoGenerator:
                 subtitle_lines=subtitle_lines,
                 conversation_mode=conversation_mode,
                 temp_video_path=temp_video_path,
+                item_images=item_images,
                 progress_callback=progress_callback,
             )
 

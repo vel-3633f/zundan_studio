@@ -586,6 +586,77 @@ class VideoProcessor:
 
         return result
 
+    def composite_conversation_frame_with_item(
+        self,
+        background: np.ndarray,
+        character_images: Dict[str, Dict[str, Dict[str, np.ndarray]]],
+        active_speakers: Dict[str, Dict[str, any]],
+        conversation_mode: str = "duo",
+        current_time: float = 0.0,
+        blink_timings: List[Dict] = None,
+        item_image: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """会話用のフレーム合成（アイテム画像表示対応版）
+
+        Args:
+            background: 背景画像
+            character_images: キャラクター画像辞書
+            active_speakers: アクティブな話者情報
+            conversation_mode: 会話モード
+            current_time: 現在時刻
+            blink_timings: 瞬きタイミング
+            item_image: 教育アイテム画像（None の場合は表示しない）
+
+        Returns:
+            合成されたフレーム
+        """
+        # 既存のフレーム合成処理
+        frame = self.composite_conversation_frame(
+            background, character_images, active_speakers,
+            conversation_mode, current_time, blink_timings
+        )
+
+        # アイテム画像がある場合は右下に配置
+        if item_image is not None:
+            item_width = 300  # アイテムサイズ（固定）
+            item_height = 300
+
+            # アイテムをリサイズ
+            item_resized = cv2.resize(item_image, (item_width, item_height))
+
+            # 右下の位置を計算（マージン50px）
+            frame_h, frame_w = frame.shape[:2]
+            x_offset = frame_w - item_width - 50
+            y_offset = frame_h - item_height - 50
+
+            # アイテム画像の合成（アルファチャンネル対応）
+            if item_resized.shape[2] == 4:  # RGBA画像の場合
+                # アルファチャンネルを分離
+                alpha = item_resized[:, :, 3] / 255.0
+
+                # RGB部分を取得
+                item_rgb = item_resized[:, :, :3]
+
+                # 背景部分を取得
+                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+
+                # アルファブレンディング
+                for c in range(3):
+                    bg_region[:, :, c] = (
+                        alpha * item_rgb[:, :, c] +
+                        (1 - alpha) * bg_region[:, :, c]
+                    )
+
+                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = bg_region
+            else:
+                # RGB画像の場合は半透明合成
+                alpha = 0.9  # 不透明度
+                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                blended = cv2.addWeighted(bg_region, 1 - alpha, item_resized, alpha, 0)
+                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = blended
+
+        return frame
+
     def _split_text_into_lines(self, text: str, max_chars_per_line: int) -> List[str]:
         """budouxを使って自然な位置でテキストを複数行に分割
 

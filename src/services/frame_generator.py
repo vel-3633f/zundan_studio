@@ -27,6 +27,7 @@ class FrameGenerator:
         subtitle_lines: List[SubtitleData],
         conversation_mode: str,
         temp_video_path: str,
+        item_images: Dict = None,
         progress_callback=None,
     ) -> bool:
         """動画フレームの生成"""
@@ -46,6 +47,9 @@ class FrameGenerator:
             return False
 
         try:
+            # 現在表示中のアイテムを追跡
+            current_item = None
+
             for frame_idx in range(total_frames):
                 if progress_callback:
                     progress_callback((frame_idx + 1) / total_frames)
@@ -63,14 +67,47 @@ class FrameGenerator:
                     )
                 )
 
-                # フレーム合成
-                frame = self.video_processor.composite_conversation_frame(
+                # 現在のセグメントを特定してアイテムを更新
+                for i, conv in enumerate(conversations):
+                    if i < len(segment_audio_intensities):
+                        segment = segment_audio_intensities[i]
+                        segment_start = segment.start_time
+                        segment_end = segment_start + segment.duration
+
+                        if segment_start <= current_time < segment_end:
+                            # display_itemが指定されている場合
+                            display_item_id = conv.get("display_item")
+
+                            if display_item_id is not None:
+                                # "none" または空文字列の場合はアイテムを非表示
+                                if display_item_id == "none" or display_item_id == "":
+                                    if current_item is not None:
+                                        logger.debug(
+                                            f"Item cleared at time={current_time:.3f}s"
+                                        )
+                                        current_item = None
+                                # アイテムIDが指定されている場合
+                                elif item_images and display_item_id in item_images:
+                                    current_item = item_images[display_item_id]
+                                    logger.debug(
+                                        f"Item switched to '{display_item_id}' at time={current_time:.3f}s"
+                                    )
+                                # アイテムIDが指定されているが画像が見つからない場合
+                                elif item_images is not None:
+                                    logger.warning(
+                                        f"Item image not found: '{display_item_id}' at time={current_time:.3f}s (keeping previous item)"
+                                    )
+                            break
+
+                # フレーム合成（アイテム付き）
+                frame = self.video_processor.composite_conversation_frame_with_item(
                     current_background,
                     character_images,
                     active_speakers,
                     conversation_mode,
                     current_time,
                     blink_timings,
+                    current_item,
                 )
 
                 # 字幕追加
