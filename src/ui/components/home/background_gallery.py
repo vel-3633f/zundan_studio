@@ -1,8 +1,11 @@
 import streamlit as st
 from typing import List, Dict, Optional
 import os
+import logging
 from config import Paths, Backgrounds
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 def get_background_info(bg_name: str, backgrounds_dir: str, valid_extensions: List[str]) -> Optional[Dict]:
@@ -142,3 +145,138 @@ def render_background_status_check(background_options: List[str]) -> None:
         use_container_width=True,
         hide_index=True,
     )
+
+    # 画像管理機能
+    st.markdown("---")
+    st.markdown("### 📤 背景画像の管理")
+
+    col_upload, col_manage = st.columns([1, 1])
+
+    with col_upload:
+        st.markdown("**新規アップロード**")
+        uploaded_file = st.file_uploader(
+            "背景画像をアップロード",
+            type=["png", "jpg", "jpeg", "webp"],
+            help="背景画像ファイルを選択してください",
+            key="background_uploader"
+        )
+
+        if uploaded_file:
+            # ファイル名から拡張子を取得
+            file_ext = os.path.splitext(uploaded_file.name)[1]
+            # デフォルトのファイル名（拡張子なし）を提案
+            default_name = os.path.splitext(uploaded_file.name)[0]
+
+            new_bg_name = st.text_input(
+                "保存名（拡張子なし）",
+                value=default_name,
+                help="背景画像の名前を入力してください（例: kitchen, bedroom）",
+                key="new_bg_name"
+            )
+
+            # プレビュー表示
+            try:
+                image = Image.open(uploaded_file)
+                st.image(image, caption=f"プレビュー: {uploaded_file.name}", width=200)
+                st.write(f"サイズ: {image.size[0]}x{image.size[1]}px")
+            except Exception as e:
+                st.error(f"画像の読み込みに失敗: {e}")
+
+            if st.button("💾 アップロード", type="primary", key="upload_bg_btn"):
+                if new_bg_name.strip():
+                    try:
+                        # 保存先パス
+                        save_path = os.path.join(backgrounds_dir, f"{new_bg_name.strip()}{file_ext}")
+
+                        # ファイルが既に存在するか確認
+                        if os.path.exists(save_path):
+                            st.warning(f"⚠️ '{new_bg_name}' は既に存在します。上書きしますか？")
+                            if st.button("上書き保存", key="overwrite_bg_btn"):
+                                image = Image.open(uploaded_file)
+                                image.save(save_path)
+                                st.success(f"✅ '{new_bg_name}' を上書き保存しました！")
+                                st.rerun()
+                        else:
+                            # 新規保存
+                            image = Image.open(uploaded_file)
+                            image.save(save_path)
+                            st.success(f"✅ '{new_bg_name}' をアップロードしました！")
+                            logger.info(f"Uploaded new background: {save_path}")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ アップロードに失敗: {e}")
+                        logger.error(f"Failed to upload background: {e}")
+                else:
+                    st.warning("保存名を入力してください")
+
+    with col_manage:
+        st.markdown("**既存画像の管理**")
+
+        if display_backgrounds:
+            selected_bg = st.selectbox(
+                "管理する背景を選択",
+                options=display_backgrounds,
+                format_func=lambda x: Backgrounds.get_display_name(x),
+                key="manage_bg_select"
+            )
+
+            if selected_bg:
+                # 画像情報を取得
+                bg_info = get_background_info(selected_bg, backgrounds_dir, valid_extensions)
+
+                if bg_info and bg_info.get("exists"):
+                    # プレビュー表示
+                    try:
+                        image = Image.open(bg_info["path"])
+                        st.image(image, caption=f"{Backgrounds.get_display_name(selected_bg)}", width=200)
+                        if "width" in bg_info and "height" in bg_info:
+                            st.write(f"サイズ: {bg_info['width']}x{bg_info['height']}px")
+                    except Exception as e:
+                        st.warning(f"プレビュー表示失敗: {e}")
+
+                    # 名前変更
+                    with st.expander("✏️ 名前を変更"):
+                        new_name = st.text_input(
+                            "新しい名前（拡張子なし）",
+                            value=selected_bg,
+                            key="rename_bg_input"
+                        )
+                        if st.button("名前を変更", key="rename_bg_btn"):
+                            if new_name.strip() and new_name != selected_bg:
+                                try:
+                                    old_path = bg_info["path"]
+                                    new_path = os.path.join(backgrounds_dir, f"{new_name.strip()}{bg_info['extension']}")
+
+                                    if os.path.exists(new_path):
+                                        st.error(f"❌ '{new_name}' は既に存在します")
+                                    else:
+                                        os.rename(old_path, new_path)
+                                        st.success(f"✅ '{selected_bg}' → '{new_name}' に変更しました")
+                                        logger.info(f"Renamed background: {old_path} -> {new_path}")
+                                        st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 名前変更に失敗: {e}")
+                                    logger.error(f"Failed to rename background: {e}")
+                            elif new_name == selected_bg:
+                                st.info("同じ名前です")
+                            else:
+                                st.warning("新しい名前を入力してください")
+
+                    # 削除
+                    with st.expander("🗑️ 削除", expanded=False):
+                        st.warning(f"⚠️ '{Backgrounds.get_display_name(selected_bg)}' を削除しますか？この操作は取り消せません。")
+                        confirm_delete = st.checkbox(f"本当に削除する", key="confirm_delete_bg")
+                        if confirm_delete:
+                            if st.button("🗑️ 削除を実行", type="secondary", key="delete_bg_btn"):
+                                try:
+                                    os.remove(bg_info["path"])
+                                    st.success(f"✅ '{selected_bg}' を削除しました")
+                                    logger.info(f"Deleted background: {bg_info['path']}")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 削除に失敗: {e}")
+                                    logger.error(f"Failed to delete background: {e}")
+                else:
+                    st.warning("選択した背景の情報が取得できません")
+        else:
+            st.info("管理する背景画像がありません")

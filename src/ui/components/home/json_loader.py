@@ -8,6 +8,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from config import Paths
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -454,6 +455,148 @@ def render_item_images_status_check(data: Dict[str, Any]) -> None:
         use_container_width=True,
         hide_index=True,
     )
+
+    # アイテム画像管理機能
+    st.markdown("---")
+    st.markdown("### 📤 アイテム画像の管理")
+
+    items_dir = Path("assets/items")
+
+    col_upload, col_manage = st.columns([1, 1])
+
+    with col_upload:
+        st.markdown("**新規アップロード**")
+        uploaded_file = st.file_uploader(
+            "アイテム画像をアップロード",
+            type=["png"],
+            help="アイテム画像ファイル（PNG）を選択してください",
+            key="item_uploader"
+        )
+
+        if uploaded_file:
+            # デフォルトのファイル名（拡張子なし）を提案
+            default_name = os.path.splitext(uploaded_file.name)[0]
+
+            new_item_name = st.text_input(
+                "保存名（拡張子なし）",
+                value=default_name,
+                help="アイテム画像のIDを入力してください（例: hamburger, pizza）",
+                key="new_item_name"
+            )
+
+            # プレビュー表示
+            try:
+                image = Image.open(uploaded_file)
+                st.image(image, caption=f"プレビュー: {uploaded_file.name}", width=150)
+                st.write(f"サイズ: {image.size[0]}x{image.size[1]}px")
+            except Exception as e:
+                st.error(f"画像の読み込みに失敗: {e}")
+
+            if st.button("💾 アップロード", type="primary", key="upload_item_btn"):
+                if new_item_name.strip():
+                    try:
+                        # 保存先パス（assets/items直下）
+                        items_dir.mkdir(parents=True, exist_ok=True)
+                        save_path = items_dir / f"{new_item_name.strip()}.png"
+
+                        # ファイルが既に存在するか確認
+                        if save_path.exists():
+                            st.warning(f"⚠️ '{new_item_name}' は既に存在します。上書きしますか？")
+                            if st.button("上書き保存", key="overwrite_item_btn"):
+                                image = Image.open(uploaded_file)
+                                image.save(save_path)
+                                st.success(f"✅ '{new_item_name}' を上書き保存しました！")
+                                st.rerun()
+                        else:
+                            # 新規保存
+                            image = Image.open(uploaded_file)
+                            image.save(save_path)
+                            st.success(f"✅ '{new_item_name}' をアップロードしました！")
+                            logger.info(f"Uploaded new item: {save_path}")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ アップロードに失敗: {e}")
+                        logger.error(f"Failed to upload item: {e}")
+                else:
+                    st.warning("保存名を入力してください")
+
+    with col_manage:
+        st.markdown("**既存画像の管理**")
+
+        # assets/items 配下の全PNGファイルを取得
+        existing_items = []
+        if items_dir.exists():
+            for file_path in items_dir.rglob("*.png"):
+                # 拡張子を除いたファイル名を取得
+                item_id = file_path.stem
+                existing_items.append((item_id, file_path))
+
+        if existing_items:
+            # アイテムIDでソート
+            existing_items.sort(key=lambda x: x[0])
+
+            selected_item = st.selectbox(
+                "管理するアイテムを選択",
+                options=[item[0] for item in existing_items],
+                key="manage_item_select"
+            )
+
+            if selected_item:
+                # 選択されたアイテムのパスを取得
+                selected_path = next(path for item_id, path in existing_items if item_id == selected_item)
+
+                # プレビュー表示
+                try:
+                    image = Image.open(selected_path)
+                    st.image(image, caption=f"{selected_item}.png", width=150)
+                    st.write(f"サイズ: {image.size[0]}x{image.size[1]}px")
+                    st.caption(f"パス: {selected_path}")
+                except Exception as e:
+                    st.warning(f"プレビュー表示失敗: {e}")
+
+                # 名前変更
+                with st.expander("✏️ 名前を変更"):
+                    new_name = st.text_input(
+                        "新しい名前（拡張子なし）",
+                        value=selected_item,
+                        key="rename_item_input"
+                    )
+                    if st.button("名前を変更", key="rename_item_btn"):
+                        if new_name.strip() and new_name != selected_item:
+                            try:
+                                new_path = selected_path.parent / f"{new_name.strip()}.png"
+
+                                if new_path.exists():
+                                    st.error(f"❌ '{new_name}' は既に存在します")
+                                else:
+                                    selected_path.rename(new_path)
+                                    st.success(f"✅ '{selected_item}' → '{new_name}' に変更しました")
+                                    logger.info(f"Renamed item: {selected_path} -> {new_path}")
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ 名前変更に失敗: {e}")
+                                logger.error(f"Failed to rename item: {e}")
+                        elif new_name == selected_item:
+                            st.info("同じ名前です")
+                        else:
+                            st.warning("新しい名前を入力してください")
+
+                # 削除
+                with st.expander("🗑️ 削除", expanded=False):
+                    st.warning(f"⚠️ '{selected_item}.png' を削除しますか？この操作は取り消せません。")
+                    confirm_delete = st.checkbox(f"本当に削除する", key="confirm_delete_item")
+                    if confirm_delete:
+                        if st.button("🗑️ 削除を実行", type="secondary", key="delete_item_btn"):
+                            try:
+                                selected_path.unlink()
+                                st.success(f"✅ '{selected_item}' を削除しました")
+                                logger.info(f"Deleted item: {selected_path}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ 削除に失敗: {e}")
+                                logger.error(f"Failed to delete item: {e}")
+        else:
+            st.info("管理するアイテム画像がありません")
 
 
 def render_json_selector(
