@@ -28,6 +28,7 @@ class FrameGenerator:
         conversation_mode: str,
         temp_video_path: str,
         item_images: Dict = None,
+        sections: List = None,
         progress_callback=None,
     ) -> bool:
         """動画フレームの生成"""
@@ -49,6 +50,23 @@ class FrameGenerator:
         try:
             # 現在表示中のアイテムを追跡
             current_item = None
+            current_section_key = None
+
+            # アイテム表示が許可されるセクションキー
+            ITEM_ALLOWED_SECTIONS = {"background", "learning"}
+
+            # セクションごとのセグメント範囲を事前計算
+            section_segment_ranges = []
+            if sections:
+                segment_index = 0
+                for section in sections:
+                    segment_count = len(section.segments)
+                    section_segment_ranges.append({
+                        "key": getattr(section, "section_key", None),
+                        "start": segment_index,
+                        "end": segment_index + segment_count
+                    })
+                    segment_index += segment_count
 
             for frame_idx in range(total_frames):
                 if progress_callback:
@@ -75,28 +93,51 @@ class FrameGenerator:
                         segment_end = segment_start + segment.duration
 
                         if segment_start <= current_time < segment_end:
-                            # display_itemが指定されている場合
-                            display_item_id = conv.get("display_item")
+                            # 現在のセグメントが属するセクションを判定
+                            new_section_key = None
+                            for section_range in section_segment_ranges:
+                                if section_range["start"] <= i < section_range["end"]:
+                                    new_section_key = section_range["key"]
+                                    break
 
-                            if display_item_id is not None:
-                                # "none" または空文字列の場合はアイテムを非表示
-                                if display_item_id == "none" or display_item_id == "":
+                            # セクションが変わった場合
+                            if new_section_key != current_section_key:
+                                # アイテム表示が許可されていないセクションに入った場合はクリア
+                                if new_section_key not in ITEM_ALLOWED_SECTIONS:
                                     if current_item is not None:
-                                        logger.debug(
-                                            f"Item cleared at time={current_time:.3f}s"
+                                        logger.info(
+                                            f"Item cleared: section changed to '{new_section_key}' at time={current_time:.3f}s"
                                         )
                                         current_item = None
-                                # アイテムIDが指定されている場合
-                                elif item_images and display_item_id in item_images:
-                                    current_item = item_images[display_item_id]
-                                    logger.debug(
-                                        f"Item switched to '{display_item_id}' at time={current_time:.3f}s"
+                                else:
+                                    logger.info(
+                                        f"Entered item-allowed section '{new_section_key}' at time={current_time:.3f}s"
                                     )
-                                # アイテムIDが指定されているが画像が見つからない場合
-                                elif item_images is not None:
-                                    logger.warning(
-                                        f"Item image not found: '{display_item_id}' at time={current_time:.3f}s (keeping previous item)"
-                                    )
+                                current_section_key = new_section_key
+
+                            # アイテム表示が許可されているセクションでのみアイテムを処理
+                            if current_section_key in ITEM_ALLOWED_SECTIONS:
+                                display_item_id = conv.get("display_item")
+
+                                if display_item_id is not None:
+                                    # "none" または空文字列の場合はアイテムを非表示
+                                    if display_item_id == "none" or display_item_id == "":
+                                        if current_item is not None:
+                                            logger.debug(
+                                                f"Item cleared at time={current_time:.3f}s"
+                                            )
+                                            current_item = None
+                                    # アイテムIDが指定されている場合
+                                    elif item_images and display_item_id in item_images:
+                                        current_item = item_images[display_item_id]
+                                        logger.debug(
+                                            f"Item switched to '{display_item_id}' at time={current_time:.3f}s"
+                                        )
+                                    # アイテムIDが指定されているが画像が見つからない場合
+                                    elif item_images is not None:
+                                        logger.warning(
+                                            f"Item image not found: '{display_item_id}' at time={current_time:.3f}s (keeping previous item)"
+                                        )
                             break
 
                 # フレーム合成（アイテム付き）

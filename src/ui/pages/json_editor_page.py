@@ -155,6 +155,56 @@ def validate_json_data(data: Dict[str, Any]) -> tuple[bool, str]:
         return False, f"バリデーションエラー: {str(e)}"
 
 
+def check_display_item_images(data: Dict[str, Any]) -> Dict[str, Any]:
+    """display_itemで使用されている画像の存在チェック
+
+    Args:
+        data: JSONデータ
+
+    Returns:
+        {
+            "item_ids": List[str],  # 使用されているアイテムID一覧
+            "missing": List[str],   # 存在しない画像のアイテムID
+            "found": List[str],     # 存在する画像のアイテムID
+        }
+    """
+    item_ids = set()
+    items_dir = Path("assets/items")
+
+    # 全セクションのセグメントから display_item を収集
+    sections = data.get("sections", [])
+    for section in sections:
+        segments = section.get("segments", [])
+        for segment in segments:
+            display_item = segment.get("display_item")
+            if display_item and display_item != "none":
+                item_ids.add(display_item)
+
+    # 各アイテムIDの画像ファイルが存在するかチェック
+    missing = []
+    found = []
+
+    for item_id in sorted(item_ids):
+        # assets/items/ 配下を再帰的に探索
+        image_found = False
+        if items_dir.exists():
+            for root, dirs, files in os.walk(items_dir):
+                if f"{item_id}.png" in files:
+                    image_found = True
+                    break
+
+        if image_found:
+            found.append(item_id)
+        else:
+            missing.append(item_id)
+
+    return {
+        "item_ids": sorted(item_ids),
+        "missing": missing,
+        "found": found,
+    }
+
+
 def render_segment_editor(
     segment: Dict[str, Any], segment_index: int, section_name: str
 ) -> Dict[str, Any]:
@@ -368,6 +418,41 @@ def render_json_editor():
     json_data = load_json_file(selected_file)
     if json_data is None:
         return
+
+    # display_itemの画像チェック
+    st.markdown("---")
+    st.subheader("🖼️ アイテム画像チェック")
+
+    item_check_result = check_display_item_images(json_data)
+
+    if not item_check_result["item_ids"]:
+        st.info("ℹ️ このJSONファイルには display_item が使用されていません。")
+    else:
+        # 使用されているアイテムID一覧
+        st.write(f"**使用されているアイテムID**: {len(item_check_result['item_ids'])}個")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # 存在する画像
+            if item_check_result["found"]:
+                st.success(f"✅ 画像あり ({len(item_check_result['found'])}個)")
+                with st.expander("詳細を表示"):
+                    for item_id in item_check_result["found"]:
+                        st.write(f"- `{item_id}.png` ✓")
+            else:
+                st.info("存在する画像: なし")
+
+        with col2:
+            # 存在しない画像
+            if item_check_result["missing"]:
+                st.error(f"❌ 画像なし ({len(item_check_result['missing'])}個)")
+                with st.expander("詳細を表示", expanded=True):
+                    st.warning("以下の画像ファイルを `assets/items/` に配置してください:")
+                    for item_id in item_check_result["missing"]:
+                        st.write(f"- `{item_id}.png` ⚠️")
+            else:
+                st.success("✅ すべての画像が揃っています！")
 
     # 編集フォーム
     st.markdown("---")

@@ -50,6 +50,7 @@ def create_closing_section() -> VideoSection:
 
     return VideoSection(
         section_name="締めくくり",
+        section_key="closing",
         scene_background="blue_sky",
         bgm_id="summer_triangle",
         bgm_volume=0.20,

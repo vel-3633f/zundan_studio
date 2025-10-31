@@ -158,6 +158,9 @@ class SectionGeneratorBase:
             logger.info(f"{self.section_name} をLLMで生成中...")
             section = chain.invoke({"food_name": context.food_name})
 
+            # セクションキーを設定
+            section.section_key = self.section_key
+
             # セクションタイプに応じた固定BGMを設定
             bgm_config = get_section_bgm(self.section_key)
             section.bgm_id = bgm_config["bgm_id"]

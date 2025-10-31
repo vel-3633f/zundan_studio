@@ -36,6 +36,10 @@ class VideoSection(BaseModel):
     """動画セクションのモデル"""
 
     section_name: str = Field(description="セクション名")
+    section_key: Optional[str] = Field(
+        default=None,
+        description="セクションのキー（例: background, learning）"
+    )
     scene_background: str = Field(description="このセクションで使用する背景シーン")
     bgm_id: str = Field(default="none", description="このセクションで使用するBGMのID")
     bgm_volume: float = Field(default=0.25, description="BGMの音量（0.0〜1.0）")

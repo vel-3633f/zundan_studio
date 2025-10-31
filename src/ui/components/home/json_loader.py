@@ -12,6 +12,56 @@ from config import Paths
 logger = logging.getLogger(__name__)
 
 
+def check_display_item_images(data: Dict[str, Any]) -> Dict[str, Any]:
+    """display_itemで使用されている画像の存在チェック
+
+    Args:
+        data: JSONデータ
+
+    Returns:
+        {
+            "item_ids": List[str],  # 使用されているアイテムID一覧
+            "missing": List[str],   # 存在しない画像のアイテムID
+            "found": List[str],     # 存在する画像のアイテムID
+        }
+    """
+    item_ids = set()
+    items_dir = Path("assets/items")
+
+    # 全セクションのセグメントから display_item を収集
+    sections = data.get("sections", [])
+    for section in sections:
+        segments = section.get("segments", [])
+        for segment in segments:
+            display_item = segment.get("display_item")
+            if display_item and display_item != "none":
+                item_ids.add(display_item)
+
+    # 各アイテムIDの画像ファイルが存在するかチェック
+    missing = []
+    found = []
+
+    for item_id in sorted(item_ids):
+        # assets/items/ 配下を再帰的に探索
+        image_found = False
+        if items_dir.exists():
+            for root, dirs, files in os.walk(items_dir):
+                if f"{item_id}.png" in files:
+                    image_found = True
+                    break
+
+        if image_found:
+            found.append(item_id)
+        else:
+            missing.append(item_id)
+
+    return {
+        "item_ids": sorted(item_ids),
+        "missing": missing,
+        "found": found,
+    }
+
+
 def get_json_files_list() -> List[str]:
     """outputs/jsonディレクトリのJSONファイル一覧を取得"""
     try:
@@ -404,6 +454,43 @@ def render_json_selector(
                     st.metric("セグメント数", len(data.get("all_segments", [])))
                 with col3:
                     st.metric("推定時間", data.get("estimated_duration", "N/A"))
+
+                # display_itemの画像チェック
+                st.markdown("---")
+                st.write("**🖼️ アイテム画像チェック**")
+
+                item_check_result = check_display_item_images(data)
+
+                if not item_check_result["item_ids"]:
+                    st.info("ℹ️ このJSONファイルには display_item が使用されていません。")
+                else:
+                    # 使用されているアイテムID一覧
+                    st.write(f"使用アイテムID: {len(item_check_result['item_ids'])}個")
+
+                    col_found, col_missing = st.columns(2)
+
+                    with col_found:
+                        # 存在する画像
+                        if item_check_result["found"]:
+                            st.success(f"✅ 画像あり: {len(item_check_result['found'])}個")
+                            with st.expander("詳細"):
+                                for item_id in item_check_result["found"]:
+                                    st.write(f"- `{item_id}.png` ✓")
+                        else:
+                            st.info("存在する画像: なし")
+
+                    with col_missing:
+                        # 存在しない画像
+                        if item_check_result["missing"]:
+                            st.error(f"❌ 画像なし: {len(item_check_result['missing'])}個")
+                            with st.expander("詳細", expanded=True):
+                                st.warning("以下の画像を `assets/items/` に配置してください:")
+                                for item_id in item_check_result["missing"]:
+                                    st.write(f"- `{item_id}.png` ⚠️")
+                        else:
+                            st.success("✅ すべての画像が揃っています！")
+
+                st.markdown("---")
 
                 # 読み込みボタン
                 if st.button(

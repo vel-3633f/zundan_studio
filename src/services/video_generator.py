@@ -112,6 +112,7 @@ class VideoGenerator:
                 conversation_mode=conversation_mode,
                 temp_video_path=temp_video_path,
                 item_images=item_images,
+                sections=sections,
                 progress_callback=progress_callback,
             )
 
