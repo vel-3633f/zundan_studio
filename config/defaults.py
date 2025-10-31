@@ -43,8 +43,8 @@ class DefaultConversations:
         ]
 
     @staticmethod
-    def get_reset_conversation() -> List[Dict[str, str]]:
-        """リセット用会話を取得"""
+    def get_default_conversation() -> List[Dict[str, str]]:
+        """デフォルト会話を取得"""
         return [
             {
                 "speaker": "zundamon",

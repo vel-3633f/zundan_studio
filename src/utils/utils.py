@@ -303,34 +303,3 @@ def validate_text_input(
 def sanitize_filename(filename: str) -> str:
     """Sanitize filename for safe file operations"""
     return TextValidator.sanitize_filename(filename)
-
-
-def split_long_text(text: str, max_length: int = 30) -> List[str]:
-    """長いテキストを指定文字数以内に分割"""
-    if len(text) <= max_length:
-        return [text]
-
-    sentences = re.split(r"([。！？])", text)
-    result = []
-    current = ""
-
-    for i in range(0, len(sentences) - 1, 2):
-        sentence = sentences[i] + (sentences[i + 1] if i + 1 < len(sentences) else "")
-
-        if len(current + sentence) <= max_length:
-            current += sentence
-        else:
-            if current:
-                result.append(current)
-                current = sentence
-            else:
-                while len(sentence) > max_length:
-                    result.append(sentence[:max_length])
-                    sentence = sentence[max_length:]
-                current = sentence
-
-    if current:
-        result.append(current)
-
-    logger.debug(f"テキスト分割: {len(result)}個に分割（元: {len(text)}文字）")
-    return result

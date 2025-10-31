@@ -147,15 +147,6 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
     return full_path
 
 
-def get_all_bgm_ids() -> list[str]:
-    """利用可能な全BGM IDのリストを取得
-
-    Returns:
-        list[str]: BGM IDのリスト
-    """
-    return list(BGM_LIBRARY.keys())
-
-
 SECTION_BGM_MAP: Dict[str, str] = {
     "hook": "mayonaka_omocha",
     "daily": "honwaka",

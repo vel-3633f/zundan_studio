@@ -33,10 +33,6 @@ def main():
             "module": "src.ui.pages.food_generation_page",
             "function": "render_food_overconsumption_page",
         },
-        "📝 JSON編集": {
-            "module": "src.ui.pages.json_editor_page",
-            "function": "render_json_editor_page",
-        },
         "🍔 食べ物管理": {
             "module": "src.ui.pages.food_management_page",
             "function": "render_food_management_page",
