@@ -413,6 +413,49 @@ def load_json_to_session_state(
         return None
 
 
+def render_item_images_status_check(data: Dict[str, Any]) -> None:
+    """アイテム画像の読み込み状態を確認して表示"""
+    if not data:
+        st.info("JSONファイルを読み込むとアイテム画像のチェックが表示されます")
+        return
+
+    item_check_result = check_display_item_images(data)
+
+    if not item_check_result["item_ids"]:
+        st.info("このJSONには display_item が使用されていません")
+        return
+
+    # 統計情報を表示（背景画像チェックと同じスタイル）
+    total = len(item_check_result["item_ids"])
+    found = len(item_check_result["found"])
+    missing = len(item_check_result["missing"])
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("合計", total)
+    with col2:
+        st.metric("読み込み成功", found)
+    with col3:
+        st.metric("未検出", missing)
+
+    # テーブルで詳細を表示
+    item_statuses = []
+    for item_id in item_check_result["item_ids"]:
+        exists = item_id in item_check_result["found"]
+        item_statuses.append({
+            "アイテムID": item_id,
+            "状態": "✅" if exists else "❌",
+            "ファイル": f"{item_id}.png",
+            "詳細": "読み込み成功" if exists else "ファイルが見つかりません",
+        })
+
+    st.dataframe(
+        item_statuses,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
 def render_json_selector(
     available_characters: List[str] = None,
     available_backgrounds: List[str] = None,
@@ -454,43 +497,6 @@ def render_json_selector(
                     st.metric("セグメント数", len(data.get("all_segments", [])))
                 with col3:
                     st.metric("推定時間", data.get("estimated_duration", "N/A"))
-
-                # display_itemの画像チェック
-                st.markdown("---")
-                st.write("**🖼️ アイテム画像チェック**")
-
-                item_check_result = check_display_item_images(data)
-
-                if not item_check_result["item_ids"]:
-                    st.info("ℹ️ このJSONファイルには display_item が使用されていません。")
-                else:
-                    # 使用されているアイテムID一覧
-                    st.write(f"使用アイテムID: {len(item_check_result['item_ids'])}個")
-
-                    col_found, col_missing = st.columns(2)
-
-                    with col_found:
-                        # 存在する画像
-                        if item_check_result["found"]:
-                            st.success(f"✅ 画像あり: {len(item_check_result['found'])}個")
-                            with st.expander("詳細"):
-                                for item_id in item_check_result["found"]:
-                                    st.write(f"- `{item_id}.png` ✓")
-                        else:
-                            st.info("存在する画像: なし")
-
-                    with col_missing:
-                        # 存在しない画像
-                        if item_check_result["missing"]:
-                            st.error(f"❌ 画像なし: {len(item_check_result['missing'])}個")
-                            with st.expander("詳細", expanded=True):
-                                st.warning("以下の画像を `assets/items/` に配置してください:")
-                                for item_id in item_check_result["missing"]:
-                                    st.write(f"- `{item_id}.png` ⚠️")
-                        else:
-                            st.success("✅ すべての画像が揃っています！")
-
-                st.markdown("---")
 
                 # 読み込みボタン
                 if st.button(

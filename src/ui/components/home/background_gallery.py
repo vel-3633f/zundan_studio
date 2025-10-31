@@ -67,8 +67,6 @@ def get_background_info(bg_name: str, backgrounds_dir: str, valid_extensions: Li
 
 def render_background_status_check(background_options: List[str]) -> None:
     """背景画像の読み込み状態を確認して表示"""
-    st.subheader("📋 背景画像読み込み状態チェック")
-
     if not background_options or (len(background_options) == 1 and background_options[0] == "default"):
         st.info("背景画像が見つかりません")
         return
@@ -144,5 +142,3 @@ def render_background_status_check(background_options: List[str]) -> None:
         use_container_width=True,
         hide_index=True,
     )
-
-    st.markdown("---")

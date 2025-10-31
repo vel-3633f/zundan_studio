@@ -11,6 +11,7 @@ from src.ui.components.home.video_generation import generate_conversation_video
 from src.ui.components.home.json_loader import (
     render_json_selector,
     extract_backgrounds_from_json,
+    render_item_images_status_check,
 )
 from src.ui.components.home.background_gallery import render_background_status_check
 from src.ui.components.home.section_bgm_editor import (
@@ -63,7 +64,16 @@ def render_home_page():
     current_background_options = background_options
     render_json_selector(available_characters, current_background_options, expression_options)
 
-    render_background_status_check(background_options)
+    # タブでリソースチェックを統合表示
+    st.subheader("📋 リソース読み込み状態チェック")
+    tab1, tab2 = st.tabs(["🖼️ 背景画像", "🎨 アイテム画像"])
+
+    with tab1:
+        render_background_status_check(background_options)
+
+    with tab2:
+        loaded_json_data = getattr(st.session_state, "loaded_json_data", None)
+        render_item_images_status_check(loaded_json_data)
 
     render_section_bgm_editor()
 
