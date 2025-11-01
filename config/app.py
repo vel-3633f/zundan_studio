@@ -15,11 +15,9 @@ class AppConfig:
     page_icon: str = "🎭"
     layout: str = "wide"
 
-    # 動画設定
     fps: int = 30
     resolution: Tuple[int, int] = (1280, 720)
 
-    # 音声パラメータデフォルト値
     default_speed: float = 1.0
     default_pitch: float = 0.0
     default_intonation: float = 1.0
@@ -68,11 +66,6 @@ class Paths:
         return os.path.join(Paths.get_assets_dir(), character_name)
 
     @staticmethod
-    def get_fonts_dir() -> str:
-        """フォントディレクトリを取得"""
-        return os.path.join(Paths.get_assets_dir(), "fonts")
-
-    @staticmethod
     def get_temp_dir() -> str:
         """一時ファイルディレクトリを取得"""
         return os.path.join(Paths.get_project_root(), "temp")
@@ -81,21 +74,6 @@ class Paths:
     def get_outputs_dir() -> str:
         """出力ディレクトリを取得"""
         return os.path.join(Paths.get_project_root(), "outputs")
-
-    @staticmethod
-    def get_items_dir() -> str:
-        """アイテム画像ディレクトリを取得"""
-        return os.path.join(Paths.get_assets_dir(), "items")
-
-    @staticmethod
-    def get_item_category_dir(category: str) -> str:
-        """カテゴリ別アイテムディレクトリを取得"""
-        return os.path.join(Paths.get_items_dir(), category)
-
-    @staticmethod
-    def get_item_file_path(category: str, item_name: str) -> str:
-        """アイテム画像ファイルパスを取得"""
-        return os.path.join(Paths.get_item_category_dir(category), f"{item_name}.png")
 
 
 # グローバル設定インスタンス

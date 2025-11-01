@@ -3,10 +3,64 @@ import streamlit as st
 from typing import Dict, List, Any, Optional
 import logging
 import os
+import time
+import shutil
+import tempfile
 from pathlib import Path
 from config import Paths
+from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+
+def check_display_item_images(data: Dict[str, Any]) -> Dict[str, Any]:
+    """display_itemで使用されている画像の存在チェック
+
+    Args:
+        data: JSONデータ
+
+    Returns:
+        {
+            "item_ids": List[str],  # 使用されているアイテムID一覧
+            "missing": List[str],   # 存在しない画像のアイテムID
+            "found": List[str],     # 存在する画像のアイテムID
+        }
+    """
+    item_ids = set()
+    items_dir = Path("assets/items")
+
+    # 全セクションのセグメントから display_item を収集
+    sections = data.get("sections", [])
+    for section in sections:
+        segments = section.get("segments", [])
+        for segment in segments:
+            display_item = segment.get("display_item")
+            if display_item and display_item != "none":
+                item_ids.add(display_item)
+
+    # 各アイテムIDの画像ファイルが存在するかチェック
+    missing = []
+    found = []
+
+    for item_id in sorted(item_ids):
+        # assets/items/ 配下を再帰的に探索
+        image_found = False
+        if items_dir.exists():
+            for root, dirs, files in os.walk(items_dir):
+                if f"{item_id}.png" in files:
+                    image_found = True
+                    break
+
+        if image_found:
+            found.append(item_id)
+        else:
+            missing.append(item_id)
+
+    return {
+        "item_ids": sorted(item_ids),
+        "missing": missing,
+        "found": found,
+    }
 
 
 def get_json_files_list() -> List[str]:
@@ -27,17 +81,80 @@ def get_json_files_list() -> List[str]:
         return []
 
 
-def load_json_file(filename: str) -> Optional[Dict[str, Any]]:
-    """outputs/jsonディレクトリからJSONファイルを読み込み"""
-    try:
-        json_dir = os.path.join(Paths.get_outputs_dir(), "json")
-        file_path = os.path.join(json_dir, filename)
+def load_json_file(filename: str, max_retries: int = 3, retry_delay: float = 0.2, use_temp_copy: bool = True) -> Optional[Dict[str, Any]]:
+    """outputs/jsonディレクトリからJSONファイルを読み込み（リトライ＋一時ファイルコピー機能付き）
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load JSON file {filename}: {e}")
+    Args:
+        filename: JSONファイル名
+        max_retries: 最大リトライ回数（デフォルト: 3）
+        retry_delay: リトライ間隔（秒、デフォルト: 0.2）
+        use_temp_copy: 一時ファイルにコピーしてから読み込むか（デフォルト: True、デッドロック回避）
+
+    Returns:
+        JSONデータ（Dict）または失敗時にNone
+    """
+    json_dir = os.path.join(Paths.get_outputs_dir(), "json")
+    file_path = os.path.join(json_dir, filename)
+
+    # ファイルが存在するか確認
+    if not os.path.exists(file_path):
+        logger.error(f"File not found: {file_path}")
         return None
+
+    for attempt in range(max_retries):
+        tmp_path = None
+        try:
+            if use_temp_copy:
+                # 一時ファイルにコピーしてから読み込む（デッドロック回避）
+                with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False, encoding='utf-8') as tmp_file:
+                    tmp_path = tmp_file.name
+
+                # ファイルをコピー（バイナリモードで高速コピー）
+                shutil.copy2(file_path, tmp_path)
+                logger.debug(f"Copied {filename} to temporary file: {tmp_path}")
+
+                # 一時ファイルから読み込み
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    logger.info(f"Successfully loaded JSON file via temp copy: {filename}")
+                    return data
+            else:
+                # 直接読み込み
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    logger.info(f"Successfully loaded JSON file: {filename}")
+                    return data
+
+        except (OSError, IOError) as e:
+            # Errno 35 (Resource deadlock avoided) や他のIOエラーをキャッチ
+            if attempt < max_retries - 1:
+                logger.warning(
+                    f"File read attempt {attempt + 1}/{max_retries} failed for {filename}: {e}. Retrying in {retry_delay}s..."
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                logger.error(f"Failed to load JSON file {filename} after {max_retries} attempts: {e}")
+                return None
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error in {filename}: {e}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Unexpected error loading {filename}: {e}", exc_info=True)
+            return None
+
+        finally:
+            # 一時ファイルをクリーンアップ
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                    logger.debug(f"Cleaned up temporary file: {tmp_path}")
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to cleanup temp file {tmp_path}: {cleanup_error}")
+
+    return None
 
 
 def validate_json_structure(data: Dict[str, Any]) -> bool:
@@ -295,6 +412,191 @@ def load_json_to_session_state(
         st.error(f"ファイルの読み込みに失敗しました: {str(e)}")
         logger.error(f"File load error: {e}")
         return None
+
+
+def render_item_images_status_check(data: Dict[str, Any]) -> None:
+    """アイテム画像の読み込み状態を確認して表示"""
+    if not data:
+        st.info("JSONファイルを読み込むとアイテム画像のチェックが表示されます")
+        return
+
+    item_check_result = check_display_item_images(data)
+
+    if not item_check_result["item_ids"]:
+        st.info("このJSONには display_item が使用されていません")
+        return
+
+    # 統計情報を表示（背景画像チェックと同じスタイル）
+    total = len(item_check_result["item_ids"])
+    found = len(item_check_result["found"])
+    missing = len(item_check_result["missing"])
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("合計", total)
+    with col2:
+        st.metric("読み込み成功", found)
+    with col3:
+        st.metric("未検出", missing)
+
+    # テーブルで詳細を表示
+    item_statuses = []
+    for item_id in item_check_result["item_ids"]:
+        exists = item_id in item_check_result["found"]
+        item_statuses.append({
+            "アイテムID": item_id,
+            "状態": "✅" if exists else "❌",
+            "ファイル": f"{item_id}.png",
+            "詳細": "読み込み成功" if exists else "ファイルが見つかりません",
+        })
+
+    st.dataframe(
+        item_statuses,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    # アイテム画像管理機能
+    st.markdown("---")
+    st.markdown("### 📤 アイテム画像の管理")
+
+    items_dir = Path("assets/items")
+
+    col_upload, col_manage = st.columns([1, 1])
+
+    with col_upload:
+        st.markdown("**新規アップロード**")
+        uploaded_file = st.file_uploader(
+            "アイテム画像をアップロード",
+            type=["png"],
+            help="アイテム画像ファイル（PNG）を選択してください",
+            key="item_uploader"
+        )
+
+        if uploaded_file:
+            # デフォルトのファイル名（拡張子なし）を提案
+            default_name = os.path.splitext(uploaded_file.name)[0]
+
+            new_item_name = st.text_input(
+                "保存名（拡張子なし）",
+                value=default_name,
+                help="アイテム画像のIDを入力してください（例: hamburger, pizza）",
+                key="new_item_name"
+            )
+
+            # プレビュー表示
+            try:
+                image = Image.open(uploaded_file)
+                st.image(image, caption=f"プレビュー: {uploaded_file.name}", width=150)
+                st.write(f"サイズ: {image.size[0]}x{image.size[1]}px")
+            except Exception as e:
+                st.error(f"画像の読み込みに失敗: {e}")
+
+            if st.button("💾 アップロード", type="primary", key="upload_item_btn"):
+                if new_item_name.strip():
+                    try:
+                        # 保存先パス（assets/items直下）
+                        items_dir.mkdir(parents=True, exist_ok=True)
+                        save_path = items_dir / f"{new_item_name.strip()}.png"
+
+                        # ファイルが既に存在するか確認
+                        if save_path.exists():
+                            st.warning(f"⚠️ '{new_item_name}' は既に存在します。上書きしますか？")
+                            if st.button("上書き保存", key="overwrite_item_btn"):
+                                image = Image.open(uploaded_file)
+                                image.save(save_path)
+                                st.success(f"✅ '{new_item_name}' を上書き保存しました！")
+                                st.rerun()
+                        else:
+                            # 新規保存
+                            image = Image.open(uploaded_file)
+                            image.save(save_path)
+                            st.success(f"✅ '{new_item_name}' をアップロードしました！")
+                            logger.info(f"Uploaded new item: {save_path}")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ アップロードに失敗: {e}")
+                        logger.error(f"Failed to upload item: {e}")
+                else:
+                    st.warning("保存名を入力してください")
+
+    with col_manage:
+        st.markdown("**既存画像の管理**")
+
+        # assets/items 配下の全PNGファイルを取得
+        existing_items = []
+        if items_dir.exists():
+            for file_path in items_dir.rglob("*.png"):
+                # 拡張子を除いたファイル名を取得
+                item_id = file_path.stem
+                existing_items.append((item_id, file_path))
+
+        if existing_items:
+            # アイテムIDでソート
+            existing_items.sort(key=lambda x: x[0])
+
+            selected_item = st.selectbox(
+                "管理するアイテムを選択",
+                options=[item[0] for item in existing_items],
+                key="manage_item_select"
+            )
+
+            if selected_item:
+                # 選択されたアイテムのパスを取得
+                selected_path = next(path for item_id, path in existing_items if item_id == selected_item)
+
+                # プレビュー表示
+                try:
+                    image = Image.open(selected_path)
+                    st.image(image, caption=f"{selected_item}.png", width=150)
+                    st.write(f"サイズ: {image.size[0]}x{image.size[1]}px")
+                    st.caption(f"パス: {selected_path}")
+                except Exception as e:
+                    st.warning(f"プレビュー表示失敗: {e}")
+
+                # 名前変更
+                with st.expander("✏️ 名前を変更"):
+                    new_name = st.text_input(
+                        "新しい名前（拡張子なし）",
+                        value=selected_item,
+                        key="rename_item_input"
+                    )
+                    if st.button("名前を変更", key="rename_item_btn"):
+                        if new_name.strip() and new_name != selected_item:
+                            try:
+                                new_path = selected_path.parent / f"{new_name.strip()}.png"
+
+                                if new_path.exists():
+                                    st.error(f"❌ '{new_name}' は既に存在します")
+                                else:
+                                    selected_path.rename(new_path)
+                                    st.success(f"✅ '{selected_item}' → '{new_name}' に変更しました")
+                                    logger.info(f"Renamed item: {selected_path} -> {new_path}")
+                                    st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ 名前変更に失敗: {e}")
+                                logger.error(f"Failed to rename item: {e}")
+                        elif new_name == selected_item:
+                            st.info("同じ名前です")
+                        else:
+                            st.warning("新しい名前を入力してください")
+
+                # 削除
+                with st.expander("🗑️ 削除", expanded=False):
+                    st.warning(f"⚠️ '{selected_item}.png' を削除しますか？この操作は取り消せません。")
+                    confirm_delete = st.checkbox(f"本当に削除する", key="confirm_delete_item")
+                    if confirm_delete:
+                        if st.button("🗑️ 削除を実行", type="secondary", key="delete_item_btn"):
+                            try:
+                                selected_path.unlink()
+                                st.success(f"✅ '{selected_item}' を削除しました")
+                                logger.info(f"Deleted item: {selected_path}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ 削除に失敗: {e}")
+                                logger.error(f"Failed to delete item: {e}")
+        else:
+            st.info("管理するアイテム画像がありません")
 
 
 def render_json_selector(

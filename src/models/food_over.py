@@ -26,12 +26,20 @@ class ConversationSegment(BaseModel):
         default_factory=dict,
         description="各キャラクターの表情を個別に指定 {キャラクター名: 表情名}"
     )
+    display_item: Optional[str] = Field(
+        default=None,
+        description="このセリフで表示する教育アイテム画像のID（ナレーター+めたんセクション専用）"
+    )
 
 
 class VideoSection(BaseModel):
     """動画セクションのモデル"""
 
     section_name: str = Field(description="セクション名")
+    section_key: Optional[str] = Field(
+        default=None,
+        description="セクションのキー（例: background, learning）"
+    )
     scene_background: str = Field(description="このセクションで使用する背景シーン")
     bgm_id: str = Field(default="none", description="このセクションで使用するBGMのID")
     bgm_volume: float = Field(default=0.25, description="BGMの音量（0.0〜1.0）")

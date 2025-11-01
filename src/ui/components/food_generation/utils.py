@@ -12,20 +12,6 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def estimate_video_duration(segments: List[Dict]) -> str:
-    """動画の推定時間を計算"""
-    if not segments:
-        return "約0分00秒"
-
-    total_chars = sum(len(segment.get("text", "")) for segment in segments)
-    total_seconds = total_chars * 0.4
-    minutes = int(total_seconds // 60)
-    seconds = int(total_seconds % 60)
-    duration = f"約{minutes}分{seconds:02d}秒"
-    logger.debug(f"動画時間推定: {total_chars}文字 → {duration}")
-    return duration
-
-
 def _convert_japanese_to_romaji(food_name: str) -> str:
     """日本語の食べ物名をローマ字に変換する"""
     try:

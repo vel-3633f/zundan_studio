@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=10)
-def _load_character_images_cached(character_name: str, expression: str, base_path: str) -> tuple:
+def _load_character_images_cached(
+    character_name: str, expression: str, base_path: str
+) -> tuple:
     """キャラクター画像を読み込み（キャッシュ機能付き）
 
     Args:
@@ -31,7 +33,7 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
 
     Returns:
         tuple: (images_dict_items, target_size) のタプル
-               images_dict_items は (key, image_bytes) のタプルのリスト
+            images_dict_items は (key, image_bytes) のタプルのリスト
     """
     expression_dir = os.path.join(base_path, expression)
 
@@ -50,6 +52,7 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
             img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
             if img is not None:
                 images[key] = img
+                logger.info(f"Loaded {character_name}/{expression}/{key}: {filename}")
         else:
             if expression != "normal":
                 fallback_path = os.path.join(base_path, "normal", f"normal_{key}.png")
@@ -57,7 +60,13 @@ def _load_character_images_cached(character_name: str, expression: str, base_pat
                     img = cv2.imread(fallback_path, cv2.IMREAD_UNCHANGED)
                     if img is not None:
                         images[key] = img
+                        logger.info(
+                            f"Loaded {character_name}/{expression}/{key} (fallback): normal_{key}.png"
+                        )
                         continue
+            logger.warning(
+                f"Image not found: {character_name}/{expression}/{key} - {filename}"
+            )
 
     if images:
         target_size = images[list(images.keys())[0]].shape[:2]
@@ -251,23 +260,73 @@ class VideoProcessor:
         self, intensity: float, images: dict, is_blinking: bool = False
     ) -> np.ndarray:
         """音声強度に基づく口画像選択（瞬き対応）"""
-        # 瞬き中は目を閉じた画像を優先（瞬き専用画像がなければclosedを使用）
+
+        # 利用可能な画像キーを確認
+        if not images:
+            logger.error("No images available for mouth selection")
+            return None
+
+        # デバッグ情報を常にログ出力（INFO レベル）
+        if not hasattr(self, "_mouth_call_count"):
+            self._mouth_call_count = 0
+            logger.info(f"[MOUTH_SYNC] Available image keys: {list(images.keys())}")
+
+        self._mouth_call_count += 1
+
+        # 瞬き中の処理
         if is_blinking:
-            return images.get(
-                "blink", images.get("closed", images[list(images.keys())[0]])
-            )
+            if "blink" in images:
+                return images["blink"]
+            elif "closed" in images:
+                return images["closed"]
+            else:
+                # フォールバック: 最初の利用可能な画像
+                fallback_key = list(images.keys())[0]
+                logger.warning(f"[MOUTH_SYNC] Blinking fallback to '{fallback_key}'")
+                return images[fallback_key]
 
         # 通常の口パクアニメーション
+        # 30フレームごと（約1秒ごと）にログ出力
+        if self._mouth_call_count % 30 == 1:
+            logger.info(
+                f"[MOUTH_SYNC] Frame #{self._mouth_call_count}: intensity={intensity:.3f}, available_keys={list(images.keys())}"
+            )
+
+        # intensity値に基づいて適切な画像を選択
         if intensity < 0.1:
-            return images.get("closed", images[list(images.keys())[0]])
+            # 優先順位: closed > blink > half > open > 最初の画像
+            for key in ["closed", "blink", "half", "open"]:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
+                    return images[key]
         elif intensity < 0.4:
-            return images.get(
-                "half", images.get("closed", images[list(images.keys())[0]])
-            )
+            # 優先順位: half > closed > open > 最初の画像
+            for key in ["half", "closed", "open"]:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
+                    return images[key]
         else:
-            return images.get(
-                "open", images.get("half", images[list(images.keys())[0]])
-            )
+            # 優先順位: open > half > closed > 最初の画像
+            for key in ["open", "half", "closed"]:
+                if key in images:
+                    if self._mouth_call_count % 30 == 1:
+                        logger.info(
+                            f"[MOUTH_SYNC] Selected '{key}' for intensity={intensity:.3f}"
+                        )
+                    return images[key]
+
+        # フォールバック
+        fallback_key = list(images.keys())[0]
+        logger.warning(
+            f"[MOUTH_SYNC] Fallback to '{fallback_key}' for intensity={intensity:.3f}"
+        )
+        return images[fallback_key]
 
     def _get_mouth_state(self, intensity: float, is_blinking: bool) -> str:
         """音声強度から口の状態を判定"""
@@ -305,7 +364,9 @@ class VideoProcessor:
 
         self._resize_cache[cache_key] = resized_img
 
-        logger.debug(f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}")
+        logger.debug(
+            f"Cached resized image: {cache_key}, cache size: {len(self._resize_cache)}"
+        )
 
         return resized_img
 
@@ -386,6 +447,15 @@ class VideoProcessor:
         """会話用のフレーム合成（表情対応）"""
         result = background.copy()
 
+        # デバッグ: active_speakers の内容をログ出力（サンプリング）
+        if not hasattr(self, "_composite_call_count"):
+            self._composite_call_count = 0
+        self._composite_call_count += 1
+        if self._composite_call_count % 30 == 1:  # 30フレームごと
+            logger.info(
+                f"[COMPOSITE] Frame #{self._composite_call_count}, time={current_time:.3f}s, active_speakers={active_speakers}"
+            )
+
         if conversation_mode == "solo":
             sorted_chars = []
             for char_name, speaker_data in active_speakers.items():
@@ -416,14 +486,26 @@ class VideoProcessor:
                 intensity = float(speaker_data)
                 expression = "normal"
 
+            # デバッグ: 各キャラクターの intensity をログ出力
+            if self._composite_call_count % 30 == 1:
+                logger.info(
+                    f"[COMPOSITE] Processing {char_name}: intensity={intensity:.3f}, expression={expression}"
+                )
+
             if expression in character_images[char_name]:
                 char_imgs = character_images[char_name][expression]
             elif "normal" in character_images[char_name]:
                 char_imgs = character_images[char_name]["normal"]
+                logger.warning(
+                    f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'"
+                )
             else:
                 available_expressions = list(character_images[char_name].keys())
                 if available_expressions:
                     char_imgs = character_images[char_name][available_expressions[0]]
+                    logger.warning(
+                        f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'"
+                    )
                 else:
                     logger.error(f"No expressions available for {char_name}")
                     continue
@@ -434,7 +516,40 @@ class VideoProcessor:
                     current_time, blink_timings, char_name
                 )
 
-            mouth_img = self.select_mouth_image(intensity, char_imgs, is_blinking)
+            # デバッグ: 重要なフレームで詳細ログを出力
+            if intensity > 0.1 and expression == "sick":
+                logger.info(
+                    f"[MOUTH_SELECT] {char_name}(sick): intensity={intensity:.3f}, is_blinking={is_blinking}, images={list(char_imgs.keys())}"
+                )
+
+            # キャラクター別の口パク感度調整
+            adjusted_intensity = intensity
+            if char_name == "zundamon":
+                # ずんだもんは口の動きを大きくする
+                adjusted_intensity = intensity * 1.7
+                if intensity > 0.1:
+                    logger.debug(
+                        f"[MOUTH_ADJUST] {char_name}: {intensity:.3f} -> {adjusted_intensity:.3f}"
+                    )
+
+            mouth_img = self.select_mouth_image(
+                adjusted_intensity, char_imgs, is_blinking
+            )
+
+            # デバッグ: 選択された画像を確認
+            if intensity > 0.1 and expression == "sick":
+                mouth_state = self._get_mouth_state(adjusted_intensity, is_blinking)
+                logger.info(
+                    f"[MOUTH_SELECT] {char_name}(sick): selected mouth_state={mouth_state}"
+                )
+
+            # デバッグ用ログ: 口パク状態を記録
+            mouth_state = self._get_mouth_state(intensity, is_blinking)
+            if current_time % 1.0 < (1.0 / self.fps):  # 1秒ごとにログ出力
+                logger.debug(
+                    f"Mouth sync - char: {char_name}, time: {current_time:.2f}s, "
+                    f"intensity: {intensity:.3f}, mouth: {mouth_state}, blinking: {is_blinking}"
+                )
 
             bg_h, bg_w = background.shape[:2]
             char_h, char_w = mouth_img.shape[:2]
@@ -454,8 +569,13 @@ class VideoProcessor:
                 target_height = int(char_h * target_width / char_w)
 
             mouth_img = self._get_resized_image(
-                mouth_img, char_name, expression, intensity, is_blinking,
-                target_width, target_height
+                mouth_img,
+                char_name,
+                expression,
+                intensity,
+                is_blinking,
+                target_width,
+                target_height,
             )
 
             margin = 10
@@ -465,6 +585,77 @@ class VideoProcessor:
             result = self.composite_frame(result, mouth_img, (x, y))
 
         return result
+
+    def composite_conversation_frame_with_item(
+        self,
+        background: np.ndarray,
+        character_images: Dict[str, Dict[str, Dict[str, np.ndarray]]],
+        active_speakers: Dict[str, Dict[str, any]],
+        conversation_mode: str = "duo",
+        current_time: float = 0.0,
+        blink_timings: List[Dict] = None,
+        item_image: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """会話用のフレーム合成（アイテム画像表示対応版）
+
+        Args:
+            background: 背景画像
+            character_images: キャラクター画像辞書
+            active_speakers: アクティブな話者情報
+            conversation_mode: 会話モード
+            current_time: 現在時刻
+            blink_timings: 瞬きタイミング
+            item_image: 教育アイテム画像（None の場合は表示しない）
+
+        Returns:
+            合成されたフレーム
+        """
+        # 既存のフレーム合成処理
+        frame = self.composite_conversation_frame(
+            background, character_images, active_speakers,
+            conversation_mode, current_time, blink_timings
+        )
+
+        # アイテム画像がある場合は右下に配置
+        if item_image is not None:
+            item_width = 300  # アイテムサイズ（固定）
+            item_height = 300
+
+            # アイテムをリサイズ
+            item_resized = cv2.resize(item_image, (item_width, item_height))
+
+            # 右下の位置を計算（マージン50px）
+            frame_h, frame_w = frame.shape[:2]
+            x_offset = frame_w - item_width - 50
+            y_offset = frame_h - item_height - 50
+
+            # アイテム画像の合成（アルファチャンネル対応）
+            if item_resized.shape[2] == 4:  # RGBA画像の場合
+                # アルファチャンネルを分離
+                alpha = item_resized[:, :, 3] / 255.0
+
+                # RGB部分を取得
+                item_rgb = item_resized[:, :, :3]
+
+                # 背景部分を取得
+                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+
+                # アルファブレンディング
+                for c in range(3):
+                    bg_region[:, :, c] = (
+                        alpha * item_rgb[:, :, c] +
+                        (1 - alpha) * bg_region[:, :, c]
+                    )
+
+                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = bg_region
+            else:
+                # RGB画像の場合は半透明合成
+                alpha = 0.9  # 不透明度
+                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                blended = cv2.addWeighted(bg_region, 1 - alpha, item_resized, alpha, 0)
+                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = blended
+
+        return frame
 
     def _split_text_into_lines(self, text: str, max_chars_per_line: int) -> List[str]:
         """budouxを使って自然な位置でテキストを複数行に分割
@@ -494,7 +685,7 @@ class VideoProcessor:
                 else:
                     if len(chunk) > max_chars_per_line:
                         for i in range(0, len(chunk), max_chars_per_line):
-                            lines.append(chunk[i:i + max_chars_per_line])
+                            lines.append(chunk[i : i + max_chars_per_line])
                     else:
                         current_line = chunk
 

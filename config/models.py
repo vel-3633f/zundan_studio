@@ -5,17 +5,17 @@ from typing import List, Dict, Any
 # 利用可能なAIモデルの設定
 AVAILABLE_MODELS: List[Dict[str, Any]] = [
     {
-        "id": "gpt-4.1-mini",
-        "name": "GPT-4.1-mini",
+        "id": "gpt-4.1",
+        "name": "GPT-4.1",
         "provider": "openai",
         "temperature_range": (0.0, 1.0),
-        "default_temperature": 0.8,
+        "default_temperature": 1.0,
         "max_tokens": 32768,
         "recommended": True,
     },
     {
-        "id": "gpt-4.1",
-        "name": "GPT-4.1",
+        "id": "gpt-4.1-mini",
+        "name": "GPT-4.1-mini",
         "provider": "openai",
         "temperature_range": (0.0, 1.0),
         "default_temperature": 0.8,
@@ -34,7 +34,7 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
 ]
 
 # デフォルトモデル設定
-DEFAULT_MODEL_ID = "claude-sonnet-4-5-20250929"
+DEFAULT_MODEL_ID = "gpt-4.1"
 
 
 # モデル設定を取得する関数

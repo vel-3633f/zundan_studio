@@ -13,6 +13,7 @@ from src.core.generate_food_over import (
     create_llm_instance
 )
 from config.models import get_model_config, get_default_model_config
+from config.closing_section import create_closing_section
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -147,7 +148,7 @@ def generate_food_overconsumption_script_sectioned(
             all_segments.extend(section.segments)
 
         total_segments = len(all_segments)
-        logger.info(f"全セグメント数: {total_segments}")
+        logger.info(f"全セグメント数（締めくくり前）: {total_segments}")
 
         if total_segments < 130:
             st.warning(f"⚠️ セリフ数が少なめです（{total_segments}/130）")
@@ -169,7 +170,20 @@ def generate_food_overconsumption_script_sectioned(
                     f"(目標: {config['min']}-{config['max']})"
                 )
 
-        estimated_duration_sec = total_segments * 4
+        # 締めくくりセクションを追加
+        st.info("🎬 締めくくりセクションを追加中...")
+        closing_section = create_closing_section()
+        sections.append(closing_section)
+        all_segments.extend(closing_section.segments)
+
+        total_segments_with_closing = len(all_segments)
+        logger.info(
+            f"締めくくりセクション追加完了: +{len(closing_section.segments)}セリフ "
+            f"(合計: {total_segments_with_closing})"
+        )
+        st.success(f"✅ 締めくくり追加: +{len(closing_section.segments)}セリフ")
+
+        estimated_duration_sec = total_segments_with_closing * 4
         estimated_duration = f"{estimated_duration_sec // 60}分{estimated_duration_sec % 60}秒"
 
         script = FoodOverconsumptionScript(
@@ -181,10 +195,10 @@ def generate_food_overconsumption_script_sectioned(
         )
 
         st.session_state.last_generated_json = script
-        st.session_state.last_llm_output = f"セクション分割方式で生成成功: {total_segments}セリフ"
+        st.session_state.last_llm_output = f"セクション分割方式で生成成功: {total_segments_with_closing}セリフ"
 
         st.success("🎉 台本生成完了！")
-        logger.info(f"台本生成成功: {total_segments}セリフ, 推定時間: {estimated_duration}")
+        logger.info(f"台本生成成功: {total_segments_with_closing}セリフ, 推定時間: {estimated_duration}")
 
         return script
 

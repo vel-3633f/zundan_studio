@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 
 class VideoGenerator:
     def __init__(self):
+        # 口パクデバッグ用: ログレベルを一時的にINFOに設定
+        for logger_name in ['src.services.audio_combiner', 'src.services.frame_generator',
+                           'src.core.video_processor', 'src.core.audio_processor',
+                           'src.services.bgm_mixer', 'config.bgm_library']:
+            logging.getLogger(logger_name).setLevel(logging.INFO)
+
         self.audio_processor = AudioProcessor()
         self.video_processor = VideoProcessor()
         self.fps = self.video_processor.fps
@@ -51,6 +57,7 @@ class VideoGenerator:
         try:
             character_images = self.resource_manager.load_character_images()
             backgrounds = self.resource_manager.load_backgrounds()
+            item_images = self.resource_manager.load_item_images()
 
             if not self.resource_manager.validate_resources(
                 character_images, backgrounds
@@ -104,6 +111,8 @@ class VideoGenerator:
                 subtitle_lines=subtitle_lines,
                 conversation_mode=conversation_mode,
                 temp_video_path=temp_video_path,
+                item_images=item_images,
+                sections=sections,
                 progress_callback=progress_callback,
             )
 
@@ -117,6 +126,10 @@ class VideoGenerator:
 
             self.audio_combiner.cleanup_audio_clips(combined_audio, audio_clips)
 
+            # BGMキャッシュのクリア
+            if sections:
+                self.bgm_mixer.clear_cache()
+
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
@@ -125,6 +138,12 @@ class VideoGenerator:
 
         except Exception as e:
             logger.error(f"Video generation failed: {e}")
+            # エラー時もBGMキャッシュをクリア
+            if sections:
+                try:
+                    self.bgm_mixer.clear_cache()
+                except Exception:
+                    pass
             return None
 
     def _combine_video_with_audio(
@@ -202,6 +221,10 @@ class VideoGenerator:
     def cleanup(self):
         """メモリリソースのクリーンアップ"""
         try:
+            # BGMキャッシュのクリア
+            if hasattr(self, 'bgm_mixer') and self.bgm_mixer:
+                self.bgm_mixer.clear_cache()
+
             if hasattr(self.video_processor, '_resize_cache'):
                 cache_size = len(self.video_processor._resize_cache)
                 self.video_processor._resize_cache.clear()

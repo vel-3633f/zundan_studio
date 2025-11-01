@@ -8,11 +8,6 @@ services:
     volumes:
       - ./outputs:/app/outputs
       - ./temp:/app/temp
-      - ./assets:/app/assets
-      - ./src:/app/src
-      - ./main.py:/app/main.py
-      - ./config:/app/config
-      - ./.streamlit:/app/.streamlit
     depends_on:
       - voicevox
     environment:

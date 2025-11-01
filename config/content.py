@@ -50,11 +50,6 @@ class Backgrounds:
         return {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
 
     @classmethod
-    def is_valid_background(cls, name: str) -> bool:
-        """指定された背景名が有効かチェック"""
-        return name in cls.get_all()
-
-    @classmethod
     def load_backgrounds_from_names(cls, background_names: List[str]) -> None:
         """背景名のリストから背景設定を動的に作成"""
         cls._loaded_backgrounds = {}

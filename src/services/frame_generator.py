@@ -27,6 +27,8 @@ class FrameGenerator:
         subtitle_lines: List[SubtitleData],
         conversation_mode: str,
         temp_video_path: str,
+        item_images: Dict = None,
+        sections: List = None,
         progress_callback=None,
     ) -> bool:
         """動画フレームの生成"""
@@ -46,6 +48,26 @@ class FrameGenerator:
             return False
 
         try:
+            # 現在表示中のアイテムを追跡
+            current_item = None
+            current_section_key = None
+
+            # アイテム表示が許可されるセクションキー
+            ITEM_ALLOWED_SECTIONS = {"background", "learning"}
+
+            # セクションごとのセグメント範囲を事前計算
+            section_segment_ranges = []
+            if sections:
+                segment_index = 0
+                for section in sections:
+                    segment_count = len(section.segments)
+                    section_segment_ranges.append({
+                        "key": getattr(section, "section_key", None),
+                        "start": segment_index,
+                        "end": segment_index + segment_count
+                    })
+                    segment_index += segment_count
+
             for frame_idx in range(total_frames):
                 if progress_callback:
                     progress_callback((frame_idx + 1) / total_frames)
@@ -63,14 +85,70 @@ class FrameGenerator:
                     )
                 )
 
-                # フレーム合成
-                frame = self.video_processor.composite_conversation_frame(
+                # 現在のセグメントを特定してアイテムを更新
+                for i, conv in enumerate(conversations):
+                    if i < len(segment_audio_intensities):
+                        segment = segment_audio_intensities[i]
+                        segment_start = segment.start_time
+                        segment_end = segment_start + segment.duration
+
+                        if segment_start <= current_time < segment_end:
+                            # 現在のセグメントが属するセクションを判定
+                            new_section_key = None
+                            for section_range in section_segment_ranges:
+                                if section_range["start"] <= i < section_range["end"]:
+                                    new_section_key = section_range["key"]
+                                    break
+
+                            # セクションが変わった場合
+                            if new_section_key != current_section_key:
+                                # アイテム表示が許可されていないセクションに入った場合はクリア
+                                if new_section_key not in ITEM_ALLOWED_SECTIONS:
+                                    if current_item is not None:
+                                        logger.info(
+                                            f"Item cleared: section changed to '{new_section_key}' at time={current_time:.3f}s"
+                                        )
+                                        current_item = None
+                                else:
+                                    logger.info(
+                                        f"Entered item-allowed section '{new_section_key}' at time={current_time:.3f}s"
+                                    )
+                                current_section_key = new_section_key
+
+                            # アイテム表示が許可されているセクションでのみアイテムを処理
+                            if current_section_key in ITEM_ALLOWED_SECTIONS:
+                                display_item_id = conv.get("display_item")
+
+                                if display_item_id is not None:
+                                    # "none" または空文字列の場合はアイテムを非表示
+                                    if display_item_id == "none" or display_item_id == "":
+                                        if current_item is not None:
+                                            logger.debug(
+                                                f"Item cleared at time={current_time:.3f}s"
+                                            )
+                                            current_item = None
+                                    # アイテムIDが指定されている場合
+                                    elif item_images and display_item_id in item_images:
+                                        current_item = item_images[display_item_id]
+                                        logger.debug(
+                                            f"Item switched to '{display_item_id}' at time={current_time:.3f}s"
+                                        )
+                                    # アイテムIDが指定されているが画像が見つからない場合
+                                    elif item_images is not None:
+                                        logger.warning(
+                                            f"Item image not found: '{display_item_id}' at time={current_time:.3f}s (keeping previous item)"
+                                        )
+                            break
+
+                # フレーム合成（アイテム付き）
+                frame = self.video_processor.composite_conversation_frame_with_item(
                     current_background,
                     character_images,
                     active_speakers,
                     conversation_mode,
                     current_time,
                     blink_timings,
+                    current_item,
                 )
 
                 # 字幕追加
@@ -98,6 +176,7 @@ class FrameGenerator:
         active_speakers = {}
         current_background = backgrounds["default"]
         current_conversation = None
+        intensity = 0.0  # 強度値を初期化
 
         # 現在の話者と強度、背景、表情を特定
         for i, (conv, audio_path) in enumerate(zip(conversations, audio_file_list)):
@@ -133,9 +212,14 @@ class FrameGenerator:
                             )
 
                         current_frame_idx = int(current_time * self.fps)
-                        logger.debug(
-                            f"Frame {current_frame_idx}: local_time={local_time:.3f}, progress={frame_progress:.3f}, exact_idx={exact_frame_index:.2f}, intensity={intensity:.3f}"
-                        )
+                        # 1秒ごとまたは高い強度値のときにログ出力
+                        if current_frame_idx % self.fps == 0 or intensity > 0.5:
+                            logger.info(
+                                f"Frame {current_frame_idx} (time={current_time:.3f}s): "
+                                f"segment[{i}], local_time={local_time:.3f}s, "
+                                f"progress={frame_progress:.3f}, idx={exact_frame_index:.2f}, "
+                                f"intensity={intensity:.3f}"
+                            )
                     else:
                         intensity = 0
 
@@ -196,6 +280,13 @@ class FrameGenerator:
                                 "intensity": intensity,
                                 "expression": char_expression,
                             }
+                            # 話者の強度値を常に記録（重要な情報）
+                            current_frame_idx = int(current_time * self.fps)
+                            if current_frame_idx % (self.fps * 2) == 0:  # 2秒ごと
+                                logger.info(
+                                    f"Active speaker: {char_name}, time={current_time:.3f}s, "
+                                    f"intensity={intensity:.3f}, expression={char_expression}"
+                                )
                         else:
                             active_speakers[char_name] = {
                                 "intensity": 0,

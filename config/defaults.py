@@ -14,30 +14,37 @@ class DefaultConversations:
         return [
             {
                 "speaker": "zundamon",
-                "text": "こんにちはなのだ！今日もいい天気なのだ！",
+                "text": "今日の動画はここまでなのだ！",
                 "background": "blue_sky",
                 "expression": "happy",
-                "visible_characters": ["zundamon", "metan"],
+                "visible_characters": ["zundamon"],
             },
             {
-                "speaker": "metan",
-                "text": "こんにちは〜！本当にいい天気だっぺ〜",
+                "speaker": "zundamon",
+                "text": "この動画が役に立ったら、チャンネル登録と高評価をお願いするのだ！",
                 "background": "blue_sky",
-                "expression": "normal",
-                "visible_characters": ["zundamon", "metan"],
+                "expression": "excited",
+                "visible_characters": ["zundamon"],
             },
             {
-                "speaker": "tsumugi",
-                "text": "春日部つむぎです。よろしくお願いします！",
-                "background": "sakura",
-                "expression": "normal",
-                "visible_characters": ["zundamon", "tsumugi"],
+                "speaker": "zundamon",
+                "text": "じゃないと、ずんだもんがお腹空きすぎて倒れちゃうのだ～！",
+                "background": "blue_sky",
+                "expression": "sick",
+                "visible_characters": ["zundamon"],
+            },
+            {
+                "speaker": "zundamon",
+                "text": "それじゃあまた次の動画で会おうなのだ！バイバイなのだ〜！",
+                "background": "blue_sky",
+                "expression": "happy",
+                "visible_characters": ["zundamon"],
             },
         ]
 
     @staticmethod
-    def get_reset_conversation() -> List[Dict[str, str]]:
-        """リセット用会話を取得"""
+    def get_default_conversation() -> List[Dict[str, str]]:
+        """デフォルト会話を取得"""
         return [
             {
                 "speaker": "zundamon",

@@ -1,6 +1,6 @@
 [server]
-runOnSave = true
-fileWatcherType = "auto"
+runOnSave = false
+fileWatcherType = "none"
 
 [runner]
 fastReruns = true
