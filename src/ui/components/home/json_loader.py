@@ -234,6 +234,7 @@ def validate_and_clean_data(
             "expression": expression,
             "visible_characters": cleaned_visible_chars,
             "character_expressions": character_expressions,
+            "display_item": segment.get("display_item"),  # display_itemを保持
         }
         cleaned_segments.append(cleaned_segment)
 
@@ -339,6 +340,7 @@ def convert_json_to_conversation_lines(
             "expression": segment["expression"],
             "visible_characters": segment["visible_characters"].copy(),
             "character_expressions": segment.get("character_expressions", {}).copy(),
+            "display_item": segment.get("display_item"),  # display_itemフィールドを追加
         }
 
         conversation_lines.append(conversation_line)
@@ -365,6 +367,10 @@ def load_json_to_session_state(
 ) -> Optional[Dict[str, Any]]:
     """JSONファイルをセッション状態に読み込み"""
     try:
+        # 読み込み前のデータ数をログ出力
+        before_count = len(st.session_state.get("conversation_lines", []))
+        logger.info(f"[DEBUG] Before loading JSON: conversation_lines count = {before_count}")
+
         # JSONファイルを読み込み
         data = load_json_file(filename)
         if not data:
@@ -389,9 +395,17 @@ def load_json_to_session_state(
             data, available_characters, available_backgrounds, available_expressions
         )
 
-        # セッション状態に設定
+        # セッション状態をクリアしてから設定（デフォルトデータが残らないようにする）
+        logger.info(f"[DEBUG] Setting conversation_lines to {len(conversation_lines)} items")
+        st.session_state.conversation_lines = []
         st.session_state.conversation_lines = conversation_lines
         st.session_state.loaded_json_data = data  # 背景抽出用にJSONデータを保存
+
+        logger.info(f"[DEBUG] After setting: conversation_lines count = {len(st.session_state.conversation_lines)}")
+
+        # 実際のデータ内容を最初の3件だけログ出力
+        for idx, line in enumerate(st.session_state.conversation_lines[:3]):
+            logger.info(f"[DEBUG] Line {idx}: speaker={line.get('speaker')}, text={line.get('text')[:30]}...")
 
         # section_bgm_settingsをクリアして再初期化を促す
         if "section_bgm_settings" in st.session_state:
