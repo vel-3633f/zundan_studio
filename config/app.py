@@ -75,6 +75,11 @@ class Paths:
         """出力ディレクトリを取得"""
         return os.path.join(Paths.get_project_root(), "outputs")
 
+    @staticmethod
+    def get_fonts_dir() -> str:
+        """フォントディレクトリを取得"""
+        return os.path.join(Paths.get_assets_dir(), "fonts")
+
 
 # グローバル設定インスタンス
 APP_CONFIG = AppConfig()
