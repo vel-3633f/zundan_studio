@@ -18,6 +18,10 @@ def render_conversation_input(
     """Render conversation input interface"""
     st.subheader("会話内容")
 
+    # UIの再レンダリングを強制するためのタイムスタンプを取得
+    timestamp = st.session_state.get("conversation_update_timestamp", 0)
+    key_suffix = f"_{timestamp}"
+
     for i, line in enumerate(st.session_state.conversation_lines):
         if "background" not in line:
             line["background"] = "default"
@@ -53,7 +57,7 @@ def render_conversation_input(
                     format_func=lambda x: next(
                         opt[1] for opt in char_options if opt[0] == x
                     ),
-                    key=f"speaker_{i}",
+                    key=f"speaker_{i}{key_suffix}",
                     index=current_char_index,
                 )
                 line["speaker"] = selected_option
@@ -75,7 +79,7 @@ def render_conversation_input(
                     label_text,
                     value=line["text"],
                     height=UI_CONFIG.text_area_height,
-                    key=f"text_{i}",
+                    key=f"text_{i}{key_suffix}",
                     placeholder=placeholder_text,
                 )
 
@@ -103,7 +107,7 @@ def render_conversation_input(
                 line["background"] = st.selectbox(
                     "背景選択",
                     options=background_options,
-                    key=f"background_{i}",
+                    key=f"background_{i}{key_suffix}",
                     index=current_bg_index,
                     format_func=Backgrounds.get_display_name,
                     label_visibility="collapsed",
@@ -121,7 +125,7 @@ def render_conversation_input(
                 line["expression"] = st.selectbox(
                     "表情選択",
                     options=expression_options,
-                    key=f"expression_{i}",
+                    key=f"expression_{i}{key_suffix}",
                     index=current_expr_index,
                     format_func=Expressions.get_display_name,
                     label_visibility="collapsed",
@@ -153,7 +157,7 @@ def render_conversation_input(
                     "表示キャラクター選択",
                     options=char_names,
                     default=line["visible_characters"],
-                    key=f"visible_chars_{i}",
+                    key=f"visible_chars_{i}{key_suffix}",
                     format_func=lambda x: char_display_names.get(x, x),
                     label_visibility="collapsed",
                     help=help_text,
@@ -212,7 +216,7 @@ def render_conversation_input(
                         selected_expr = st.selectbox(
                             display_name,
                             options=expression_options,
-                            key=f"char_expr_{i}_{char_name}",
+                            key=f"char_expr_{i}_{char_name}{key_suffix}",
                             index=current_expr_index,
                             format_func=Expressions.get_display_name,
                         )
