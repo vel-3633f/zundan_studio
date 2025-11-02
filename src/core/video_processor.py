@@ -612,8 +612,12 @@ class VideoProcessor:
         """
         # 既存のフレーム合成処理
         frame = self.composite_conversation_frame(
-            background, character_images, active_speakers,
-            conversation_mode, current_time, blink_timings
+            background,
+            character_images,
+            active_speakers,
+            conversation_mode,
+            current_time,
+            blink_timings,
         )
 
         # アイテム画像がある場合は右側中央に配置
@@ -642,7 +646,7 @@ class VideoProcessor:
             paste_y = (max_size - new_h) // 2
 
             # キャンバスの中央に画像を配置
-            canvas[paste_y:paste_y+new_h, paste_x:paste_x+new_w] = item_resized
+            canvas[paste_y : paste_y + new_h, paste_x : paste_x + new_w] = item_resized
 
             # 最終的なアイテム画像
             item_resized = canvas
@@ -663,22 +667,29 @@ class VideoProcessor:
                 item_rgb = item_resized[:, :, :3]
 
                 # 背景部分を取得
-                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                bg_region = frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ]
 
                 # アルファブレンディング
                 for c in range(3):
                     bg_region[:, :, c] = (
-                        alpha * item_rgb[:, :, c] +
-                        (1 - alpha) * bg_region[:, :, c]
+                        alpha * item_rgb[:, :, c] + (1 - alpha) * bg_region[:, :, c]
                     )
 
-                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = bg_region
+                frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ] = bg_region
             else:
                 # RGB画像の場合は半透明合成
                 alpha = 0.9  # 不透明度
-                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                bg_region = frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ]
                 blended = cv2.addWeighted(bg_region, 1 - alpha, item_resized, alpha, 0)
-                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = blended
+                frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ] = blended
 
         return frame
 
