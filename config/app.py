@@ -88,6 +88,5 @@ SUBTITLE_CONFIG = SubtitleConfig()
 
 PROMPTS_DIR = Path("src/prompts")
 SYSTEM_PROMPT_FILE = PROMPTS_DIR / "food_system_template.md"
-USER_PROMPT_FILE = PROMPTS_DIR / "food_user_template.md"
 
 TAVILY_SEARCH_RESULTS_COUNT = 3

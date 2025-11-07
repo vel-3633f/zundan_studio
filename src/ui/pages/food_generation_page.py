@@ -1,7 +1,6 @@
 import streamlit as st
 
 from src.models.food_over import FoodOverconsumptionScript
-from src.core.generate_food_over import generate_food_overconsumption_script
 from src.core.generate_food_over_sectioned import generate_food_overconsumption_script_sectioned
 from config.models import AVAILABLE_MODELS, get_recommended_model_id, get_model_config
 from src.utils.logger import get_logger
@@ -43,18 +42,6 @@ def render_food_overconsumption_page():
 
     # 生成設定
     with st.expander("⚙️ 生成設定（詳細設定）"):
-        # 生成方式の選択
-        st.subheader("生成方式")
-        generation_method = st.radio(
-            "生成方式を選択してください",
-            options=["セクション分割方式（推奨）", "一括生成方式（従来）"],
-            index=0,
-            help="セクション分割方式: トークン制限を回避し、長い台本を安定生成。進捗が見えます。\n一括生成方式: 従来の方式。短い台本向け。"
-        )
-        use_sectioned = generation_method == "セクション分割方式（推奨）"
-
-        st.divider()
-
         col1, col2 = st.columns(2)
         with col1:
             model_options = [model["name"] for model in AVAILABLE_MODELS]
@@ -91,24 +78,13 @@ def render_food_overconsumption_page():
 
     if food_name and st.button("🎬 食べ物摂取過多解説動画を作成！", type="primary"):
         logger.info(
-            f"動画生成ボタンがクリックされました: 食べ物={food_name}, "
-            f"方式={'セクション分割' if use_sectioned else '一括生成'}"
+            f"動画生成ボタンがクリックされました: 食べ物={food_name}"
         )
 
-        # 生成方式による分岐
-        if use_sectioned:
-            # セクション分割方式
-            result = generate_food_overconsumption_script_sectioned(
-                food_name, model=model, temperature=temperature
-            )
-        else:
-            # 従来の一括生成方式
-            with st.spinner(
-                f"🔍 {food_name}の情報を検索中...（検索→脚本生成で1-2分程度お待ちください）"
-            ):
-                result = generate_food_overconsumption_script(
-                    food_name, model=model, temperature=temperature
-                )
+        # セクション分割方式で生成
+        result = generate_food_overconsumption_script_sectioned(
+            food_name, model=model, temperature=temperature
+        )
 
         if isinstance(result, FoodOverconsumptionScript):
             logger.info("脚本生成成功、プレビューを表示")
