@@ -367,10 +367,6 @@ def load_json_to_session_state(
 ) -> Optional[Dict[str, Any]]:
     """JSONファイルをセッション状態に読み込み"""
     try:
-        # 読み込み前のデータ数をログ出力
-        before_count = len(st.session_state.get("conversation_lines", []))
-        logger.info(f"[DEBUG] Before loading JSON: conversation_lines count = {before_count}")
-
         # JSONファイルを読み込み
         data = load_json_file(filename)
         if not data:
@@ -395,17 +391,13 @@ def load_json_to_session_state(
             data, available_characters, available_backgrounds, available_expressions
         )
 
-        # セッション状態をクリアしてから設定（デフォルトデータが残らないようにする）
-        logger.info(f"[DEBUG] Setting conversation_lines to {len(conversation_lines)} items")
-        st.session_state.conversation_lines = []
+        # セッション状態を直接上書き（デフォルトデータが残らないようにする）
         st.session_state.conversation_lines = conversation_lines
         st.session_state.loaded_json_data = data  # 背景抽出用にJSONデータを保存
 
-        logger.info(f"[DEBUG] After setting: conversation_lines count = {len(st.session_state.conversation_lines)}")
-
-        # 実際のデータ内容を最初の3件だけログ出力
-        for idx, line in enumerate(st.session_state.conversation_lines[:3]):
-            logger.info(f"[DEBUG] Line {idx}: speaker={line.get('speaker')}, text={line.get('text')[:30]}...")
+        # UIの再レンダリングを強制するためのタイムスタンプを更新
+        import time
+        st.session_state.conversation_update_timestamp = time.time()
 
         # section_bgm_settingsをクリアして再初期化を促す
         if "section_bgm_settings" in st.session_state:

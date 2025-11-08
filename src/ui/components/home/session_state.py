@@ -36,12 +36,13 @@ def create_default_section_data():
 
 def init_session_state():
     """Initialize session state variables"""
+    # conversation_linesは初回のみ初期化（JSONロード後は上書きしない）
     if "conversation_lines" not in st.session_state:
         st.session_state.conversation_lines = (
             DefaultConversations.get_sample_conversation()
         )
 
-    # デフォルトのセクションデータを初期化
+    # デフォルトのセクションデータを初期化（初回のみ）
     if "loaded_json_data" not in st.session_state:
         st.session_state.loaded_json_data = create_default_section_data()
 

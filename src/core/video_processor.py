@@ -612,22 +612,51 @@ class VideoProcessor:
         """
         # 既存のフレーム合成処理
         frame = self.composite_conversation_frame(
-            background, character_images, active_speakers,
-            conversation_mode, current_time, blink_timings
+            background,
+            character_images,
+            active_speakers,
+            conversation_mode,
+            current_time,
+            blink_timings,
         )
 
-        # アイテム画像がある場合は右下に配置
+        # アイテム画像がある場合は右側中央に配置
         if item_image is not None:
-            item_width = 300  # アイテムサイズ（固定）
-            item_height = 300
+            max_size = 400  # 最大サイズ（正方形の枠）
 
-            # アイテムをリサイズ
-            item_resized = cv2.resize(item_image, (item_width, item_height))
+            # 元の画像サイズを取得
+            orig_h, orig_w = item_image.shape[:2]
 
-            # 右下の位置を計算（マージン50px）
+            # アスペクト比を維持してリサイズ
+            scale = min(max_size / orig_w, max_size / orig_h)
+            new_w = int(orig_w * scale)
+            new_h = int(orig_h * scale)
+
+            # リサイズ
+            item_resized = cv2.resize(item_image, (new_w, new_h))
+
+            # 正方形のキャンバス（透明）を作成
+            if item_image.shape[2] == 4:  # RGBA画像の場合
+                canvas = np.zeros((max_size, max_size, 4), dtype=np.uint8)
+            else:  # RGB画像の場合
+                canvas = np.zeros((max_size, max_size, 3), dtype=np.uint8)
+
+            # 中央配置のためのオフセット計算
+            paste_x = (max_size - new_w) // 2
+            paste_y = (max_size - new_h) // 2
+
+            # キャンバスの中央に画像を配置
+            canvas[paste_y : paste_y + new_h, paste_x : paste_x + new_w] = item_resized
+
+            # 最終的なアイテム画像
+            item_resized = canvas
+            item_width = max_size
+            item_height = max_size
+
+            # 右側中央の位置を計算（右端からマージン150px、垂直方向は中央）
             frame_h, frame_w = frame.shape[:2]
-            x_offset = frame_w - item_width - 50
-            y_offset = frame_h - item_height - 50
+            x_offset = frame_w - item_width - 150  # 右端から150px内側
+            y_offset = (frame_h - item_height) // 2  # 垂直方向の中央
 
             # アイテム画像の合成（アルファチャンネル対応）
             if item_resized.shape[2] == 4:  # RGBA画像の場合
@@ -638,22 +667,29 @@ class VideoProcessor:
                 item_rgb = item_resized[:, :, :3]
 
                 # 背景部分を取得
-                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                bg_region = frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ]
 
                 # アルファブレンディング
                 for c in range(3):
                     bg_region[:, :, c] = (
-                        alpha * item_rgb[:, :, c] +
-                        (1 - alpha) * bg_region[:, :, c]
+                        alpha * item_rgb[:, :, c] + (1 - alpha) * bg_region[:, :, c]
                     )
 
-                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = bg_region
+                frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ] = bg_region
             else:
                 # RGB画像の場合は半透明合成
                 alpha = 0.9  # 不透明度
-                bg_region = frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width]
+                bg_region = frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ]
                 blended = cv2.addWeighted(bg_region, 1 - alpha, item_resized, alpha, 0)
-                frame[y_offset:y_offset+item_height, x_offset:x_offset+item_width] = blended
+                frame[
+                    y_offset : y_offset + item_height, x_offset : x_offset + item_width
+                ] = blended
 
         return frame
 
