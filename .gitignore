@@ -22,9 +22,6 @@ assets/
 *.tiff
 *.webp
 
-# Claude設定ファイル
-.claude/
-
 # Python関連
 __pycache__/
 *.py[cod]

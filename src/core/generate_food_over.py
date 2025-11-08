@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Union
 from src.models.food_over import FoodOverconsumptionScript
-from config.app import SYSTEM_PROMPT_FILE, USER_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
+from config.app import SYSTEM_PROMPT_FILE, TAVILY_SEARCH_RESULTS_COUNT
 from config.models import get_model_config, get_default_model_config
 from src.utils.logger import get_logger
 
