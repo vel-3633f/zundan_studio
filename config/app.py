@@ -12,7 +12,7 @@ class AppConfig:
     description: str = (
         "ずんだもん（右側・緑枠）とゲストキャラクター（左側）の会話動画を作成できます"
     )
-    page_icon: str = "🎭"
+    page_icon: str = "📕"
     layout: str = "wide"
 
     fps: int = 30
