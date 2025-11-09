@@ -1,3 +1,10 @@
+"""
+背景除去処理モジュール
+
+rembgライブラリを使用して画像から背景を除去します。
+isnet-animeモデルを使用してアニメ・イラストに特化した高精度な背景除去を行います。
+"""
+
 import logging
 from PIL import Image
 from rembg import remove
@@ -35,8 +42,8 @@ class BackgroundRemover:
             input_image.save(input_bytes, format="PNG")
             input_bytes = input_bytes.getvalue()
 
-            # rembgで背景除去
-            output_bytes = remove(input_bytes)
+            # rembgで背景除去（isnet-animeモデルを使用）
+            output_bytes = remove(input_bytes, session=None, model_name="isnet-anime")
 
             # バイトストリームをPIL Imageに変換
             output_image = Image.open(BytesIO(output_bytes))
