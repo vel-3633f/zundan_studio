@@ -6,7 +6,7 @@ authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 streamlit = ">=1.28.0"
 requests = ">=2.31.0"
 moviepy = ">=1.0.3"
@@ -24,6 +24,8 @@ pykakasi = "^2.3.0"
 supabase = "^2.22.0"
 budoux = "^0.7.0"
 langchain-anthropic = "^0.3.22"
+rembg = ">=2.0.50"
+onnxruntime = ">=1.15.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
