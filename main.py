@@ -37,6 +37,10 @@ def main():
             "module": "src.ui.pages.food_management_page",
             "function": "render_food_management_page",
         },
+        "🎨 背景生成テスト": {
+            "module": "src.ui.pages.background_test_page",
+            "function": "render_background_test_page",
+        },
     }
 
     page = st.sidebar.radio(
