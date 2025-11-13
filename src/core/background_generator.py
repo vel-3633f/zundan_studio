@@ -6,7 +6,7 @@ from pathlib import Path
 
 from config import Paths
 from src.utils.logger import get_logger
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -15,16 +15,16 @@ logger = get_logger(__name__)
 class BackgroundImageGenerator:
     """Imagen 4を使用した背景画像自動生成クラス"""
 
-    def __init__(self, llm_model: str = "gpt-4.1"):
+    def __init__(self, llm_model: str = "claude-sonnet-4-5-20250929"):
         """初期化
 
         Args:
-            llm_model: プロンプト生成用のOpenAIモデル名（デフォルト: gpt-4.1）
+            llm_model: プロンプト生成用のClaudeモデル名（デフォルト: claude-sonnet-4-5-20250929）
         """
         self.client = None
         self.model = "imagen-4.0-generate-001"
         self.backgrounds_dir = Paths.get_backgrounds_dir()
-        self.llm = ChatOpenAI(model=llm_model, temperature=0.7)
+        self.llm = ChatAnthropic(model=llm_model, temperature=0.7)
         self.prompt_file = (
             Path(__file__).parent.parent / "prompts" / "background_prompt_creator.md"
         )
@@ -143,6 +143,8 @@ class BackgroundImageGenerator:
                 config=GenerateImagesConfig(
                     image_size="2K",
                     aspect_ratio="16:9",
+                    number_of_images=1,
+                    person_generation="dont_allow",
                 ),
             )
 
