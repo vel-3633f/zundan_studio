@@ -22,7 +22,7 @@ class BackgroundImageGenerator:
             llm_model: プロンプト生成用のClaudeモデル名（デフォルト: claude-sonnet-4-5-20250929）
         """
         self.client = None
-        self.model = "imagen-4.0-generate-001"
+        self.model = "imagen-4.0-ultra-generate-001"
         self.backgrounds_dir = Paths.get_backgrounds_dir()
         self.llm = ChatAnthropic(model=llm_model, temperature=0.7)
         self.prompt_file = (
@@ -148,7 +148,6 @@ class BackgroundImageGenerator:
                 ),
             )
 
-            # 保存
             output_path = os.path.join(self.backgrounds_dir, f"{bg_name}.png")
             image_result.generated_images[0].image.save(output_path)
 
