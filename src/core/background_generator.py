@@ -142,6 +142,7 @@ class BackgroundImageGenerator:
                 prompt=prompt,
                 config=GenerateImagesConfig(
                     image_size="2K",
+                    aspect_ratio="16:9",
                 ),
             )
 

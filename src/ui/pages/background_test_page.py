@@ -277,21 +277,3 @@ def render_background_test_page():
                         for bg_name, error in results["failed"]:
                             st.text(f"- {bg_name}")
                             st.code(error)
-
-    # 環境変数チェックセクション
-    st.markdown("---")
-    with st.expander("🔧 環境設定チェック", expanded=False):
-        st.subheader("環境変数の状態")
-
-        env_vars = [
-            "GOOGLE_CLOUD_PROJECT",
-            "GOOGLE_CLOUD_LOCATION",
-            "GOOGLE_GENAI_USE_VERTEXAI",
-        ]
-
-        for var in env_vars:
-            value = os.getenv(var)
-            if value:
-                st.success(f"✅ {var}: {value}")
-            else:
-                st.error(f"❌ {var}: 未設定")
