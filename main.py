@@ -37,9 +37,9 @@ def main():
             "module": "src.ui.pages.food_management_page",
             "function": "render_food_management_page",
         },
-        "🎬 台本背景生成": {
-            "module": "src.ui.pages.background_test_page",
-            "function": "render_background_test_page",
+        "🎬 台本背景管理": {
+            "module": "src.ui.pages.background_management_page",
+            "function": "render_background_management_page",
         },
     }
 

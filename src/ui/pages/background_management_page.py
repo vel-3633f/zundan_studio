@@ -116,8 +116,9 @@ def render_script_background_generation_tab(generator: BackgroundImageGenerator)
             background_status.append({
                 "背景名": bg_name,
                 "状態": "✅" if exists else "❌",
-                "種類": "固定" if is_fixed else "動的",
+                "種類": "🔒 固定" if is_fixed else "🔄 動的",
                 "使用セクション": ", ".join(sections_used[:2]) + ("..." if len(sections_used) > 2 else ""),
+                "備考": "手動配置が必要" if is_fixed and not exists else ""
             })
 
         # 統計情報
@@ -143,6 +144,19 @@ def render_script_background_generation_tab(generator: BackgroundImageGenerator)
         # 未生成背景がある場合
         if missing_backgrounds:
             st.warning(f"⚠️ {missing_count}個の背景が未生成です")
+
+            # 固定背景の存在チェック
+            missing_fixed = [bg for bg in fixed_backgrounds
+                             if bg in missing_backgrounds]
+
+            if missing_fixed:
+                st.error(
+                    f"🔒 **固定背景が見つかりません**: {', '.join(missing_fixed)}\n\n"
+                    f"これらは手動で用意する必要があります。\n\n"
+                    f"**対処方法**:\n"
+                    f"- 「🎨 単一生成テスト」タブで個別に生成\n"
+                    f"- `{generator.backgrounds_dir}` に画像ファイルを配置"
+                )
 
             # 一括生成セクション
             st.markdown("---")
@@ -281,9 +295,9 @@ def render_script_background_generation_tab(generator: BackgroundImageGenerator)
         st.code(traceback.format_exc())
 
 
-def render_background_test_page():
-    """台本背景生成ページをレンダリング"""
-    st.title("🎬 台本背景生成")
+def render_background_management_page():
+    """台本背景管理ページをレンダリング"""
+    st.title("🎬 台本背景管理")
     st.markdown("---")
 
     st.info(
