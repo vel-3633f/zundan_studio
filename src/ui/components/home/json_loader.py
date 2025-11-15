@@ -449,11 +449,19 @@ def render_item_images_status_check(data: Dict[str, Any]) -> None:
     item_statuses = []
     for item_id in item_check_result["item_ids"]:
         exists = item_id in item_check_result["found"]
+        # 3単語形式のチェック
+        parts = item_id.split("_")
+        naming_ok = len(parts) == 3 and all(part.islower() and part.isalpha() for part in parts)
+
+        detail = "読み込み成功" if exists else "ファイルが見つかりません"
+        if not naming_ok:
+            detail += " ⚠️ 命名規則違反（3単語形式推奨）"
+
         item_statuses.append({
             "アイテムID": item_id,
             "状態": "✅" if exists else "❌",
             "ファイル": f"{item_id}.png",
-            "詳細": "読み込み成功" if exists else "ファイルが見つかりません",
+            "詳細": detail,
         })
 
     st.dataframe(
@@ -486,9 +494,26 @@ def render_item_images_status_check(data: Dict[str, Any]) -> None:
             new_item_name = st.text_input(
                 "保存名（拡張子なし）",
                 value=default_name,
-                help="アイテム画像のIDを入力してください（例: hamburger, pizza）",
+                help="アイテム画像のIDを入力してください\n命名規則: 3つの英単語をアンダースコアで区切る（例: steaming_hot_ramen, yellow_vitamin_capsules）",
                 key="new_item_name"
             )
+
+            # 3単語形式のバリデーション
+            if new_item_name.strip():
+                parts = new_item_name.strip().split("_")
+                if len(parts) != 3:
+                    st.warning(
+                        f"⚠️ アイテム名は3つの英単語をアンダースコアで区切る形式にしてください\n"
+                        f"現在: {len(parts)}単語 → 必要: 3単語\n"
+                        f"例: steaming_hot_ramen, fresh_green_spinach"
+                    )
+                elif not all(part.islower() and part.isalpha() for part in parts):
+                    st.warning(
+                        "⚠️ 各単語は小文字の英字のみで構成してください\n"
+                        "例: steaming_hot_ramen (OK)  /  Steaming_Hot_Ramen (NG)"
+                    )
+                else:
+                    st.success("✅ 命名規則に適合しています")
 
             # プレビュー表示
             try:
@@ -500,29 +525,42 @@ def render_item_images_status_check(data: Dict[str, Any]) -> None:
 
             if st.button("💾 アップロード", type="primary", key="upload_item_btn"):
                 if new_item_name.strip():
-                    try:
-                        # 保存先パス（assets/items直下）
-                        items_dir.mkdir(parents=True, exist_ok=True)
-                        save_path = items_dir / f"{new_item_name.strip()}.png"
+                    # 3単語形式のバリデーション
+                    parts = new_item_name.strip().split("_")
+                    if len(parts) != 3:
+                        st.error(
+                            f"❌ アイテム名は3つの英単語をアンダースコアで区切る形式にしてください\n"
+                            f"例: steaming_hot_ramen, yellow_vitamin_capsules"
+                        )
+                    elif not all(part.islower() and part.isalpha() for part in parts):
+                        st.error(
+                            "❌ 各単語は小文字の英字のみで構成してください\n"
+                            "例: steaming_hot_ramen"
+                        )
+                    else:
+                        try:
+                            # 保存先パス（assets/items直下）
+                            items_dir.mkdir(parents=True, exist_ok=True)
+                            save_path = items_dir / f"{new_item_name.strip()}.png"
 
-                        # ファイルが既に存在するか確認
-                        if save_path.exists():
-                            st.warning(f"⚠️ '{new_item_name}' は既に存在します。上書きしますか？")
-                            if st.button("上書き保存", key="overwrite_item_btn"):
+                            # ファイルが既に存在するか確認
+                            if save_path.exists():
+                                st.warning(f"⚠️ '{new_item_name}' は既に存在します。上書きしますか？")
+                                if st.button("上書き保存", key="overwrite_item_btn"):
+                                    image = Image.open(uploaded_file)
+                                    image.save(save_path)
+                                    st.success(f"✅ '{new_item_name}' を上書き保存しました！")
+                                    st.rerun()
+                            else:
+                                # 新規保存
                                 image = Image.open(uploaded_file)
                                 image.save(save_path)
-                                st.success(f"✅ '{new_item_name}' を上書き保存しました！")
+                                st.success(f"✅ '{new_item_name}' をアップロードしました！")
+                                logger.info(f"Uploaded new item: {save_path}")
                                 st.rerun()
-                        else:
-                            # 新規保存
-                            image = Image.open(uploaded_file)
-                            image.save(save_path)
-                            st.success(f"✅ '{new_item_name}' をアップロードしました！")
-                            logger.info(f"Uploaded new item: {save_path}")
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ アップロードに失敗: {e}")
-                        logger.error(f"Failed to upload item: {e}")
+                        except Exception as e:
+                            st.error(f"❌ アップロードに失敗: {e}")
+                            logger.error(f"Failed to upload item: {e}")
                 else:
                     st.warning("保存名を入力してください")
 
