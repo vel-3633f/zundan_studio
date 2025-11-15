@@ -136,7 +136,10 @@ class FrameGenerator:
                                     # アイテムIDが指定されているが画像が見つからない場合
                                     elif item_images is not None:
                                         logger.warning(
-                                            f"Item image not found: '{display_item_id}' at time={current_time:.3f}s (keeping previous item)"
+                                            f"Item image not found: '{display_item_id}' at time={current_time:.3f}s\n"
+                                            f"  → アイテム画像を assets/items/{display_item_id}.png として用意してください\n"
+                                            f"  → 命名規則: 3つの英単語をアンダースコアで区切る（例: steaming_hot_ramen）\n"
+                                            f"  → 実物のビジュアルを表現し、表や図は使用しないでください"
                                         )
                             break
 
