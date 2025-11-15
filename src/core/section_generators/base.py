@@ -30,7 +30,7 @@ class SectionGeneratorBase:
     """セクション生成の基底クラス"""
 
     def __init__(
-        self, section_key: str, section_name: str, min_lines: int, max_lines: int
+        self, section_key: str, section_name: str, min_lines: int, max_lines: int, fixed_background: Optional[str] = None
     ):
         """
         Args:
@@ -38,11 +38,13 @@ class SectionGeneratorBase:
             section_name: セクションの表示名（例: "冒頭フック・危機の予告"）
             min_lines: 最低セリフ数
             max_lines: 最大セリフ数
+            fixed_background: 固定背景（Noneの場合は動的選択）
         """
         self.section_key = section_key
         self.section_name = section_name
         self.min_lines = min_lines
         self.max_lines = max_lines
+        self.fixed_background = fixed_background
         self.prompt_file = Path(f"src/prompts/sections/section_{section_key}.md")
 
     def load_common_rules(self) -> str:
@@ -168,6 +170,13 @@ class SectionGeneratorBase:
             logger.info(
                 f"BGM設定: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
             )
+
+            # 固定背景が指定されている場合は上書き
+            if self.fixed_background:
+                section.scene_background = self.fixed_background
+                logger.info(
+                    f"背景を固定設定で上書き: {self.fixed_background}"
+                )
 
             segment_count = len(section.segments)
             logger.info(
