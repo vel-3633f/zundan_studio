@@ -27,6 +27,8 @@ class ItemImageGenerator(AssetImageGenerator):
         super().__init__(
             output_dir=items_dir, prompt_file=prompt_file, llm_model=llm_model
         )
+        # アイテム画像生成は imagen-4.0-generate-001 を使用
+        self.model = "imagen-4.0-generate-001"
 
     def get_user_prompt_template(self) -> str:
         """ユーザープロンプトのテンプレートを取得
