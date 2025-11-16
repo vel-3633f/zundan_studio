@@ -41,6 +41,10 @@ def main():
             "module": "src.ui.pages.background_management_page",
             "function": "render_background_management_page",
         },
+        "🧩 アイテム画像管理": {
+            "module": "src.ui.pages.item_management_page",
+            "function": "render_item_management_page",
+        },
     }
 
     page = st.sidebar.radio(
