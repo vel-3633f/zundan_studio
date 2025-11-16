@@ -38,19 +38,21 @@
    - `no people`, `no hands`, `no human elements` を必ず明記
    - アイテムが主役となるシンプルな構図を意識
    - 写真的表現を避けるため `not photorealistic` の使用も検討
+   - **文字・テキスト・ラベルを絶対に含めない**
+   - `no text`, `no labels`, `no words`, `no letters` を必ず明記
 
 ## 出力形式
 
 ユーザーからアイテム名を受け取ったら、以下の形式で英語プロンプトのみを出力してください:
 
 ```
-[detailed object description], [illustration style keywords], [composition], [background], [lighting], [color palette], [texture and detail elements], [quality terms], illustration, artwork, cartoon style, no people, no hands, no human elements, isolated object, not photorealistic
+[detailed object description], [illustration style keywords], [composition], [background], [lighting], [color palette], [texture and detail elements], [quality terms], illustration, artwork, cartoon style, no people, no hands, no human elements, no text, no labels, no words, no letters, isolated object, not photorealistic
 ```
 
 ## プロンプト例
 
 ```
-A bowl of steaming hot ramen noodles, curly yellow noodles with sliced pork, soft-boiled egg, green scallions, bamboo shoots, rising steam, cartoon style, centered composition, white background, bright lighting, vibrant colors, glossy texture, detailed, high quality, illustration, artwork, no people, no hands, isolated object, not photorealistic
+A bowl of steaming hot ramen noodles, curly yellow noodles with sliced pork, soft-boiled egg, green scallions, bamboo shoots, rising steam, cartoon style, centered composition, white background, bright lighting, vibrant colors, glossy texture, detailed, high quality, illustration, artwork, no people, no hands, no text, no labels, no words, isolated object, not photorealistic
 ```
 
 ## チェックリスト
@@ -61,6 +63,7 @@ A bowl of steaming hot ramen noodles, curly yellow noodles with sliced pork, sof
 - [ ] `illustration` または `cartoon style` が含まれている
 - [ ] `white background` または `simple background` が含まれている
 - [ ] `no people`, `no hands` が含まれている
+- [ ] **`no text`, `no labels`, `no words` が必ず含まれている（重要）**
 - [ ] `centered composition`, `isolated object` が含まれている
 - [ ] 照明、色彩、品質に関する要素が含まれている
 - [ ] カンマ区切りの列挙形式になっている

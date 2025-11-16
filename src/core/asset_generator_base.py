@@ -150,7 +150,7 @@ class AssetImageGenerator(ABC):
         self,
         image: Image.Image,
         radius: int = 50,
-        border_width: int = 3,
+        border_width: int = 10,
         border_color: tuple = (200, 200, 200),
     ) -> Image.Image:
         """画像に角丸と枠線を適用
@@ -256,8 +256,13 @@ class AssetImageGenerator(ABC):
             generated_image = image_result.generated_images[0]
 
             # PIL Imageとして取得
+            # Google Gen AIのImageオブジェクトからPIL Imageに変換
+            from io import BytesIO
+
             if hasattr(generated_image, "image"):
-                img = generated_image.image
+                # Imageオブジェクトのバイトデータを取得してPIL Imageに変換
+                image_bytes = generated_image.image.image_bytes
+                img = Image.open(BytesIO(image_bytes))
             else:
                 raise ValueError(
                     f"Cannot extract image from result: {type(generated_image)}"
