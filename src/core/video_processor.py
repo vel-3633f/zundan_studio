@@ -632,8 +632,8 @@ class VideoProcessor:
             new_w = int(orig_w * scale)
             new_h = int(orig_h * scale)
 
-            # リサイズ
-            item_resized = cv2.resize(item_image, (new_w, new_h))
+            # リサイズ（高品質な補間方法を使用）
+            item_resized = cv2.resize(item_image, (new_w, new_h), interpolation=cv2.INTER_AREA)
 
             # 正方形のキャンバス（透明）を作成
             if item_image.shape[2] == 4:  # RGBA画像の場合
@@ -653,10 +653,10 @@ class VideoProcessor:
             item_width = max_size
             item_height = max_size
 
-            # 右側中央の位置を計算（右端からマージン150px、垂直方向は中央）
+            # 右側上部の位置を計算（右端からマージン150px、上から80px）
             frame_h, frame_w = frame.shape[:2]
             x_offset = frame_w - item_width - 150  # 右端から150px内側
-            y_offset = (frame_h - item_height) // 2  # 垂直方向の中央
+            y_offset = 80  # 上から80px
 
             # アイテム画像の合成（アルファチャンネル対応）
             if item_resized.shape[2] == 4:  # RGBA画像の場合

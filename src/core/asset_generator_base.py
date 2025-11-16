@@ -149,8 +149,8 @@ class AssetImageGenerator(ABC):
     def _apply_rounded_corners(
         self,
         image: Image.Image,
-        radius: int = 50,
-        border_width: int = 10,
+        radius: int = 80,
+        border_width: int = 20,
         border_color: tuple = (200, 200, 200),
     ) -> Image.Image:
         """画像に角丸と枠線を適用
