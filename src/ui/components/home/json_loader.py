@@ -265,6 +265,29 @@ def extract_backgrounds_from_json(data: Dict[str, Any]) -> List[str]:
     return sorted(list(backgrounds))
 
 
+def extract_items_from_json(data: Dict[str, Any]) -> List[str]:
+    """JSONデータから使用されているアイテム名を抽出
+
+    Args:
+        data: JSONデータ
+
+    Returns:
+        List[str]: アイテムIDのリスト（重複なし、ソート済み）
+    """
+    item_ids = set()
+
+    # 全セクションのセグメントから display_item を収集
+    sections = data.get("sections", [])
+    for section in sections:
+        segments = section.get("segments", [])
+        for segment in segments:
+            display_item = segment.get("display_item")
+            if display_item and display_item != "none":
+                item_ids.add(display_item)
+
+    return sorted(list(item_ids))
+
+
 def convert_json_to_conversation_lines(
     data: Dict[str, Any],
     available_characters: List[str] = None,
