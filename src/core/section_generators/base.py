@@ -42,7 +42,12 @@ class SectionGeneratorBase:
     """セクション生成の基底クラス"""
 
     def __init__(
-        self, section_key: str, section_name: str, min_lines: int, max_lines: int, fixed_background: Optional[str] = None
+        self,
+        section_key: str,
+        section_name: str,
+        min_lines: int,
+        max_lines: int,
+        fixed_background: Optional[str] = None,
     ):
         """
         Args:
@@ -117,21 +122,19 @@ class SectionGeneratorBase:
         return context_text
 
     def replace_outline_variables(
-        self, prompt_text: str, context: SectionContext, format_instructions: str
+        self, prompt_text: str, context: SectionContext
     ) -> str:
         """プロンプト内のアウトライン変数を実際の値で置換
 
         Args:
             prompt_text: プロンプトテキスト
             context: セクションコンテキスト
-            format_instructions: フォーマット指示
 
         Returns:
             str: 置換後のプロンプトテキスト
         """
         replacements = {
             "{{food_name}}": context.food_name,
-            "{{format_instructions}}": format_instructions,
             "{{outline_title}}": context.outline.title,
             "{{outline_eating_reason}}": context.outline.eating_reason,
             "{{outline_symptom_progression}}": "\n".join(
@@ -170,10 +173,11 @@ class SectionGeneratorBase:
             parser = PydanticOutputParser(pydantic_object=VideoSection)
             format_instructions = parser.get_format_instructions()
 
-            # アウトライン変数を置換
-            section_prompt = self.replace_outline_variables(
-                section_prompt_raw, context, format_instructions
-            )
+            # アウトライン変数を置換（{{format_instructions}}を除く）
+            section_prompt = self.replace_outline_variables(section_prompt_raw, context)
+
+            # {{format_instructions}}を削除
+            section_prompt = section_prompt.replace("{{format_instructions}}", "")
 
             full_prompt = f"""
                 {common_rules}
@@ -188,26 +192,28 @@ class SectionGeneratorBase:
 
                 ## 参考情報
                 {context.reference_information}
+
+                ## 出力形式
+
+                {format_instructions}
                 """
 
-            # プロンプトチェーン構築
-            prompt = ChatPromptTemplate.from_messages(
-                [
-                    (
-                        "system",
-                        "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。",
-                    ),
-                    ("user", full_prompt),
-                ]
-            ).partial(
-                bgm_choices=format_bgm_choices_for_prompt(),
-            )
+            # システムメッセージ
+            system_message = "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"
 
-            # LLMチェーン実行
-            chain = prompt | llm | parser
+            # LLMを直接呼び出す（ChatPromptTemplateの変数参照問題を回避）
+            from langchain_core.messages import HumanMessage, SystemMessage
+
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=full_prompt),
+            ]
 
             logger.info(f"{self.section_name} をLLMで生成中...")
-            section = chain.invoke({"food_name": context.food_name})
+            llm_response = llm.invoke(messages)
+
+            # LLMの応答をパース
+            section = parser.invoke(llm_response)
 
             # セクションキーを設定
             section.section_key = self.section_key
@@ -223,9 +229,7 @@ class SectionGeneratorBase:
             # 固定背景が指定されている場合は上書き
             if self.fixed_background:
                 section.scene_background = self.fixed_background
-                logger.info(
-                    f"背景を固定設定で上書き: {self.fixed_background}"
-                )
+                logger.info(f"背景を固定設定で上書き: {self.fixed_background}")
 
             segment_count = len(section.segments)
             logger.info(
