@@ -15,6 +15,18 @@ logger = get_logger(__name__)
 
 COMMON_RULES_FILE = Path("src/prompts/sections/common_rules.md")
 
+# セクションごとに必要なアウトライン変数のマッピング
+SECTION_OUTLINE_VARIABLES = {
+    "hook": ["critical_event"],  # 決定的イベントの一部
+    "background": [],  # 食品解説なのでアウトライン情報は不要
+    "daily": ["eating_reason"],  # 毎日食べる理由
+    "honeymoon": ["eating_reason"],  # 継続
+    "deterioration": ["symptom_progression"],  # 症状の進行
+    "crisis": ["critical_event"],  # 決定的イベントの完全版
+    "learning": ["medical_mechanism"],  # 医学的メカニズム
+    "recovery": ["solution"],  # 解決策
+}
+
 
 @dataclass
 class SectionContext:
@@ -104,6 +116,38 @@ class SectionGeneratorBase:
 
         return context_text
 
+    def replace_outline_variables(
+        self, prompt_text: str, context: SectionContext, format_instructions: str
+    ) -> str:
+        """プロンプト内のアウトライン変数を実際の値で置換
+
+        Args:
+            prompt_text: プロンプトテキスト
+            context: セクションコンテキスト
+            format_instructions: フォーマット指示
+
+        Returns:
+            str: 置換後のプロンプトテキスト
+        """
+        replacements = {
+            "{{food_name}}": context.food_name,
+            "{{format_instructions}}": format_instructions,
+            "{{outline_title}}": context.outline.title,
+            "{{outline_eating_reason}}": context.outline.eating_reason,
+            "{{outline_symptom_progression}}": "\n".join(
+                f"- {symptom}" for symptom in context.outline.symptom_progression
+            ),
+            "{{outline_critical_event}}": context.outline.critical_event,
+            "{{outline_medical_mechanism}}": context.outline.medical_mechanism,
+            "{{outline_solution}}": context.outline.solution,
+        }
+
+        result = prompt_text
+        for var, value in replacements.items():
+            result = result.replace(var, value)
+
+        return result
+
     def generate(self, context: SectionContext, llm: Any) -> VideoSection:
         """セクションを生成する
 
@@ -120,10 +164,16 @@ class SectionGeneratorBase:
 
         try:
             common_rules = self.load_common_rules()
-            section_prompt = self.load_section_prompt()
+            section_prompt_raw = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
             parser = PydanticOutputParser(pydantic_object=VideoSection)
+            format_instructions = parser.get_format_instructions()
+
+            # アウトライン変数を置換
+            section_prompt = self.replace_outline_variables(
+                section_prompt_raw, context, format_instructions
+            )
 
             full_prompt = f"""
                 {common_rules}
@@ -150,7 +200,6 @@ class SectionGeneratorBase:
                     ("user", full_prompt),
                 ]
             ).partial(
-                format_instructions=parser.get_format_instructions(),
                 bgm_choices=format_bgm_choices_for_prompt(),
             )
 
