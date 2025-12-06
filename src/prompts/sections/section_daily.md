@@ -23,7 +23,7 @@
 
 ## 必須要素
 
-- アウトラインの「eating_reason」（{{outline_eating_reason}}）を反映しつつ、{{food_name}}の特性を強く反映
+- アウトラインの「daily_content」（{{outline_daily_content}}）を反映しつつ、{{food_name}}の特性を強く反映
 - **一日 3 食すべてを{{food_name}}にしている事実を会話内で明示**
 - {{food_name}}の特性に応じた、現代人が共感できる「あるある」な理由
 - ずんだもんの楽観的で前向きな態度（表情: happy, normal, excited）

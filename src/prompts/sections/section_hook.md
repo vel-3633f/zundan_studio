@@ -17,7 +17,7 @@ D. 第三者発見型：めたんが異変に気づいてずんだもんを見�
 
 - ずんだもんが明らかに深刻な状態（表情: sick, sad）
 - めたんの驚きと心配（表情: surprised, worried）
-- 決定的イベント（{{outline_critical_event}}）の一部を示唆
+- 決定的イベント（{{outline_hook_content}}）を示唆
 - {{food_name}}への言及
 - 視聴者に「どうしてこうなった？」と思わせる引き
 

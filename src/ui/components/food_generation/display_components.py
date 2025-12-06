@@ -13,7 +13,7 @@ def display_json_debug(data, title="JSON Debug"):
 
 
 def display_outline_for_approval(outline: StoryOutline) -> None:
-    """アウトラインを承認用に表示する
+    """アウトラインを承認用に表示する（8セクション構造対応）
 
     Args:
         outline: 生成されたアウトライン
@@ -22,34 +22,45 @@ def display_outline_for_approval(outline: StoryOutline) -> None:
     st.markdown("## 📋 生成されたアウトライン")
     st.markdown("以下の内容で動画を生成します。確認して承認してください。")
 
-    # タイトル
+    # タイトルと食べ物名
     st.success(f"### 🎬 {outline.title}")
+    st.info(f"**対象食品**: {outline.food_name}")
 
-    # 主要な情報を3カラムで表示
+    st.markdown("---")
+    st.markdown("### 📖 8つのセクション構成")
+
+    # セクション1-4
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### 📌 冒頭フック")
-        st.info(outline.hook_scene_summary)
+        st.markdown("#### 1️⃣ 冒頭フック・危機の予告")
+        st.info(outline.hook_content)
 
-        st.markdown("#### 🎯 毎日食べる理由")
-        st.info(outline.eating_reason)
+        st.markdown("#### 2️⃣ 食品解説・背景情報")
+        st.info(outline.background_content)
+
+        st.markdown("#### 3️⃣ 日常導入・理由付け")
+        st.info(outline.daily_content)
+
+        st.markdown("#### 4️⃣ 楽観期・ハネムーン期")
+        st.info(outline.honeymoon_content)
 
     with col2:
-        st.markdown("#### ⚡ 決定的イベント")
-        st.warning(outline.critical_event)
+        st.markdown("#### 5️⃣ 異変期・段階的悪化")
+        with st.container():
+            for i, symptom in enumerate(outline.deterioration_content, 1):
+                st.markdown(f"**第{i}段階**: {symptom}")
 
-        st.markdown("#### 💊 解決策")
-        st.success(outline.solution)
+        st.markdown("#### 6️⃣ 危機・転機となる決定的イベント")
+        st.warning(outline.crisis_content)
 
-    # 詳細情報をExpanderで表示
-    with st.expander("📊 症状の段階的進行を確認", expanded=True):
-        for i, symptom in enumerate(outline.symptom_progression, 1):
-            st.markdown(f"**{i}. {symptom}**")
+        st.markdown("#### 7️⃣ 真相解明・学習フェーズ")
+        st.info(outline.learning_content)
 
-    with st.expander("🔬 医学的メカニズムを確認"):
-        st.markdown(outline.medical_mechanism)
+        st.markdown("#### 8️⃣ 回復・新しい習慣")
+        st.success(outline.recovery_content)
 
+    # 完全なデータをExpanderで表示
     with st.expander("🔍 完全なアウトラインデータ（JSON形式）"):
         st.json(outline.model_dump())
 

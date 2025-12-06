@@ -3,17 +3,23 @@ from typing import List, Dict, Optional
 
 
 class StoryOutline(BaseModel):
-    """ストーリー全体のアウトライン"""
+    """ストーリー全体のアウトライン（8セクション構造）"""
 
     title: str = Field(description="YouTubeタイトル")
-    hook_scene_summary: str = Field(description="冒頭で見せる決定的シーンの概要")
-    eating_reason: str = Field(description="毎日食べることになった理由")
-    symptom_progression: List[str] = Field(description="症状の段階的進行リスト")
-    critical_event: str = Field(description="決定的イベントの具体的内容")
-    medical_mechanism: str = Field(description="体内で起きる医学的メカニズム")
-    solution: str = Field(description="回復のための具体的解決策")
+    food_name: str = Field(description="食べ物名")
 
-    @field_validator("title", "hook_scene_summary", "eating_reason", "critical_event", "medical_mechanism", "solution")
+    # 各セクションに対応したコンテンツ
+    hook_content: str = Field(description="冒頭フックで見せる決定的シーン")
+    background_content: str = Field(description="食品の特性・成分・一般的な効果")
+    daily_content: str = Field(description="毎日食べることになった理由・状況")
+    honeymoon_content: str = Field(description="楽観期の様子・ポジティブな面")
+    deterioration_content: List[str] = Field(description="異変期の症状進行・段階的悪化")
+    crisis_content: str = Field(description="決定的イベントの具体的内容")
+    learning_content: str = Field(description="医学的メカニズム・真相")
+    recovery_content: str = Field(description="回復のための解決策")
+
+    @field_validator("title", "food_name", "hook_content", "background_content", "daily_content",
+                     "honeymoon_content", "crisis_content", "learning_content", "recovery_content")
     @classmethod
     def validate_string_not_empty(cls, v: str) -> str:
         """文字列フィールドが空でないことを確認"""
@@ -21,20 +27,20 @@ class StoryOutline(BaseModel):
             raise ValueError("文字列は空にできません")
         return v.strip()
 
-    @field_validator("symptom_progression")
+    @field_validator("deterioration_content")
     @classmethod
-    def validate_symptom_progression_not_empty(cls, v: List[str]) -> List[str]:
+    def validate_deterioration_content_not_empty(cls, v: List[str]) -> List[str]:
         """症状リストが空でなく、かつ3-5要素を持つことを確認"""
         if not v:
-            raise ValueError("症状の段階的進行リストは空にできません")
+            raise ValueError("異変期の症状進行リストは空にできません")
         if len(v) < 3:
-            raise ValueError("症状の段階的進行は最低3段階必要です")
+            raise ValueError("異変期の症状進行は最低3段階必要です")
         if len(v) > 5:
-            raise ValueError("症状の段階的進行は最大5段階です")
+            raise ValueError("異変期の症状進行は最大5段階です")
         # 各要素が空でないことを確認
         cleaned = [item.strip() for item in v if item and item.strip()]
         if len(cleaned) < 3:
-            raise ValueError("症状の段階的進行に有効な要素が不足しています")
+            raise ValueError("異変期の症状進行に有効な要素が不足しています")
         return cleaned
 
 

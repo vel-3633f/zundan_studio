@@ -17,7 +17,7 @@
 
 ## 必須要素
 
-- アウトラインの「medical_mechanism」（{{outline_medical_mechanism}}）を反映した医学的・科学的な情報
+- アウトラインの「learning_content」（{{outline_learning_content}}）を反映した医学的・科学的な情報
 - **ナレーターの話し方**: 「〜です」「〜ます」「〜でした」調で統一（丁寧語）
 - {{food_name}}の成分や特性の科学的説明（ナレーター）
 - 過剰摂取のメカニズムの詳細解説（ナレーター）
