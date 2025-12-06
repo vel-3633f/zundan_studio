@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 
 from PIL import Image, ImageDraw
 from src.utils.logger import get_logger
-from langchain_anthropic import ChatAnthropic
+from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -20,19 +20,25 @@ class AssetImageGenerator(ABC):
         self,
         output_dir: str,
         prompt_file: Path,
-        llm_model: str = "claude-sonnet-4-5-20250929",
+        llm_model: str = "anthropic.claude-3-5-sonnet-20241022-v2:0",
     ):
         """初期化
 
         Args:
             output_dir: 画像の出力ディレクトリ
             prompt_file: プロンプト生成用のマークダウンファイル
-            llm_model: プロンプト生成用のClaudeモデル名
+            llm_model: プロンプト生成用のBedrockモデルID
         """
         self.client = None
         self.model = "imagen-4.0-ultra-generate-001"
         self.output_dir = output_dir
-        self.llm = ChatAnthropic(model=llm_model, temperature=0.7)
+
+        aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+        self.llm = ChatBedrock(
+            model_id=llm_model,
+            model_kwargs={"temperature": 0.7, "max_tokens": 4096},
+            region_name=aws_region,
+        )
         self.prompt_file = prompt_file
         self._ensure_output_dir()
 

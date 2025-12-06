@@ -6,7 +6,7 @@ from pathlib import Path
 
 from config import Paths
 from src.utils.logger import get_logger
-from langchain_anthropic import ChatAnthropic
+from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -15,16 +15,23 @@ logger = get_logger(__name__)
 class BackgroundImageGenerator:
     """Imagen 4を使用した背景画像自動生成クラス"""
 
-    def __init__(self, llm_model: str = "claude-sonnet-4-5-20250929"):
+    def __init__(self, llm_model: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"):
         """初期化
 
         Args:
-            llm_model: プロンプト生成用のClaudeモデル名（デフォルト: claude-sonnet-4-5-20250929）
+            llm_model: プロンプト生成用のBedrockモデルID（デフォルト: Claude 3.5 Sonnet v2）
         """
         self.client = None
         self.model = "imagen-4.0-ultra-generate-001"
         self.backgrounds_dir = Paths.get_backgrounds_dir()
-        self.llm = ChatAnthropic(model=llm_model, temperature=0.7)
+
+        # AWS Bedrock LLMインスタンス生成
+        aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+        self.llm = ChatBedrock(
+            model_id=llm_model,
+            model_kwargs={"temperature": 0.7, "max_tokens": 4096},
+            region_name=aws_region,
+        )
         self.prompt_file = (
             Path(__file__).parent.parent / "prompts" / "background_prompt_creator.md"
         )
