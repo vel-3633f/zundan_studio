@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 
 from PIL import Image, ImageDraw
 from src.utils.logger import get_logger
-from langchain_aws import ChatBedrock
+from src.utils.llm_factory import create_bedrock_llm
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -34,9 +34,10 @@ class AssetImageGenerator(ABC):
         self.output_dir = output_dir
 
         aws_region = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
-        self.llm = ChatBedrock(
+        self.llm = create_bedrock_llm(
             model_id=llm_model,
-            model_kwargs={"temperature": 0.7, "max_tokens": 4096},
+            temperature=0.7,
+            max_tokens=4096,
             region_name=aws_region,
         )
         self.prompt_file = prompt_file

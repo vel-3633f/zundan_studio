@@ -11,11 +11,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_aws import ChatBedrock
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 from langchain_community.retrievers import TavilySearchAPIRetriever
+from src.utils.llm_factory import create_llm_from_model_config
 
 _prompt_cache = {}
 
@@ -116,40 +116,12 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
 
 
 def create_llm_instance(model: str, temperature: float, model_config: Dict[str, Any]):
-    """モデル設定に基づいてLLMインスタンスを生成する（AWS Bedrock専用）"""
-    provider = model_config.get("provider", "bedrock")
-    max_tokens = model_config.get("max_tokens", 8192)
+    """モデル設定に基づいてLLMインスタンスを生成する（AWS Bedrock専用）
 
-    if provider != "bedrock":
-        raise ValueError(f"サポートされていないプロバイダー: {provider}. Bedrockのみサポートしています。")
-
-    # AWS認証情報の確認
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    aws_region = os.getenv("AWS_DEFAULT_REGION")
-
-    if not aws_access_key or not aws_secret_key:
-        raise ValueError(
-            "AWS認証情報が設定されていません。\n"
-            "AWS_ACCESS_KEY_ID と AWS_SECRET_ACCESS_KEY を .env ファイルに設定してください。"
-        )
-
-    if not aws_region:
-        raise ValueError(
-            "AWSリージョンが設定されていません。\n"
-            "AWS_DEFAULT_REGION を .env ファイルに設定してください（例: us-east-1）"
-        )
-
-    logger.info(
-        f"AWS Bedrock LLMインスタンス生成: model={model}, region={aws_region}, max_tokens={max_tokens}"
-    )
-
-    return ChatBedrock(
-        model_id=model,
-        model_kwargs={"temperature": temperature, "max_tokens": max_tokens},
-        region_name=aws_region,
-        timeout=600,  # 600秒のタイムアウトを設定
-    )
+    注: この関数は後方互換性のために残されています。
+    新しいコードでは src.utils.llm_factory.create_llm_from_model_config を使用してください。
+    """
+    return create_llm_from_model_config(model_config, temperature)
 
 
 def generate_food_overconsumption_script(
