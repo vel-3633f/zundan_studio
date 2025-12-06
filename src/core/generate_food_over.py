@@ -148,6 +148,7 @@ def create_llm_instance(model: str, temperature: float, model_config: Dict[str, 
         model_id=model,
         model_kwargs={"temperature": temperature, "max_tokens": max_tokens},
         region_name=aws_region,
+        timeout=600,  # 600秒のタイムアウトを設定
     )
 
 
