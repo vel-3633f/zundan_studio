@@ -71,8 +71,8 @@ def generate_outline(
         })
 
         logger.info(f"アウトライン生成成功: タイトル={outline.title}")
-        logger.debug(f"症状進行: {outline.symptom_progression}")
-        logger.debug(f"決定的イベント: {outline.critical_event}")
+        logger.debug(f"異変期の症状: {outline.deterioration_content}")
+        logger.debug(f"危機イベント: {outline.crisis_content}")
 
         return outline
 

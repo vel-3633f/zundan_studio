@@ -11,11 +11,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.exceptions import OutputParserException
 from langchain_community.retrievers import TavilySearchAPIRetriever
+from src.utils.llm_factory import create_llm_from_model_config
 
 _prompt_cache = {}
 
@@ -116,42 +116,12 @@ def format_search_results_for_prompt(search_results: Dict[str, List[str]]) -> st
 
 
 def create_llm_instance(model: str, temperature: float, model_config: Dict[str, Any]):
-    """モデル設定に基づいてLLMインスタンスを生成する"""
-    provider = model_config.get("provider", "openai")
-    max_tokens = model_config.get("max_tokens", 4096)
+    """モデル設定に基づいてLLMインスタンスを生成する（AWS Bedrock専用）
 
-    if provider == "openai":
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY が設定されていません")
-        logger.info(
-            f"OpenAI LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
-        )
-        return ChatOpenAI(
-            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
-        )
-
-    elif provider == "anthropic":
-        try:
-            from langchain_anthropic import ChatAnthropic
-        except ImportError:
-            raise ImportError(
-                "langchain-anthropic パッケージがインストールされていません。\n"
-                "以下のコマンドでインストールしてください: pip install langchain-anthropic"
-            )
-
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY が設定されていません")
-        logger.info(
-            f"Anthropic LLMインスタンス生成: model={model}, max_tokens={max_tokens}"
-        )
-        return ChatAnthropic(
-            model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key
-        )
-
-    else:
-        raise ValueError(f"サポートされていないプロバイダー: {provider}")
+    注: この関数は後方互換性のために残されています。
+    新しいコードでは src.utils.llm_factory.create_llm_from_model_config を使用してください。
+    """
+    return create_llm_from_model_config(model_config, temperature)
 
 
 def generate_food_overconsumption_script(

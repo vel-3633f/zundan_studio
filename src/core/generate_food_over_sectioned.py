@@ -31,12 +31,12 @@ SECTION_CONFIGS = [
 ]
 
 
-def generate_food_overconsumption_script_sectioned(
+def generate_outline_only(
     food_name: str,
     model: str = None,
     temperature: float = None
-) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
-    """セクション分割方式で食べ物摂取過多動画脚本を生成する
+) -> Union[StoryOutline, Dict[str, Any]]:
+    """アウトラインのみを生成する
 
     Args:
         food_name: 食べ物名
@@ -44,7 +44,7 @@ def generate_food_overconsumption_script_sectioned(
         temperature: 生成温度
 
     Returns:
-        FoodOverconsumptionScript: 生成された台本、またはエラー辞書
+        StoryOutline: 生成されたアウトライン、またはエラー辞書
     """
     try:
         # モデル設定
@@ -58,10 +58,9 @@ def generate_food_overconsumption_script_sectioned(
             temperature = model_config["default_temperature"]
 
         provider = model_config.get("provider", "openai")
-        max_tokens = model_config.get("max_tokens", 4096)
 
         logger.info(
-            f"セクション分割方式で脚本生成開始: 食べ物={food_name}, "
+            f"アウトライン生成開始: 食べ物={food_name}, "
             f"プロバイダー={provider}, モデル={model}, temperature={temperature}"
         )
 
@@ -74,12 +73,49 @@ def generate_food_overconsumption_script_sectioned(
         llm = create_llm_instance(model, temperature, model_config)
         outline = generate_outline(food_name, reference_info, llm)
 
-        st.success(f"✅ タイトル決定: {outline.title}")
+        # アウトラインと関連情報をsession_stateに保存
+        st.session_state.current_outline = outline
+        st.session_state.current_food_name = food_name
+        st.session_state.current_reference_info = reference_info
+        st.session_state.current_model = model
+        st.session_state.current_temperature = temperature
+        st.session_state.current_model_config = model_config
+
+        st.success(f"✅ アウトライン生成完了: {outline.title}")
         logger.info(f"アウトライン生成完了: {outline.title}")
+
+        return outline
+
+    except Exception as e:
+        error_msg = f"アウトライン生成エラー: {e}"
+        logger.error(error_msg, exc_info=True)
+        st.error(f"❌ アウトライン生成に失敗しました: {str(e)}")
+        return {"error": "Outline Generation Error", "details": str(e)}
+
+
+def generate_sections_from_approved_outline() -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
+    """承認されたアウトラインから各セクションを生成する
+
+    Returns:
+        FoodOverconsumptionScript: 生成された台本、またはエラー辞書
+    """
+    try:
+        # session_stateからアウトラインと設定を取得
+        outline = st.session_state.current_outline
+        food_name = st.session_state.current_food_name
+        reference_info = st.session_state.current_reference_info
+        model = st.session_state.current_model
+        temperature = st.session_state.current_temperature
+        model_config = st.session_state.current_model_config
+
+        logger.info(f"承認されたアウトラインから脚本生成開始: {outline.title}")
+
+        llm = create_llm_instance(model, temperature, model_config)
 
         sections = []
         previous_sections_summary = []
 
+        st.info("🎬 各セクションの詳細を生成中...")
         progress_bar = st.progress(0)
         status_text = st.empty()
 
@@ -211,3 +247,28 @@ def generate_food_overconsumption_script_sectioned(
         st.session_state.last_generated_json = None
 
         return {"error": "Unexpected Error", "details": str(e)}
+
+
+def generate_food_overconsumption_script_sectioned(
+    food_name: str,
+    model: str = None,
+    temperature: float = None
+) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
+    """セクション分割方式で食べ物摂取過多動画脚本を生成する（ワンステップ版・後方互換性のため残存）
+
+    Args:
+        food_name: 食べ物名
+        model: 使用するモデルID
+        temperature: 生成温度
+
+    Returns:
+        FoodOverconsumptionScript: 生成された台本、またはエラー辞書
+    """
+    # アウトライン生成
+    outline_result = generate_outline_only(food_name, model, temperature)
+
+    if isinstance(outline_result, dict) and "error" in outline_result:
+        return outline_result
+
+    # そのまま承認してセクション生成
+    return generate_sections_from_approved_outline()

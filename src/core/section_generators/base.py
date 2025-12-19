@@ -15,6 +15,18 @@ logger = get_logger(__name__)
 
 COMMON_RULES_FILE = Path("src/prompts/sections/common_rules.md")
 
+# セクションごとに必要なアウトライン変数のマッピング（8セクション構造）
+SECTION_OUTLINE_VARIABLES = {
+    "hook": ["hook_content"],  # 冒頭フックで見せる決定的シーン
+    "background": ["background_content"],  # 食品の特性・成分・一般的な効果
+    "daily": ["daily_content"],  # 毎日食べる理由・状況
+    "honeymoon": ["honeymoon_content"],  # 楽観期の様子・ポジティブな面
+    "deterioration": ["deterioration_content"],  # 異変期の症状進行・段階的悪化
+    "crisis": ["crisis_content"],  # 決定的イベントの具体的内容
+    "learning": ["learning_content"],  # 医学的メカニズム・真相
+    "recovery": ["recovery_content"],  # 回復のための解決策
+}
+
 
 @dataclass
 class SectionContext:
@@ -30,7 +42,12 @@ class SectionGeneratorBase:
     """セクション生成の基底クラス"""
 
     def __init__(
-        self, section_key: str, section_name: str, min_lines: int, max_lines: int, fixed_background: Optional[str] = None
+        self,
+        section_key: str,
+        section_name: str,
+        min_lines: int,
+        max_lines: int,
+        fixed_background: Optional[str] = None,
     ):
         """
         Args:
@@ -80,16 +97,21 @@ class SectionGeneratorBase:
             raise
 
     def build_context_text(self, context: SectionContext) -> str:
-        """コンテキスト情報をテキスト化"""
+        """コンテキスト情報をテキスト化（8セクション構造対応）"""
         context_text = f"""
 ## 全体のアウトライン
 - YouTubeタイトル: {context.outline.title}
-- 食べ物: {context.food_name}
-- 毎日食べる理由: {context.outline.eating_reason}
-- 症状の進行: {', '.join(context.outline.symptom_progression)}
-- 決定的イベント: {context.outline.critical_event}
-- 医学的メカニズム: {context.outline.medical_mechanism}
-- 解決策: {context.outline.solution}
+- 食べ物: {context.outline.food_name}
+
+### セクション別コンテンツ
+1. 冒頭フック: {context.outline.hook_content}
+2. 食品解説: {context.outline.background_content}
+3. 日常導入: {context.outline.daily_content}
+4. 楽観期: {context.outline.honeymoon_content}
+5. 異変期: {', '.join(context.outline.deterioration_content)}
+6. 危機: {context.outline.crisis_content}
+7. 真相解明: {context.outline.learning_content}
+8. 回復: {context.outline.recovery_content}
 """
 
         if context.previous_sections:
@@ -103,6 +125,39 @@ class SectionGeneratorBase:
 """
 
         return context_text
+
+    def replace_outline_variables(
+        self, prompt_text: str, context: SectionContext
+    ) -> str:
+        """プロンプト内のアウトライン変数を実際の値で置換（8セクション構造対応）
+
+        Args:
+            prompt_text: プロンプトテキスト
+            context: セクションコンテキスト
+
+        Returns:
+            str: 置換後のプロンプトテキスト
+        """
+        replacements = {
+            "{{food_name}}": context.food_name,
+            "{{outline_title}}": context.outline.title,
+            "{{outline_hook_content}}": context.outline.hook_content,
+            "{{outline_background_content}}": context.outline.background_content,
+            "{{outline_daily_content}}": context.outline.daily_content,
+            "{{outline_honeymoon_content}}": context.outline.honeymoon_content,
+            "{{outline_deterioration_content}}": "\n".join(
+                f"- {symptom}" for symptom in context.outline.deterioration_content
+            ),
+            "{{outline_crisis_content}}": context.outline.crisis_content,
+            "{{outline_learning_content}}": context.outline.learning_content,
+            "{{outline_recovery_content}}": context.outline.recovery_content,
+        }
+
+        result = prompt_text
+        for var, value in replacements.items():
+            result = result.replace(var, value)
+
+        return result
 
     def generate(self, context: SectionContext, llm: Any) -> VideoSection:
         """セクションを生成する
@@ -120,10 +175,17 @@ class SectionGeneratorBase:
 
         try:
             common_rules = self.load_common_rules()
-            section_prompt = self.load_section_prompt()
+            section_prompt_raw = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
             parser = PydanticOutputParser(pydantic_object=VideoSection)
+            format_instructions = parser.get_format_instructions()
+
+            # アウトライン変数を置換（{{format_instructions}}を除く）
+            section_prompt = self.replace_outline_variables(section_prompt_raw, context)
+
+            # {{format_instructions}}を削除
+            section_prompt = section_prompt.replace("{{format_instructions}}", "")
 
             full_prompt = f"""
                 {common_rules}
@@ -138,27 +200,28 @@ class SectionGeneratorBase:
 
                 ## 参考情報
                 {context.reference_information}
+
+                ## 出力形式
+
+                {format_instructions}
                 """
 
-            # プロンプトチェーン構築
-            prompt = ChatPromptTemplate.from_messages(
-                [
-                    (
-                        "system",
-                        "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。",
-                    ),
-                    ("user", full_prompt),
-                ]
-            ).partial(
-                format_instructions=parser.get_format_instructions(),
-                bgm_choices=format_bgm_choices_for_prompt(),
-            )
+            # システムメッセージ
+            system_message = "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"
 
-            # LLMチェーン実行
-            chain = prompt | llm | parser
+            # LLMを直接呼び出す（ChatPromptTemplateの変数参照問題を回避）
+            from langchain_core.messages import HumanMessage, SystemMessage
+
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=full_prompt),
+            ]
 
             logger.info(f"{self.section_name} をLLMで生成中...")
-            section = chain.invoke({"food_name": context.food_name})
+            llm_response = llm.invoke(messages)
+
+            # LLMの応答をパース
+            section = parser.invoke(llm_response)
 
             # セクションキーを設定
             section.section_key = self.section_key
@@ -174,9 +237,7 @@ class SectionGeneratorBase:
             # 固定背景が指定されている場合は上書き
             if self.fixed_background:
                 section.scene_background = self.fixed_background
-                logger.info(
-                    f"背景を固定設定で上書き: {self.fixed_background}"
-                )
+                logger.info(f"背景を固定設定で上書き: {self.fixed_background}")
 
             segment_count = len(section.segments)
             logger.info(
