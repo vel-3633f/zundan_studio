@@ -82,13 +82,26 @@ const ScriptGenerationPage = () => {
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
-                  <option value="claude-3-5-sonnet">
+                  <option
+                    value="claude-3-5-sonnet"
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
                     Claude 3.5 Sonnet (推奨)
                   </option>
-                  <option value="gpt-4">GPT-4</option>
-                  <option value="gemini-pro">Gemini Pro</option>
+                  <option
+                    value="gpt-4"
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    GPT-4
+                  </option>
+                  <option
+                    value="gemini-pro"
+                    className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    Gemini Pro
+                  </option>
                 </select>
               </div>
               <div>

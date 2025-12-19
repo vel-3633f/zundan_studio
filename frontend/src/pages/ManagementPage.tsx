@@ -75,7 +75,9 @@ const ManagementPage = () => {
         {/* 背景画像タブ */}
         {activeTab === "backgrounds" && (
           <div>
-            <h3 className="text-lg font-medium mb-4">背景画像管理</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              背景画像管理
+            </h3>
             <p className="text-gray-600 dark:text-gray-400">
               背景画像のアップロード機能は実装中です
             </p>
@@ -85,7 +87,9 @@ const ManagementPage = () => {
         {/* アイテム画像タブ */}
         {activeTab === "items" && (
           <div>
-            <h3 className="text-lg font-medium mb-4">アイテム画像管理</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              アイテム画像管理
+            </h3>
             <p className="text-gray-600 dark:text-gray-400">
               アイテム画像のアップロード機能は実装中です
             </p>
@@ -95,7 +99,9 @@ const ManagementPage = () => {
         {/* 食べ物管理タブ */}
         {activeTab === "foods" && (
           <div>
-            <h3 className="text-lg font-medium mb-4">食べ物管理</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              食べ物管理
+            </h3>
 
             {/* 追加フォーム */}
             <div className="flex space-x-2 mb-6">

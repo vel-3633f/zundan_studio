@@ -53,10 +53,20 @@ const HomePage = () => {
               <select
                 value={speaker}
                 onChange={(e) => setSpeaker(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="zundamon">ずんだもん</option>
-                <option value="metan">四国めたん</option>
+                <option
+                  value="zundamon"
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  ずんだもん
+                </option>
+                <option
+                  value="metan"
+                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  四国めたん
+                </option>
               </select>
             </div>
             <div className="md:col-span-3">
@@ -121,6 +131,11 @@ const HomePage = () => {
           >
             {isGenerating ? "生成中..." : "🎭 会話動画を生成"}
           </Button>
+          {conversations.length === 0 && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+              ※ セリフを追加してから生成ボタンを押してください
+            </p>
+          )}
         </div>
 
         {/* 進捗表示 */}

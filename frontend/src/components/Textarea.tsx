@@ -25,7 +25,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             error
               ? "border-red-500 focus:ring-red-500"
               : "border-gray-300 dark:border-gray-600",
-            "dark:bg-gray-700 dark:text-white",
+            "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
             className
           )}
           {...props}
