@@ -148,6 +148,44 @@ cd backend
 celery -A app.tasks.celery_app worker --loglevel=info
 ```
 
+## ⚙️ 設定
+
+### AIモデル設定
+
+AIモデルの設定は `backend/app/config/models.py` で一元管理されています。
+
+```python
+# 利用可能なAIモデルの設定
+AVAILABLE_MODELS: List[Dict[str, Any]] = [
+    {
+        "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "name": "Claude Sonnet 4.5",
+        "provider": "bedrock",
+        "temperature_range": (0.0, 1.0),
+        "default_temperature": 1.0,
+        "max_tokens": 64000,
+        "recommended": True,
+    },
+    # ... 他のモデル
+]
+
+# デフォルトモデル設定
+DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+```
+
+**特徴:**
+- フロントエンドは起動時に `/scripts/models` APIからモデル一覧を取得
+- バックエンドの全ジェネレーター（台本生成、画像生成など）でデフォルトモデルを使用
+- モデルの追加・変更は `models.py` を編集するだけで全体に反映
+
+### デフォルトモード設定
+
+生成モードのデフォルト設定は `frontend/src/stores/scriptStore.ts` で管理されています。
+
+```typescript
+mode: "comedy",  // デフォルトモード: "comedy" (お笑い) または "food" (食べ物)
+```
+
 ## 🐛 トラブルシューティング
 
 ### VOICEVOX に接続できない

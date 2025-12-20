@@ -168,10 +168,12 @@ class BackgroundImageGenerator:
             generated_image = image_result.generated_images[0]
 
             # PIL Imageとして取得
-            if hasattr(generated_image, 'image'):
+            if hasattr(generated_image, "image"):
                 img = generated_image.image
             else:
-                raise ValueError(f"Cannot extract image from result: {type(generated_image)}")
+                raise ValueError(
+                    f"Cannot extract image from result: {type(generated_image)}"
+                )
 
             # 画像を保存（拡張子から自動判定）
             img.save(output_path)
@@ -181,11 +183,15 @@ class BackgroundImageGenerator:
                 raise IOError(f"Image file was not saved: {output_path}")
 
             file_size = os.path.getsize(output_path)
-            logger.info(f"Successfully saved background: {output_path} ({file_size} bytes)")
+            logger.info(
+                f"Successfully saved background: {output_path} ({file_size} bytes)"
+            )
             return output_path
 
         except Exception as e:
-            logger.error(f"Failed to generate background '{bg_name}': {e}", exc_info=True)
+            logger.error(
+                f"Failed to generate background '{bg_name}': {e}", exc_info=True
+            )
             raise
 
     def generate_missing_backgrounds(

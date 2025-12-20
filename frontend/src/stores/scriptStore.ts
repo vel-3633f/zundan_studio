@@ -172,7 +172,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
     try {
       const { scriptApi } = await import("@/api/scripts");
       const data = await scriptApi.getAvailableModels();
-      
+
       set({
         availableModels: data.models,
         defaultModelId: data.default_model_id,
@@ -181,7 +181,9 @@ export const useScriptStore = create<ScriptState>((set) => ({
       });
 
       // デフォルト温度を設定
-      const defaultModel = data.models.find(m => m.id === data.default_model_id);
+      const defaultModel = data.models.find(
+        (m) => m.id === data.default_model_id
+      );
       if (defaultModel) {
         set({ temperature: defaultModel.default_temperature });
       }

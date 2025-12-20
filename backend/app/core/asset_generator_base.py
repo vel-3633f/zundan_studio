@@ -74,7 +74,9 @@ class AssetImageGenerator(ABC):
             logger.error(f"Failed to initialize Google Gen AI client: {e}")
             raise
 
-    def check_image_exists(self, image_name: str, extensions: Optional[List[str]] = None) -> bool:
+    def check_image_exists(
+        self, image_name: str, extensions: Optional[List[str]] = None
+    ) -> bool:
         """画像が存在するかチェック
 
         Args:
@@ -292,9 +294,7 @@ class AssetImageGenerator(ABC):
                 raise IOError(f"Image file was not saved: {output_path}")
 
             file_size = os.path.getsize(output_path)
-            logger.info(
-                f"Successfully saved image: {output_path} ({file_size} bytes)"
-            )
+            logger.info(f"Successfully saved image: {output_path} ({file_size} bytes)")
             return output_path
 
         except Exception as e:
