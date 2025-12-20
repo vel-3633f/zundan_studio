@@ -393,14 +393,14 @@ class ComedyScriptGenerator:
         llm: Any,
         progress_callback: Optional[Callable[[str], None]] = None,
     ) -> ComedyTitleBatch:
-        """ランダムにタイトルを5-10個量産
+        """ランダムにタイトルを20-30個量産
 
         Args:
             llm: LLMインスタンス
             progress_callback: 進捗通知用コールバック関数
 
         Returns:
-            ComedyTitleBatch: 生成されたタイトル候補リスト
+            ComedyTitleBatch: 生成されたタイトル候補リスト（20-30個）
         """
         logger.info("お笑いモード タイトル量産開始")
 

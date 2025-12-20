@@ -63,9 +63,9 @@ const InputSection = ({
         {mode === "comedy" && (
           <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
             <p className="text-sm text-primary-900 dark:text-primary-100">
-              🎲 AIがランダムにバカバカしいタイトルを5-10個生成します。
+              🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
               <br />
-              気に入ったタイトルを選んで、漫談台本を作成しましょう！
+              5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
             </p>
           </div>
         )}

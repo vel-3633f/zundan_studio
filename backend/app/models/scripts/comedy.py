@@ -28,7 +28,7 @@ class ComedyTitleCandidate(BaseModel):
 
 class ComedyTitleBatch(BaseModel):
     titles: List[ComedyTitleCandidate] = Field(
-        description="生成されたタイトル候補リスト（5-10個）"
+        description="生成されたタイトル候補リスト（20-30個）"
     )
 
     @field_validator("titles")
@@ -36,8 +36,8 @@ class ComedyTitleBatch(BaseModel):
     def validate_titles_count(
         cls, v: List[ComedyTitleCandidate]
     ) -> List[ComedyTitleCandidate]:
-        if len(v) < 5 or len(v) > 10:
-            raise ValueError("タイトルは5-10個生成する必要があります")
+        if len(v) < 20 or len(v) > 30:
+            raise ValueError("タイトルは20-30個生成する必要があります")
         return v
 
 

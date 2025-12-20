@@ -248,9 +248,9 @@ async def generate_full_script(request: FullScriptRequest):
 @router.post("/comedy/titles/batch")
 async def generate_comedy_titles_batch():
     """
-    お笑いモード: ランダムタイトル量産（5-10個）
+    お笑いモード: ランダムタイトル量産（20-30個）
 
-    テーマ入力不要で、AIが自動的にバカバカしいタイトルを5-10個生成します。
+    テーマ入力不要で、AIが自動的にバカバカしいタイトルを20-30個生成します。
     """
     try:
         logger.info("お笑いタイトル量産リクエスト")
