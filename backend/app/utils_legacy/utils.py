@@ -1,230 +1,10 @@
-import os
-import logging
-import uuid
-from datetime import datetime
-from typing import Optional, Dict, Tuple
-import re
-from typing import Dict, Optional, List
-from app.models.food_over import ConversationSegment
-from app.utils_legacy.logger import get_logger
+from typing import Optional, Tuple, Dict
 
-logger = get_logger(__name__)
-
-
-class Constants:
-    DEFAULT_PREFIX = "output"
-    DEFAULT_EXTENSION = "mp4"
-    MAX_TEXT_LENGTH = 1000
-    MAX_FILENAME_LENGTH = 255
-    INVALID_FILENAME_CHARS = '<>:"/\\|?*'
-
-    TEMP_DIR = "temp"
-    OUTPUTS_DIR = "outputs"
-    ASSETS_DIR = "assets"
-    ZUNDAMON_DIR = "zundamon"
-    BACKGROUNDS_DIR = "backgrounds"
-
-    LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    SUPPRESSED_LOGGERS = ["moviepy", "PIL", "matplotlib"]
-
-
-class PathManager:
-    @staticmethod
-    def get_project_root() -> str:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.dirname(os.path.dirname(current_dir))
-
-    @classmethod
-    def get_temp_dir(cls) -> str:
-        return os.path.join(cls.get_project_root(), Constants.TEMP_DIR)
-
-    @classmethod
-    def get_outputs_dir(cls) -> str:
-        return os.path.join(cls.get_project_root(), Constants.OUTPUTS_DIR)
-
-    @classmethod
-    def get_required_directories(cls) -> list[str]:
-        base_dir = cls.get_project_root()
-        return [
-            os.path.join(base_dir, Constants.TEMP_DIR),
-            os.path.join(base_dir, Constants.OUTPUTS_DIR),
-            os.path.join(base_dir, Constants.ASSETS_DIR, Constants.ZUNDAMON_DIR),
-            os.path.join(base_dir, Constants.ASSETS_DIR, Constants.BACKGROUNDS_DIR),
-            os.path.join(base_dir, Constants.ASSETS_DIR, "items"),
-            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "drinks"),
-            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "books"),
-            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "tools"),
-            os.path.join(base_dir, Constants.ASSETS_DIR, "items", "weapons"),
-        ]
-
-
-class FileOperations:
-    @staticmethod
-    def delete_file_safe(file_path: str, file_type: str = "file") -> bool:
-        try:
-            os.remove(file_path)
-            filename = os.path.basename(file_path)
-            logger.info(f"Cleaned up {file_type}: {filename}")
-            return True
-        except PermissionError:
-            filename = os.path.basename(file_path)
-            logger.warning(f"Permission denied for {file_type}: {filename}")
-            return False
-        except OSError as e:
-            filename = os.path.basename(file_path)
-            logger.warning(f"Could not delete {file_type} {filename}: {e}")
-            return False
-
-    @staticmethod
-    def cleanup_directory(directory: str, dir_type: str) -> int:
-        if not os.path.exists(directory):
-            if dir_type == "temp":
-                logger.info(f"Temp directory not found: {directory}")
-            return 0
-
-        deleted_count = 0
-        try:
-            for filename in os.listdir(directory):
-                file_path = os.path.join(directory, filename)
-                if os.path.isfile(file_path):
-                    if FileOperations.delete_file_safe(file_path, f"{dir_type} file"):
-                        deleted_count += 1
-
-            logger.info(
-                f"{dir_type.capitalize()} cleanup completed. Deleted {deleted_count} files."
-            )
-        except Exception as e:
-            logger.error(f"Failed to cleanup {dir_type} files: {e}")
-
-        return deleted_count
-
-    @staticmethod
-    def count_files_in_directory(directory: str) -> Tuple[int, int]:
-        count = 0
-        total_size = 0
-
-        if os.path.exists(directory):
-            for filename in os.listdir(directory):
-                file_path = os.path.join(directory, filename)
-                if os.path.isfile(file_path):
-                    count += 1
-                    total_size += os.path.getsize(file_path)
-
-        return count, total_size
-
-
-class FileManager:
-    @staticmethod
-    def generate_unique_filename(
-        prefix: str = Constants.DEFAULT_PREFIX,
-        extension: str = Constants.DEFAULT_EXTENSION,
-    ) -> str:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        unique_id = str(uuid.uuid4())[:8]
-        return f"{prefix}_{timestamp}_{unique_id}.{extension}"
-
-    @staticmethod
-    def cleanup_temp_files(temp_dir: str = None) -> int:
-        if temp_dir is None:
-            temp_dir = PathManager.get_temp_dir()
-
-        return FileOperations.cleanup_directory(temp_dir, "temp")
-
-    @staticmethod
-    def cleanup_all_generated_files() -> int:
-        total_deleted = 0
-
-        # Clean temp directory
-        temp_deleted = FileOperations.cleanup_directory(
-            PathManager.get_temp_dir(), "temp"
-        )
-        total_deleted += temp_deleted
-
-        # Clean outputs directory
-        output_deleted = FileOperations.cleanup_directory(
-            PathManager.get_outputs_dir(), "output"
-        )
-        total_deleted += output_deleted
-
-        logger.info(f"Total cleanup completed. Deleted {total_deleted} files.")
-        return total_deleted
-
-    @staticmethod
-    def get_generated_files_info() -> Dict[str, float]:
-        # Count temp files
-        temp_count, temp_size = FileOperations.count_files_in_directory(
-            PathManager.get_temp_dir()
-        )
-
-        # Count output files
-        output_count, output_size = FileOperations.count_files_in_directory(
-            PathManager.get_outputs_dir()
-        )
-
-        return {
-            "temp_count": temp_count,
-            "temp_size_mb": temp_size / (1024 * 1024),
-            "output_count": output_count,
-            "output_size_mb": output_size / (1024 * 1024),
-            "total_count": temp_count + output_count,
-            "total_size_mb": (temp_size + output_size) / (1024 * 1024),
-        }
-
-    @staticmethod
-    def ensure_directories():
-        directories = PathManager.get_required_directories()
-        for directory in directories:
-            os.makedirs(directory, exist_ok=True)
-
-    @staticmethod
-    def get_file_size_mb(file_path: str) -> Optional[float]:
-        try:
-            if os.path.exists(file_path):
-                return os.path.getsize(file_path) / (1024 * 1024)
-            return None
-        except Exception:
-            return None
-
-
-class TextValidator:
-    @staticmethod
-    def validate_text_input(
-        text: str, max_length: int = Constants.MAX_TEXT_LENGTH
-    ) -> Tuple[bool, str]:
-        if not text or not text.strip():
-            return False, "テキストを入力してください"
-
-        if len(text) > max_length:
-            return False, f"テキストは{max_length}文字以内で入力してください"
-
-        return True, ""
-
-    @staticmethod
-    def sanitize_filename(filename: str) -> str:
-        for char in Constants.INVALID_FILENAME_CHARS:
-            filename = filename.replace(char, "_")
-        return filename[: Constants.MAX_FILENAME_LENGTH]
-
-
-class LoggingConfig:
-    @staticmethod
-    def setup_logging(debug: bool = False):
-        level = logging.DEBUG if debug else logging.WARNING
-        logging.basicConfig(
-            level=level,
-            format=Constants.LOG_FORMAT,
-            handlers=[
-                logging.StreamHandler(),
-            ],
-        )
-
-        if not debug:
-            LoggingConfig._suppress_third_party_logs()
-
-    @staticmethod
-    def _suppress_third_party_logs():
-        for logger_name in Constants.SUPPRESSED_LOGGERS:
-            logging.getLogger(logger_name).setLevel(logging.WARNING)
+from app.utils_legacy.constants import Constants
+from app.utils_legacy.paths import PathManager
+from app.utils_legacy.files import FileManager, FileOperations
+from app.utils_legacy.validators import TextValidator
+from app.utils_legacy.logging_config import LoggingConfig
 
 
 def setup_logging(debug: bool = False):
@@ -265,3 +45,22 @@ def validate_text_input(
 
 def sanitize_filename(filename: str) -> str:
     return TextValidator.sanitize_filename(filename)
+
+
+__all__ = [
+    "Constants",
+    "PathManager",
+    "FileManager",
+    "FileOperations",
+    "TextValidator",
+    "LoggingConfig",
+    "setup_logging",
+    "generate_unique_filename",
+    "cleanup_temp_files",
+    "cleanup_all_generated_files",
+    "get_generated_files_info",
+    "ensure_directories",
+    "get_file_size_mb",
+    "validate_text_input",
+    "sanitize_filename",
+]
