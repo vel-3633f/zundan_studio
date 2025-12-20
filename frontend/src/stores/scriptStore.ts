@@ -1,98 +1,139 @@
 import { create } from "zustand";
-import type { StoryOutline, FoodOverconsumptionScript } from "@/types";
+import type {
+  ScriptMode,
+  FoodTitle,
+  FoodOutline,
+  FoodScript,
+  ComedyTitle,
+  ComedyOutline,
+  ComedyScript,
+} from "@/types";
+
+// ステップ定義
+export type ScriptStep = "input" | "title" | "outline" | "script";
 
 interface ScriptState {
-  // 入力データ
-  foodName: string;
+  // === モードとステップ ===
+  mode: ScriptMode;
+  currentStep: ScriptStep;
+
+  // === 入力データ ===
+  inputText: string; // 食べ物名 or テーマ
   model: string;
   temperature: number;
 
-  // アウトライン
-  outline: StoryOutline | null;
-  outlineApproved: boolean;
+  // === 生成データ ===
+  generatedTitle: FoodTitle | ComedyTitle | null;
+  generatedOutline: FoodOutline | ComedyOutline | null;
+  generatedScript: FoodScript | ComedyScript | null;
 
-  // 生成状態
-  isGeneratingOutline: boolean;
-  isGeneratingSections: boolean;
-  taskId: string | null;
+  // === 参照情報（食べ物モードのみ） ===
+  referenceInfo: string;
+  searchResults: Record<string, any>;
+
+  // === 生成状態 ===
+  isGenerating: boolean;
   progress: number;
   statusMessage: string;
+  error: string | null;
 
-  // 生成結果
-  generatedScript: FoodOverconsumptionScript | null;
-  referenceInfo: string;
-
-  // アクション
-  setFoodName: (name: string) => void;
+  // === アクション ===
+  setMode: (mode: ScriptMode) => void;
+  setCurrentStep: (step: ScriptStep) => void;
+  setInputText: (text: string) => void;
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
 
-  setOutline: (outline: StoryOutline | null) => void;
-  setOutlineApproved: (approved: boolean) => void;
+  setGeneratedTitle: (title: FoodTitle | ComedyTitle | null) => void;
+  setGeneratedOutline: (outline: FoodOutline | ComedyOutline | null) => void;
+  setGeneratedScript: (script: FoodScript | ComedyScript | null) => void;
 
-  setGeneratingOutline: (generating: boolean) => void;
-  setGeneratingSections: (generating: boolean) => void;
-  setTaskId: (taskId: string | null) => void;
+  setReferenceInfo: (info: string) => void;
+  setSearchResults: (results: Record<string, any>) => void;
+
+  setGenerating: (generating: boolean) => void;
   setProgress: (progress: number) => void;
   setStatusMessage: (message: string) => void;
-
-  setGeneratedScript: (script: FoodOverconsumptionScript | null) => void;
-  setReferenceInfo: (info: string) => void;
+  setError: (error: string | null) => void;
 
   reset: () => void;
+  resetToInput: () => void;
 }
 
 export const useScriptStore = create<ScriptState>((set) => ({
-  // 初期状態
-  foodName: "",
+  // === 初期状態 ===
+  mode: "food",
+  currentStep: "input",
+
+  inputText: "",
   model: "claude-3-5-sonnet",
   temperature: 0.7,
-  outline: null,
-  outlineApproved: false,
-  isGeneratingOutline: false,
-  isGeneratingSections: false,
-  taskId: null,
+
+  generatedTitle: null,
+  generatedOutline: null,
+  generatedScript: null,
+
+  referenceInfo: "",
+  searchResults: {},
+
+  isGenerating: false,
   progress: 0,
   statusMessage: "",
-  generatedScript: null,
-  referenceInfo: "",
+  error: null,
 
-  // アクション
-  setFoodName: (name) => set({ foodName: name }),
+  // === アクション ===
+  setMode: (mode) => set({ mode, currentStep: "input" }),
+
+  setCurrentStep: (step) => set({ currentStep: step }),
+
+  setInputText: (text) => set({ inputText: text }),
 
   setModel: (model) => set({ model }),
 
   setTemperature: (temp) => set({ temperature: temp }),
 
-  setOutline: (outline) => set({ outline }),
+  setGeneratedTitle: (title) => set({ generatedTitle: title }),
 
-  setOutlineApproved: (approved) => set({ outlineApproved: approved }),
-
-  setGeneratingOutline: (generating) =>
-    set({ isGeneratingOutline: generating }),
-
-  setGeneratingSections: (generating) =>
-    set({ isGeneratingSections: generating }),
-
-  setTaskId: (taskId) => set({ taskId }),
-
-  setProgress: (progress) => set({ progress }),
-
-  setStatusMessage: (message) => set({ statusMessage: message }),
+  setGeneratedOutline: (outline) => set({ generatedOutline: outline }),
 
   setGeneratedScript: (script) => set({ generatedScript: script }),
 
   setReferenceInfo: (info) => set({ referenceInfo: info }),
 
+  setSearchResults: (results) => set({ searchResults: results }),
+
+  setGenerating: (generating) => set({ isGenerating: generating }),
+
+  setProgress: (progress) => set({ progress }),
+
+  setStatusMessage: (message) => set({ statusMessage: message }),
+
+  setError: (error) => set({ error }),
+
   reset: () =>
     set({
-      outline: null,
-      outlineApproved: false,
-      isGeneratingOutline: false,
-      isGeneratingSections: false,
-      taskId: null,
+      currentStep: "input",
+      inputText: "",
+      generatedTitle: null,
+      generatedOutline: null,
+      generatedScript: null,
+      referenceInfo: "",
+      searchResults: {},
+      isGenerating: false,
       progress: 0,
       statusMessage: "",
+      error: null,
+    }),
+
+  resetToInput: () =>
+    set({
+      currentStep: "input",
+      generatedTitle: null,
+      generatedOutline: null,
       generatedScript: null,
+      isGenerating: false,
+      progress: 0,
+      statusMessage: "",
+      error: null,
     }),
 }));
