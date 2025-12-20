@@ -13,6 +13,7 @@ from app.models.script_models import (
     ComedyTitle,
     ComedyOutline,
     ComedyScript,
+    ComedyTitleBatch,
 )
 from app.core.unified_script_generator import UnifiedScriptGenerator
 
@@ -244,6 +245,41 @@ async def generate_full_script(request: FullScriptRequest):
         raise
     except Exception as e:
         logger.error(f"完全台本生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/comedy/titles/batch")
+async def generate_comedy_titles_batch():
+    """
+    お笑いモード: ランダムタイトル量産（5-10個）
+
+    テーマ入力不要で、AIが自動的にバカバカしいタイトルを5-10個生成します。
+    """
+    try:
+        logger.info("お笑いタイトル量産リクエスト")
+
+        from app.core.comedy_script_generator import ComedyScriptGenerator
+        from app.core.generate_food_over import create_llm_instance
+        from app.config.models import get_default_model_config
+
+        generator = ComedyScriptGenerator()
+
+        # モデル設定（お笑いモードは高temperature推奨）
+        model_config = get_default_model_config()
+        model = model_config["id"]
+        temperature = 0.9  # お笑いモードは高めに固定
+
+        llm = create_llm_instance(model, temperature, model_config)
+
+        # タイトル量産
+        title_batch = generator.generate_title_batch(llm)
+
+        return title_batch
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"お笑いタイトル量産エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -3,6 +3,7 @@ import {
   Settings as SettingsIcon,
   ChevronDown,
   ChevronUp,
+  Shuffle,
 } from "lucide-react";
 import { useState } from "react";
 import Card from "@/components/Card";
@@ -21,6 +22,7 @@ interface InputSectionProps {
   onModelChange: (model: string) => void;
   onTemperatureChange: (temp: number) => void;
   onSubmit: () => void;
+  onRandomGenerate?: () => void; // お笑いモード専用
 }
 
 const InputSection = ({
@@ -33,6 +35,7 @@ const InputSection = ({
   onModelChange,
   onTemperatureChange,
   onSubmit,
+  onRandomGenerate,
 }: InputSectionProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -126,6 +129,21 @@ const InputSection = ({
           )}
         </div>
 
+        {/* お笑いモード: ランダム生成ボタン */}
+        {mode === "comedy" && onRandomGenerate && (
+          <Button
+            onClick={onRandomGenerate}
+            disabled={isGenerating}
+            isLoading={isGenerating}
+            className="w-full"
+            variant="secondary"
+            leftIcon={<Shuffle className="h-5 w-5" />}
+          >
+            🎲 ランダムタイトルを5-10個生成（テーマ不要）
+          </Button>
+        )}
+
+        {/* 通常の生成ボタン */}
         <Button
           onClick={onSubmit}
           disabled={!inputText.trim() || isGenerating}
@@ -133,7 +151,7 @@ const InputSection = ({
           className="w-full"
           leftIcon={<Sparkles className="h-5 w-5" />}
         >
-          {mode === "food" ? "タイトルを生成" : "バカバカしいタイトルを生成"}
+          {mode === "food" ? "タイトルを生成" : "テーマからタイトルを生成"}
         </Button>
       </div>
     </Card>

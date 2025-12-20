@@ -14,6 +14,8 @@ from app.models.script_models import (
     ComedyScript,
     CharacterMood,
     SectionDefinition,
+    ComedyTitleBatch,
+    ComedyTitleCandidate,
 )
 from app.core.generic_section_generator import GenericSectionGenerator, SectionContext
 from app.utils_legacy.logger import get_logger
@@ -27,6 +29,9 @@ class ComedyScriptGenerator:
     def __init__(self):
         self.mode = ScriptMode.COMEDY
         self.title_prompt_file = Path("app/prompts/comedy/title_generation.md")
+        self.title_batch_prompt_file = Path(
+            "app/prompts/comedy/title_batch_generation.md"
+        )
         self.outline_prompt_file = Path("app/prompts/comedy/outline_generation.md")
 
     def load_prompt(self, file_path: Path) -> str:
@@ -380,6 +385,62 @@ class ComedyScriptGenerator:
 
         except Exception as e:
             error_msg = f"台本生成エラー: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise
+
+    def generate_title_batch(
+        self,
+        llm: Any,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> ComedyTitleBatch:
+        """ランダムにタイトルを5-10個量産
+
+        Args:
+            llm: LLMインスタンス
+            progress_callback: 進捗通知用コールバック関数
+
+        Returns:
+            ComedyTitleBatch: 生成されたタイトル候補リスト
+        """
+        logger.info("お笑いモード タイトル量産開始")
+
+        try:
+            if progress_callback:
+                progress_callback("🎲 ランダムタイトルを量産中...")
+
+            # プロンプト読み込み
+            prompt_template = self.load_prompt(self.title_batch_prompt_file)
+
+            # パーサー設定
+            parser = PydanticOutputParser(pydantic_object=ComedyTitleBatch)
+            format_instructions = parser.get_format_instructions()
+            prompt_text = prompt_template.replace(
+                "{format_instructions}", format_instructions
+            )
+
+            # システムメッセージ
+            system_message = "あなたは、ずんだもん・めたん・つむぎの3名によるYouTube漫談の企画・タイトルを無限に生み出すプロの放送作家です。ユーザーからのテーマ入力なしに、お笑いの構造に基づいた斬新なタイトルを大量に生成します。"
+
+            # LLM呼び出し
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=prompt_text),
+            ]
+
+            logger.info("タイトル量産をLLMで生成中...")
+            llm_response = llm.invoke(messages)
+
+            # パース
+            title_batch = parser.invoke(llm_response)
+
+            logger.info(f"タイトル量産成功: {len(title_batch.titles)}個生成")
+            for i, candidate in enumerate(title_batch.titles, 1):
+                logger.info(f"  {i}. [{candidate.hook_pattern}] {candidate.title}")
+
+            return title_batch
+
+        except Exception as e:
+            error_msg = f"タイトル量産エラー: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise
 

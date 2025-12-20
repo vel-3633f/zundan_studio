@@ -90,6 +90,19 @@ export interface ComedyTitle {
   clickbait_elements: string[];
 }
 
+export interface ComedyTitleCandidate {
+  id: number;
+  title: string;
+  hook_pattern: string;
+  situation: string;
+  chaos_element: string;
+  expected_conflict: string;
+}
+
+export interface ComedyTitleBatch {
+  titles: ComedyTitleCandidate[];
+}
+
 export interface ComedyOutline {
   title: string;
   mode: ScriptMode;

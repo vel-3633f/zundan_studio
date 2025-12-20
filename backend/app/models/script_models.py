@@ -251,6 +251,35 @@ class CharacterMood(BaseModel):
         return v
 
 
+class ComedyTitleCandidate(BaseModel):
+    """お笑いタイトル候補（量産用）"""
+
+    id: int = Field(description="候補ID")
+    title: str = Field(description="タイトル")
+    hook_pattern: str = Field(description="使用したお笑いフックパターン")
+    situation: str = Field(description="シチュエーション")
+    chaos_element: str = Field(description="カオス要素")
+    expected_conflict: str = Field(description="予想される対立構造")
+
+
+class ComedyTitleBatch(BaseModel):
+    """お笑いタイトル量産結果"""
+
+    titles: List[ComedyTitleCandidate] = Field(
+        description="生成されたタイトル候補リスト（5-10個）"
+    )
+
+    @field_validator("titles")
+    @classmethod
+    def validate_titles_count(
+        cls, v: List[ComedyTitleCandidate]
+    ) -> List[ComedyTitleCandidate]:
+        """タイトル数が5-10個であることを確認"""
+        if len(v) < 5 or len(v) > 10:
+            raise ValueError("タイトルは5-10個生成する必要があります")
+        return v
+
+
 class ComedyTitle(BaseTitleModel):
     """お笑いモードのタイトル"""
 

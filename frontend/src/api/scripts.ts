@@ -8,6 +8,7 @@ import type {
   ScriptResponse,
   FullScriptRequest,
   FullScriptResponse,
+  ComedyTitleBatch,
   // 旧型定義（後方互換性）
   OutlineRequest,
   OutlineResponse,
@@ -60,6 +61,16 @@ export const scriptApi = {
     const response = await apiClient.post<FullScriptResponse>(
       "/scripts/full",
       data
+    );
+    return response.data;
+  },
+
+  /**
+   * お笑いタイトル量産（ランダム5-10個生成）
+   */
+  generateComedyTitlesBatch: async (): Promise<ComedyTitleBatch> => {
+    const response = await apiClient.post<ComedyTitleBatch>(
+      "/scripts/comedy/titles/batch"
     );
     return response.data;
   },

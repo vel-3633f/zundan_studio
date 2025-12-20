@@ -1,3 +1,4 @@
+import { useState } from "react";
 import toast from "react-hot-toast";
 import ProgressBar from "@/components/ProgressBar";
 import { useScriptStore } from "@/stores/scriptStore";
@@ -6,10 +7,15 @@ import ModeSelector from "@/components/script/ModeSelector";
 import StepIndicator from "@/components/script/StepIndicator";
 import InputSection from "@/components/script/InputSection";
 import TitleSection from "@/components/script/TitleSection";
+import TitleCandidatesSection from "@/components/script/TitleCandidatesSection";
 import OutlineSection from "@/components/script/OutlineSection";
 import ScriptSection from "@/components/script/ScriptSection";
+import type { ComedyTitleBatch, ComedyTitle } from "@/types";
 
 const ScriptGenerationPage = () => {
+  const [titleCandidates, setTitleCandidates] =
+    useState<ComedyTitleBatch | null>(null);
+
   const {
     mode,
     currentStep,
@@ -39,6 +45,48 @@ const ScriptGenerationPage = () => {
     setError,
     resetToInput,
   } = useScriptStore();
+
+  // === ランダムタイトル量産（お笑いモード専用） ===
+  const handleGenerateRandomTitles = async () => {
+    setGenerating(true);
+    setError(null);
+
+    try {
+      const result = await scriptApi.generateComedyTitlesBatch();
+      setTitleCandidates(result);
+      toast.success(`${result.titles.length}個のタイトルを生成しました！`);
+    } catch (err: any) {
+      const errorMsg =
+        err.response?.data?.detail || "タイトル量産に失敗しました";
+      toast.error(errorMsg);
+      setError(errorMsg);
+      console.error("Random titles generation error:", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // === タイトル候補選択 ===
+  const handleSelectTitleCandidate = (candidateId: number) => {
+    if (!titleCandidates) return;
+
+    const selected = titleCandidates.titles.find((t) => t.id === candidateId);
+    if (!selected) return;
+
+    // ComedyTitleオブジェクトを作成
+    const comedyTitle: ComedyTitle = {
+      title: selected.title,
+      mode: "comedy",
+      theme: selected.situation,
+      clickbait_elements: [selected.hook_pattern, selected.chaos_element],
+    };
+
+    setGeneratedTitle(comedyTitle);
+    setInputText(selected.situation); // テーマを設定
+    setCurrentStep("title");
+    setTitleCandidates(null); // 候補リストをクリア
+    toast.success("タイトルを選択しました！");
+  };
 
   // === タイトル生成 ===
   const handleGenerateTitle = async () => {
@@ -202,7 +250,7 @@ const ScriptGenerationPage = () => {
       <StepIndicator currentStep={currentStep} />
 
       {/* 入力セクション */}
-      {currentStep === "input" && (
+      {currentStep === "input" && !titleCandidates && (
         <InputSection
           mode={mode}
           inputText={inputText}
@@ -213,6 +261,19 @@ const ScriptGenerationPage = () => {
           onModelChange={setModel}
           onTemperatureChange={setTemperature}
           onSubmit={handleGenerateTitle}
+          onRandomGenerate={
+            mode === "comedy" ? handleGenerateRandomTitles : undefined
+          }
+        />
+      )}
+
+      {/* タイトル候補選択（お笑いモード専用） */}
+      {currentStep === "input" && titleCandidates && (
+        <TitleCandidatesSection
+          titleBatch={titleCandidates}
+          isGenerating={isGenerating}
+          onSelectTitle={handleSelectTitleCandidate}
+          onRegenerate={handleGenerateRandomTitles}
         />
       )}
 
