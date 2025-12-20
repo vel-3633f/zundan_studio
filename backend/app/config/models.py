@@ -5,15 +5,6 @@ from typing import List, Dict, Any
 # 利用可能なAIモデルの設定
 AVAILABLE_MODELS: List[Dict[str, Any]] = [
     {
-        "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
-        "name": "Claude Haiku 4.5",
-        "provider": "bedrock",
-        "temperature_range": (0.0, 1.0),
-        "default_temperature": 1.0,
-        "max_tokens": 64000,
-        "recommended": False,
-    },
-    {
         "id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         "name": "Claude Sonnet 4.5",
         "provider": "bedrock",
@@ -21,6 +12,15 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
         "default_temperature": 1.0,
         "max_tokens": 64000,
         "recommended": True,
+    },
+    {
+        "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "name": "Claude Haiku 4.5",
+        "provider": "bedrock",
+        "temperature_range": (0.0, 1.0),
+        "default_temperature": 1.0,
+        "max_tokens": 64000,
+        "recommended": False,
     },
 ]
 

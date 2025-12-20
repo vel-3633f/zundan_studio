@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from PIL import Image, ImageDraw
 from app.utils_legacy.logger import get_logger
 from app.utils_legacy.llm_factory import create_bedrock_llm
+from app.config.models import get_default_model_config
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -20,15 +21,20 @@ class AssetImageGenerator(ABC):
         self,
         output_dir: str,
         prompt_file: Path,
-        llm_model: str = "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        llm_model: Optional[str] = None,
     ):
         """初期化
 
         Args:
             output_dir: 画像の出力ディレクトリ
             prompt_file: プロンプト生成用のマークダウンファイル
-            llm_model: プロンプト生成用のBedrockモデルID
+            llm_model: プロンプト生成用のBedrockモデルID（省略時はデフォルトモデルを使用）
         """
+        # モデル設定を取得
+        if llm_model is None:
+            model_config = get_default_model_config()
+            llm_model = model_config["id"]
+            logger.info(f"デフォルトモデルを使用: {llm_model}")
         self.client = None
         self.model = "imagen-4.0-ultra-generate-001"
         self.output_dir = output_dir

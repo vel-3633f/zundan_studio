@@ -11,6 +11,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
 import type { ScriptMode } from "@/types";
+import { useScriptStore } from "@/stores/scriptStore";
 
 interface InputSectionProps {
   mode: ScriptMode;
@@ -38,6 +39,7 @@ const InputSection = ({
   onRandomGenerate,
 }: InputSectionProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const { availableModels } = useScriptStore();
 
   return (
     <Card
@@ -92,11 +94,15 @@ const InputSection = ({
                 value={model}
                 onChange={(e) => onModelChange(e.target.value)}
               >
-                <option value="claude-3-5-sonnet">
-                  Claude 3.5 Sonnet (推奨)
-                </option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gemini-pro">Gemini Pro</option>
+                {availableModels.length > 0 ? (
+                  availableModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.recommended ? "(推奨)" : ""}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">読み込み中...</option>
+                )}
               </Select>
 
               <div>

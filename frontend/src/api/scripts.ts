@@ -76,6 +76,26 @@ export const scriptApi = {
   },
 
   /**
+   * 利用可能なモデル一覧を取得
+   */
+  getAvailableModels: async (): Promise<{
+    models: Array<{
+      id: string;
+      name: string;
+      provider: string;
+      temperature_range: [number, number];
+      default_temperature: number;
+      max_tokens: number;
+      recommended: boolean;
+    }>;
+    default_model_id: string;
+    recommended_model_id: string;
+  }> => {
+    const response = await apiClient.get("/scripts/models");
+    return response.data;
+  },
+
+  /**
    * ヘルスチェック
    */
   healthCheck: async (): Promise<{ status: string; service: string }> => {

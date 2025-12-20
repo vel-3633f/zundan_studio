@@ -280,6 +280,29 @@ async def generate_comedy_titles_batch():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/models")
+async def get_available_models():
+    """
+    利用可能なAIモデルの一覧を取得
+    
+    Returns:
+        - models: 利用可能なモデルのリスト
+        - default_model_id: デフォルトモデルのID
+        - recommended_model_id: 推奨モデルのID
+    """
+    from app.config.models import (
+        AVAILABLE_MODELS,
+        DEFAULT_MODEL_ID,
+        get_recommended_model_id,
+    )
+
+    return {
+        "models": AVAILABLE_MODELS,
+        "default_model_id": DEFAULT_MODEL_ID,
+        "recommended_model_id": get_recommended_model_id(),
+    }
+
+
 @router.get("/health")
 async def health_check():
     """スクリプト生成APIのヘルスチェック"""

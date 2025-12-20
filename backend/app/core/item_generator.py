@@ -14,11 +14,11 @@ logger = get_logger(__name__)
 class ItemImageGenerator(AssetImageGenerator):
     """Imagen 4を使用したアイテム画像自動生成クラス"""
 
-    def __init__(self, llm_model: str = "claude-sonnet-4-5-20250929"):
+    def __init__(self, llm_model: Optional[str] = None):
         """初期化
 
         Args:
-            llm_model: プロンプト生成用のClaudeモデル名（デフォルト: claude-sonnet-4-5-20250929）
+            llm_model: プロンプト生成用のBedrockモデルID（省略時はデフォルトモデルを使用）
         """
         items_dir = os.path.join(Paths.get_assets_dir(), "items")
         prompt_file = (

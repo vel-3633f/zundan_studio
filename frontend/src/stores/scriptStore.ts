@@ -12,10 +12,26 @@ import type {
 // ステップ定義
 export type ScriptStep = "input" | "title" | "outline" | "script";
 
+// モデル設定の型
+export interface ModelConfig {
+  id: string;
+  name: string;
+  provider: string;
+  temperature_range: [number, number];
+  default_temperature: number;
+  max_tokens: number;
+  recommended: boolean;
+}
+
 interface ScriptState {
   // === モードとステップ ===
   mode: ScriptMode;
   currentStep: ScriptStep;
+
+  // === モデル設定 ===
+  availableModels: ModelConfig[];
+  defaultModelId: string;
+  recommendedModelId: string;
 
   // === 入力データ ===
   inputText: string; // 食べ物名 or テーマ
@@ -44,6 +60,10 @@ interface ScriptState {
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
 
+  setAvailableModels: (models: ModelConfig[]) => void;
+  setDefaultModelId: (id: string) => void;
+  setRecommendedModelId: (id: string) => void;
+
   setGeneratedTitle: (title: FoodTitle | ComedyTitle | null) => void;
   setGeneratedOutline: (outline: FoodOutline | ComedyOutline | null) => void;
   setGeneratedScript: (script: FoodScript | ComedyScript | null) => void;
@@ -58,16 +78,21 @@ interface ScriptState {
 
   reset: () => void;
   resetToInput: () => void;
+  loadModels: () => Promise<void>;
 }
 
 export const useScriptStore = create<ScriptState>((set) => ({
   // === 初期状態 ===
-  mode: "food",
+  mode: "comedy",
   currentStep: "input",
 
+  availableModels: [],
+  defaultModelId: "",
+  recommendedModelId: "",
+
   inputText: "",
-  model: "claude-3-5-sonnet",
-  temperature: 0.7,
+  model: "", // 初期値は空、loadModelsで設定
+  temperature: 1.0,
 
   generatedTitle: null,
   generatedOutline: null,
@@ -91,6 +116,12 @@ export const useScriptStore = create<ScriptState>((set) => ({
   setModel: (model) => set({ model }),
 
   setTemperature: (temp) => set({ temperature: temp }),
+
+  setAvailableModels: (models) => set({ availableModels: models }),
+
+  setDefaultModelId: (id) => set({ defaultModelId: id }),
+
+  setRecommendedModelId: (id) => set({ recommendedModelId: id }),
 
   setGeneratedTitle: (title) => set({ generatedTitle: title }),
 
@@ -136,4 +167,26 @@ export const useScriptStore = create<ScriptState>((set) => ({
       statusMessage: "",
       error: null,
     }),
+
+  loadModels: async () => {
+    try {
+      const { scriptApi } = await import("@/api/scripts");
+      const data = await scriptApi.getAvailableModels();
+      
+      set({
+        availableModels: data.models,
+        defaultModelId: data.default_model_id,
+        recommendedModelId: data.recommended_model_id,
+        model: data.default_model_id, // デフォルトモデルを設定
+      });
+
+      // デフォルト温度を設定
+      const defaultModel = data.models.find(m => m.id === data.default_model_id);
+      if (defaultModel) {
+        set({ temperature: defaultModel.default_temperature });
+      }
+    } catch (error) {
+      console.error("Failed to load models:", error);
+    }
+  },
 }));

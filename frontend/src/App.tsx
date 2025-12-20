@@ -10,8 +10,11 @@ import Toaster from "./components/Toast";
 import HomePage from "./pages/HomePage";
 import ScriptGenerationPage from "./pages/ScriptGenerationPage";
 import ManagementPage from "./pages/ManagementPage";
+import { useScriptStore } from "./stores/scriptStore";
 
 function App() {
+  const loadModels = useScriptStore((state) => state.loadModels);
+
   useEffect(() => {
     // Initialize dark mode from localStorage
     const theme = localStorage.getItem("theme");
@@ -21,7 +24,10 @@ function App() {
     ) {
       document.documentElement.classList.add("dark");
     }
-  }, []);
+
+    // Load available models from API
+    loadModels();
+  }, [loadModels]);
 
   return (
     <Router>

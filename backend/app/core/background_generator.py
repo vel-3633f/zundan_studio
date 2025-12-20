@@ -7,6 +7,7 @@ from pathlib import Path
 from config import Paths
 from app.utils_legacy.logger import get_logger
 from app.utils_legacy.llm_factory import create_bedrock_llm
+from app.config.models import get_default_model_config
 from langchain_core.prompts import ChatPromptTemplate
 
 logger = get_logger(__name__)
@@ -15,12 +16,17 @@ logger = get_logger(__name__)
 class BackgroundImageGenerator:
     """Imagen 4を使用した背景画像自動生成クラス"""
 
-    def __init__(self, llm_model: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"):
+    def __init__(self, llm_model: Optional[str] = None):
         """初期化
 
         Args:
-            llm_model: プロンプト生成用のBedrockモデルID（デフォルト: Claude 3.5 Sonnet v2）
+            llm_model: プロンプト生成用のBedrockモデルID（省略時はデフォルトモデルを使用）
         """
+        # モデル設定を取得
+        if llm_model is None:
+            model_config = get_default_model_config()
+            llm_model = model_config["id"]
+            logger.info(f"デフォルトモデルを使用: {llm_model}")
         self.client = None
         self.model = "imagen-4.0-ultra-generate-001"
         self.backgrounds_dir = Paths.get_backgrounds_dir()
