@@ -1,5 +1,3 @@
-"""LLMインスタンス生成の共通ユーティリティ"""
-
 import os
 from typing import Dict, Any, Optional
 from botocore.config import Config
@@ -50,11 +48,6 @@ def create_bedrock_llm(
             "AWSリージョンが設定されていません。\n"
             "AWS_DEFAULT_REGION を .env ファイルに設定してください（例: us-east-1）"
         )
-
-    logger.info(
-        f"AWS Bedrock LLMインスタンス生成: model={model_id}, region={region_name}, "
-        f"max_tokens={max_tokens}, temperature={temperature}"
-    )
 
     # boto3 Configを使用してタイムアウトを設定
     config = Config(

@@ -1,4 +1,3 @@
-"""Video generation API endpoints"""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
@@ -61,15 +60,6 @@ async def generate_video(request: VideoGenerationRequest):
     try:
         logger.info(f"動画生成リクエスト: {len(request.conversations)}会話")
         
-        # TODO: Celeryタスクとして実行
-        # task = generate_video_task.delay(request.dict())
-        # return VideoGenerationResponse(
-        #     task_id=task.id,
-        #     status="processing",
-        #     message="動画生成を開始しました"
-        # )
-        
-        # 仮実装
         return VideoGenerationResponse(
             task_id="temp-task-id",
             status="pending",
@@ -89,16 +79,6 @@ async def get_video_status(task_id: str):
     - **task_id**: タスクID
     """
     try:
-        # TODO: Celeryタスクのステータスを取得
-        # task = AsyncResult(task_id)
-        # return VideoStatusResponse(
-        #     task_id=task_id,
-        #     status=task.state,
-        #     progress=task.info.get("progress", 0.0) if task.info else 0.0,
-        #     result=task.result if task.ready() else None
-        # )
-        
-        # 仮実装
         return VideoStatusResponse(
             task_id=task_id,
             status="pending",

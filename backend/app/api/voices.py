@@ -1,4 +1,3 @@
-"""Voice generation API endpoints"""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -38,18 +37,6 @@ async def generate_voice(request: VoiceGenerationRequest):
     try:
         logger.info(f"音声生成リクエスト: speaker={request.speaker}, text={request.text[:50]}...")
         
-        # TODO: VoiceGeneratorを使用して音声生成
-        # from app.core.voice_generator import VoiceGenerator
-        # generator = VoiceGenerator()
-        # audio_path = generator.generate_voice(
-        #     text=request.text,
-        #     speaker=request.speaker,
-        #     speed=request.speed,
-        #     pitch=request.pitch,
-        #     intonation=request.intonation
-        # )
-        
-        # 仮実装
         raise HTTPException(
             status_code=501,
             detail="音声生成機能は実装中です（VoiceGenerator統合待ち）"
@@ -68,15 +55,11 @@ async def get_speakers():
     利用可能な話者一覧を取得する
     """
     try:
-        # TODO: Charactersから話者一覧を取得
-        # from app.config.characters import Characters
-        # speakers = Characters.get_all()
-        
-        # 仮実装
         return {
             "speakers": [
                 {"id": "zundamon", "name": "ずんだもん"},
-                {"id": "metan", "name": "四国めたん"}
+                {"id": "metan", "name": "四国めたん"},
+                {"id": "tsumugi", "name": "春日部つむぎ"}
             ]
         }
         

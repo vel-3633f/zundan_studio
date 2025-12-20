@@ -1,5 +1,3 @@
-"""セクション分割方式での台本生成モジュール"""
-
 from typing import Dict, List, Any, Union, Optional, Callable
 from pathlib import Path
 

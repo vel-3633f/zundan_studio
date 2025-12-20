@@ -22,9 +22,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# === リクエスト・レスポンスモデル ===
-
-
 class TitleRequest(BaseModel):
     """タイトル生成リクエスト"""
 

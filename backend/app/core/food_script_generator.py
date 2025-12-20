@@ -1,5 +1,3 @@
-"""食べ物モード専用の台本生成ロジック"""
-
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 

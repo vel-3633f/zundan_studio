@@ -1,5 +1,3 @@
-"""統合台本生成エンジン（両モード対応）"""
-
 from typing import Union, Dict, Any, Optional, Callable, Tuple
 
 from app.models.script_models import (
@@ -38,7 +36,6 @@ class UnifiedScriptGenerator:
         else:
             self.generator = ComedyScriptGenerator()
 
-        logger.info(f"統合生成エンジン初期化: モード={mode.value}")
 
     def generate_title(
         self,
@@ -58,7 +55,6 @@ class UnifiedScriptGenerator:
         Returns:
             Tuple[タイトル, 参照情報, モデル設定]
         """
-        logger.info(f"タイトル生成開始 ({self.mode.value}): {input_text}")
 
         try:
             # モデル設定
@@ -97,7 +93,6 @@ class UnifiedScriptGenerator:
                     input_text, llm, progress_callback
                 )
 
-            logger.info(f"タイトル生成完了: {title.title}")
 
             return (
                 title,
@@ -135,7 +130,6 @@ class UnifiedScriptGenerator:
         Returns:
             Tuple[アウトライン, モデル設定]
         """
-        logger.info(f"アウトライン生成開始 ({self.mode.value})")
 
         try:
             # モデル設定
@@ -151,7 +145,6 @@ class UnifiedScriptGenerator:
             # お笑いモードの場合はtemperatureを高めに調整
             if self.mode == ScriptMode.COMEDY and temperature < 0.8:
                 temperature = 0.8
-                logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
 
             llm = create_llm_instance(model, temperature, model_config)
 
@@ -164,7 +157,6 @@ class UnifiedScriptGenerator:
                 else self.generator.generate_outline(title_data, llm, progress_callback)
             )
 
-            logger.info(f"アウトライン生成完了: {len(outline.sections)}セクション")
 
             return outline, {
                 "model": model,
@@ -197,7 +189,6 @@ class UnifiedScriptGenerator:
         Returns:
             生成された台本
         """
-        logger.info(f"台本生成開始 ({self.mode.value})")
 
         try:
             # モデル設定
@@ -213,7 +204,6 @@ class UnifiedScriptGenerator:
             # お笑いモードの場合はtemperatureを高めに調整
             if self.mode == ScriptMode.COMEDY and temperature < 0.8:
                 temperature = 0.8
-                logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
 
             llm = create_llm_instance(model, temperature, model_config)
 
@@ -227,7 +217,6 @@ class UnifiedScriptGenerator:
                     outline_data, llm, progress_callback
                 )
 
-            logger.info(f"台本生成完了: {len(script.all_segments)}セリフ")
 
             return script
 
@@ -254,7 +243,6 @@ class UnifiedScriptGenerator:
         Returns:
             生成された台本
         """
-        logger.info(f"完全台本生成開始 ({self.mode.value}): {input_text}")
 
         try:
             # Step 1: タイトル生成
@@ -296,7 +284,6 @@ class UnifiedScriptGenerator:
                 ),
             )
 
-            logger.info(f"完全台本生成完了 ({self.mode.value})")
 
             return script
 
