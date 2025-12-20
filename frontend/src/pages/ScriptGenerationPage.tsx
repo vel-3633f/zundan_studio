@@ -8,6 +8,7 @@ import StepIndicator from "@/components/script/StepIndicator";
 import InputSection from "@/components/script/InputSection";
 import TitleSection from "@/components/script/TitleSection";
 import TitleCandidatesSection from "@/components/script/TitleCandidatesSection";
+import SingleTitleCandidateSection from "@/components/script/SingleTitleCandidateSection";
 import OutlineSection from "@/components/script/OutlineSection";
 import ScriptSection from "@/components/script/ScriptSection";
 import type { ComedyTitleBatch, ComedyTitle } from "@/types";
@@ -15,6 +16,11 @@ import type { ComedyTitleBatch, ComedyTitle } from "@/types";
 const ScriptGenerationPage = () => {
   const [titleCandidates, setTitleCandidates] =
     useState<ComedyTitleBatch | null>(null);
+  const [singleTitleCandidate, setSingleTitleCandidate] = useState<{
+    title: any;
+    referenceInfo: string;
+    searchResults: Record<string, any>;
+  } | null>(null);
 
   const {
     mode,
@@ -110,12 +116,14 @@ const ScriptGenerationPage = () => {
         temperature,
       });
 
-      setGeneratedTitle(result.title);
-      setReferenceInfo(result.reference_info);
-      setSearchResults(result.search_results);
-      setCurrentStep("title");
+      // タイトルを候補として保存（自動的に次のステップに進まない）
+      setSingleTitleCandidate({
+        title: result.title,
+        referenceInfo: result.reference_info,
+        searchResults: result.search_results,
+      });
 
-      toast.success("タイトルを生成しました！");
+      toast.success("タイトルを生成しました！選択して次へ進んでください");
     } catch (err: any) {
       const errorMsg =
         err.response?.data?.detail || "タイトル生成に失敗しました";
@@ -125,6 +133,18 @@ const ScriptGenerationPage = () => {
     } finally {
       setGenerating(false);
     }
+  };
+
+  // === 単一タイトル選択 ===
+  const handleSelectSingleTitle = () => {
+    if (!singleTitleCandidate) return;
+
+    setGeneratedTitle(singleTitleCandidate.title);
+    setReferenceInfo(singleTitleCandidate.referenceInfo);
+    setSearchResults(singleTitleCandidate.searchResults);
+    setCurrentStep("title");
+    setSingleTitleCandidate(null);
+    toast.success("タイトルを選択しました！");
   };
 
   // === アウトライン生成 ===
@@ -201,6 +221,8 @@ const ScriptGenerationPage = () => {
   // === タイトル再生成 ===
   const handleRegenerateTitle = async () => {
     setGeneratedTitle(null);
+    setSingleTitleCandidate(null);
+    setCurrentStep("input");
     await handleGenerateTitle();
   };
 
@@ -212,7 +234,7 @@ const ScriptGenerationPage = () => {
 
   // === モード変更 ===
   const handleModeChange = (newMode: typeof mode) => {
-    if (currentStep !== "input") {
+    if (currentStep !== "input" || titleCandidates || singleTitleCandidate) {
       if (
         !confirm(
           "モードを変更すると、現在の生成データがリセットされます。よろしいですか？"
@@ -222,6 +244,15 @@ const ScriptGenerationPage = () => {
       }
     }
     setMode(newMode);
+    setTitleCandidates(null);
+    setSingleTitleCandidate(null);
+    resetToInput();
+  };
+
+  // === リセット処理のオーバーライド ===
+  const handleResetToInput = () => {
+    setTitleCandidates(null);
+    setSingleTitleCandidate(null);
     resetToInput();
   };
 
@@ -250,30 +281,45 @@ const ScriptGenerationPage = () => {
       <StepIndicator currentStep={currentStep} />
 
       {/* 入力セクション */}
-      {currentStep === "input" && !titleCandidates && (
-        <InputSection
-          mode={mode}
-          inputText={inputText}
-          model={model}
-          temperature={temperature}
-          isGenerating={isGenerating}
-          onInputTextChange={setInputText}
-          onModelChange={setModel}
-          onTemperatureChange={setTemperature}
-          onSubmit={handleGenerateTitle}
-          onRandomGenerate={
-            mode === "comedy" ? handleGenerateRandomTitles : undefined
-          }
-        />
-      )}
+      {currentStep === "input" &&
+        !titleCandidates &&
+        !singleTitleCandidate && (
+          <InputSection
+            mode={mode}
+            inputText={inputText}
+            model={model}
+            temperature={temperature}
+            isGenerating={isGenerating}
+            onInputTextChange={setInputText}
+            onModelChange={setModel}
+            onTemperatureChange={setTemperature}
+            onSubmit={handleGenerateTitle}
+            onRandomGenerate={
+              mode === "comedy" ? handleGenerateRandomTitles : undefined
+            }
+          />
+        )}
 
-      {/* タイトル候補選択（お笑いモード専用） */}
+      {/* タイトル候補選択（お笑いモード・ランダム生成） */}
       {currentStep === "input" && titleCandidates && (
         <TitleCandidatesSection
           titleBatch={titleCandidates}
           isGenerating={isGenerating}
           onSelectTitle={handleSelectTitleCandidate}
           onRegenerate={handleGenerateRandomTitles}
+          onBack={() => setTitleCandidates(null)}
+        />
+      )}
+
+      {/* 単一タイトル候補選択（通常生成） */}
+      {currentStep === "input" && singleTitleCandidate && (
+        <SingleTitleCandidateSection
+          mode={mode}
+          title={singleTitleCandidate.title}
+          isGenerating={isGenerating}
+          onSelectTitle={handleSelectSingleTitle}
+          onRegenerate={handleRegenerateTitle}
+          onBack={() => setSingleTitleCandidate(null)}
         />
       )}
 
@@ -319,7 +365,7 @@ const ScriptGenerationPage = () => {
       {currentStep !== "input" && !isGenerating && (
         <div className="flex justify-center pt-4">
           <button
-            onClick={resetToInput}
+            onClick={handleResetToInput}
             className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
           >
             最初からやり直す

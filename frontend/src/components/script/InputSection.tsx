@@ -44,11 +44,11 @@ const InputSection = ({
   return (
     <Card
       icon={<Sparkles className="h-6 w-6" />}
-      title={mode === "food" ? "食べ物設定" : "漫談テーマ設定"}
+      title={mode === "food" ? "食べ物設定" : "漫談タイトル生成"}
     >
       <div className="space-y-6">
-        {/* 入力フィールド */}
-        {mode === "food" ? (
+        {/* 入力フィールド（食べ物モードのみ） */}
+        {mode === "food" && (
           <Input
             label="調べたい食べ物"
             value={inputText}
@@ -57,15 +57,17 @@ const InputSection = ({
             helperText="一般的な食べ物や飲み物の名前を入力してください"
             leftIcon={<Sparkles className="h-5 w-5" />}
           />
-        ) : (
-          <Input
-            label="漫談のテーマ"
-            value={inputText}
-            onChange={(e) => onInputTextChange(e.target.value)}
-            placeholder="例: 猫、ラーメン、月曜日"
-            helperText="何でもOK！バカバカしいテーマほど面白い"
-            leftIcon={<Sparkles className="h-5 w-5" />}
-          />
+        )}
+
+        {/* お笑いモード: 説明文 */}
+        {mode === "comedy" && (
+          <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+            <p className="text-sm text-primary-900 dark:text-primary-100">
+              🎲 AIがランダムにバカバカしいタイトルを5-10個生成します。
+              <br />
+              気に入ったタイトルを選んで、漫談台本を作成しましょう！
+            </p>
+          </div>
         )}
 
         {/* 詳細設定 */}
@@ -135,30 +137,28 @@ const InputSection = ({
           )}
         </div>
 
-        {/* お笑いモード: ランダム生成ボタン */}
-        {mode === "comedy" && onRandomGenerate && (
+        {/* 生成ボタン */}
+        {mode === "comedy" && onRandomGenerate ? (
           <Button
             onClick={onRandomGenerate}
             disabled={isGenerating}
             isLoading={isGenerating}
             className="w-full"
-            variant="secondary"
             leftIcon={<Shuffle className="h-5 w-5" />}
           >
-            🎲 ランダムタイトルを5-10個生成（テーマ不要）
+            🎲 ランダムタイトルを生成
+          </Button>
+        ) : (
+          <Button
+            onClick={onSubmit}
+            disabled={!inputText.trim() || isGenerating}
+            isLoading={isGenerating}
+            className="w-full"
+            leftIcon={<Sparkles className="h-5 w-5" />}
+          >
+            タイトルを生成
           </Button>
         )}
-
-        {/* 通常の生成ボタン */}
-        <Button
-          onClick={onSubmit}
-          disabled={!inputText.trim() || isGenerating}
-          isLoading={isGenerating}
-          className="w-full"
-          leftIcon={<Sparkles className="h-5 w-5" />}
-        >
-          {mode === "food" ? "タイトルを生成" : "テーマからタイトルを生成"}
-        </Button>
       </div>
     </Card>
   );
