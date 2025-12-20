@@ -13,7 +13,7 @@ from moviepy.audio.AudioClip import CompositeAudioClip, concatenate_audioclips, 
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
-from app.config.bgm_library import get_bgm_file_path, get_bgm_track
+from app.config.resource_config.bgm_library import get_bgm_file_path, get_bgm_track
 from app.models.food_over import VideoSection
 
 logger = logging.getLogger(__name__)

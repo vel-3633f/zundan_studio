@@ -11,8 +11,8 @@ from app.models.script_models import (
     FoodScript,
     SectionDefinition,
 )
-from app.core.generic_section_generator import GenericSectionGenerator, SectionContext
-from app.core.generate_food_over import (
+from app.core.script_generators.generic_section_generator import GenericSectionGenerator, SectionContext
+from app.core.script_generators.generate_food_over import (
     search_food_information,
     format_search_results_for_prompt,
 )

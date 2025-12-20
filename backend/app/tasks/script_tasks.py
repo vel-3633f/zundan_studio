@@ -4,7 +4,7 @@ from typing import Dict, Any
 import logging
 
 from app.tasks.celery_app import celery_app
-from app.core.generate_food_over_sectioned import (
+from app.core.script_generators.generate_food_over_sectioned import (
     generate_outline_only,
     generate_sections_from_approved_outline
 )

@@ -5,7 +5,7 @@ from typing import List, Dict, Optional
 from pathlib import Path
 
 from config import Paths
-from app.core.asset_generator_base import AssetImageGenerator
+from app.core.asset_generators.asset_generator_base import AssetImageGenerator
 from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)
@@ -22,7 +22,7 @@ class ItemImageGenerator(AssetImageGenerator):
         """
         items_dir = os.path.join(Paths.get_assets_dir(), "items")
         prompt_file = (
-            Path(__file__).parent.parent / "prompts" / "item_prompt_creator.md"
+            Path(__file__).parent.parent / "prompts" / "assets" / "item_prompt_creator.md"
         )
         super().__init__(
             output_dir=items_dir, prompt_file=prompt_file, llm_model=llm_model

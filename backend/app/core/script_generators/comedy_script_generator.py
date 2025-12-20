@@ -17,7 +17,7 @@ from app.models.script_models import (
     ComedyTitleBatch,
     ComedyTitleCandidate,
 )
-from app.core.generic_section_generator import GenericSectionGenerator, SectionContext
+from app.core.script_generators.generic_section_generator import GenericSectionGenerator, SectionContext
 from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)

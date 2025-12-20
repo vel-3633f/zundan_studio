@@ -1,4 +1,10 @@
-import { Sparkles, RefreshCw, ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Sparkles,
+  RefreshCw,
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useState } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -66,7 +72,8 @@ const TitleCandidatesSection = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            全{titleBatch.titles.length}個のタイトル候補 - カテゴリをクリックして表示
+            全{titleBatch.titles.length}個のタイトル候補 -
+            カテゴリをクリックして表示
           </p>
           {onBack && (
             <Button
@@ -85,7 +92,7 @@ const TitleCandidatesSection = ({
         {categories.map((category) => {
           const isCategoryExpanded = expandedCategory === category;
           const titlesInCategory = categorizedTitles[category];
-          
+
           return (
             <div
               key={category}
@@ -99,7 +106,9 @@ const TitleCandidatesSection = ({
                 className="w-full px-4 py-3 flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-750 dark:hover:to-gray-700 transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{getHookPatternIcon(category)}</span>
+                  <span className="text-2xl">
+                    {getHookPatternIcon(category)}
+                  </span>
                   <div className="text-left">
                     <h3 className="font-bold text-gray-900 dark:text-white">
                       {category}

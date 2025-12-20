@@ -15,7 +15,7 @@ from app.models.script_models import (
     ComedyScript,
     ComedyTitleBatch,
 )
-from app.core.unified_script_generator import UnifiedScriptGenerator
+from app.core.script_generators.unified_script_generator import UnifiedScriptGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -255,8 +255,8 @@ async def generate_comedy_titles_batch():
     try:
         logger.info("お笑いタイトル量産リクエスト")
 
-        from app.core.comedy_script_generator import ComedyScriptGenerator
-        from app.core.generate_food_over import create_llm_instance
+        from app.core.script_generators.comedy_script_generator import ComedyScriptGenerator
+        from app.core.script_generators.generate_food_over import create_llm_instance
         from app.config.models import get_default_model_config
 
         generator = ComedyScriptGenerator()

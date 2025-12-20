@@ -5,8 +5,8 @@ from typing import List, Dict, Optional
 from moviepy import VideoFileClip
 
 from config import Paths
-from app.core.audio_processor import AudioProcessor
-from app.core.video_processor import VideoProcessor
+from app.core.processors.audio_processor import AudioProcessor
+from app.core.processors.video_processor import VideoProcessor
 from app.services.resource_manager import ResourceManager
 from app.services.audio_combiner import AudioCombiner
 from app.services.subtitle_generator import SubtitleGenerator
@@ -232,7 +232,7 @@ class VideoGenerator:
                 logger.info(f"Cleared resize cache ({cache_size} entries)")
 
             try:
-                from app.core.video_processor import _load_character_images_cached
+                from app.core.processors.video_processor import _load_character_images_cached
                 cache_info = _load_character_images_cached.cache_info()
                 _load_character_images_cached.cache_clear()
                 logger.info(f"Cleared LRU cache (hits: {cache_info.hits}, misses: {cache_info.misses}, size: {cache_info.currsize})")

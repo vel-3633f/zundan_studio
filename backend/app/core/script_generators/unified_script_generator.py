@@ -9,9 +9,9 @@ from app.models.script_models import (
     ComedyOutline,
     ComedyScript,
 )
-from app.core.food_script_generator import FoodScriptGenerator
-from app.core.comedy_script_generator import ComedyScriptGenerator
-from app.core.generate_food_over import (
+from app.core.script_generators.food_script_generator import FoodScriptGenerator
+from app.core.script_generators.comedy_script_generator import ComedyScriptGenerator
+from app.core.script_generators.generate_food_over import (
     search_food_information,
     format_search_results_for_prompt,
     create_llm_instance,

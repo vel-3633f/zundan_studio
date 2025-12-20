@@ -2,9 +2,9 @@ from typing import Dict, List, Any, Union, Optional, Callable
 from pathlib import Path
 
 from app.models.food_over import FoodOverconsumptionScript, VideoSection, StoryOutline
-from app.core.outline_generator import generate_outline
+from app.core.script_generators.outline_generator import generate_outline
 from app.core.section_generators.base import SectionGeneratorBase, SectionContext
-from app.core.generate_food_over import (
+from app.core.script_generators.generate_food_over import (
     search_food_information,
     format_search_results_for_prompt,
     create_llm_instance
