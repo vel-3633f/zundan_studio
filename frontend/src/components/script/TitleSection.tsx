@@ -8,6 +8,8 @@ interface TitleSectionProps {
   mode: ScriptMode;
   title: FoodTitle | ComedyTitle;
   isGenerating: boolean;
+  isApprovingLoading?: boolean;
+  isRegeneratingLoading?: boolean;
   onApprove: () => void;
   onRegenerate: () => void;
 }
@@ -16,6 +18,8 @@ const TitleSection = ({
   mode,
   title,
   isGenerating,
+  isApprovingLoading = false,
+  isRegeneratingLoading = false,
   onApprove,
   onRegenerate,
 }: TitleSectionProps) => {
@@ -95,6 +99,7 @@ const TitleSection = ({
           <Button
             onClick={onApprove}
             disabled={isGenerating}
+            isLoading={isApprovingLoading}
             className="flex-1"
             leftIcon={<CheckCircle className="h-5 w-5" />}
           >
@@ -104,6 +109,7 @@ const TitleSection = ({
             variant="outline"
             onClick={onRegenerate}
             disabled={isGenerating}
+            isLoading={isRegeneratingLoading}
             leftIcon={<RefreshCw className="h-5 w-5" />}
           >
             再生成
