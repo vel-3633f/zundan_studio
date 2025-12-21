@@ -1,24 +1,83 @@
 services:
-  streamlit-app:
-    build: .
-    env_file:
-      - .env
+  frontend:
+    build: ./frontend
     ports:
-      - "8505:8501"
+      - "3000:3000"
     volumes:
-      - ./outputs:/app/outputs
-      - ./temp:/app/temp
-      - ./assets:/app/assets
-    depends_on:
-      - voicevox
+      - ./frontend:/app
+      - /app/node_modules
     environment:
-      - VOICEVOX_API_URL=http://voicevox:50021
-      - STREAMLIT_SERVER_PORT=8501
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
-      - DEBUG_MODE=false
+      - VITE_API_URL=http://localhost:8000
+      - VITE_WS_URL=ws://localhost:8000
+    depends_on:
+      - backend
     networks:
       - app-network
     restart: unless-stopped
+
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./assets:/app/assets
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
+    env_file:
+      - .env
+    environment:
+      - VOICEVOX_API_URL=http://voicevox:50021
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - voicevox
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  celery-worker:
+    build: ./backend
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./backend:/app
+      - ./assets:/app/assets
+      - ./outputs:/app/outputs
+      - ./temp:/app/temp
+    env_file:
+      - .env
+    environment:
+      - VOICEVOX_API_URL=http://voicevox:50021
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - voicevox
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   voicevox:
     image: voicevox/voicevox_engine:cpu-ubuntu20.04-latest
@@ -38,5 +97,6 @@ networks:
     driver: bridge
 
 volumes:
+  redis-data:
   outputs:
   temp:

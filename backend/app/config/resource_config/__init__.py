@@ -1,0 +1,2 @@
+"""Resource configuration modules."""
+
