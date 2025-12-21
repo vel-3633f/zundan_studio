@@ -388,6 +388,19 @@ class ComedyScriptGenerator:
             # プロンプト構築
             prompt_text = prompt_template.replace("{theme}", title.theme)
             prompt_text = prompt_text.replace("{title}", title.title)
+
+            # clickbait_elementsを個別に渡す
+            # 最大3つのフック要素を想定（足りない場合は空文字）
+            for i in range(1, 4):
+                element_key = f"{{clickbait_element_{i}}}"
+                if i <= len(title.clickbait_elements):
+                    prompt_text = prompt_text.replace(
+                        element_key, title.clickbait_elements[i - 1]
+                    )
+                else:
+                    # フック要素が3つ未満の場合は空文字で置換
+                    prompt_text = prompt_text.replace(element_key, "（なし）")
+
             prompt_text = prompt_text.replace(
                 "{zundamon_mood}", str(character_moods.zundamon)
             )
@@ -406,7 +419,13 @@ class ComedyScriptGenerator:
             )
 
             # システムメッセージ
-            system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白いストーリー構成を設計するプロフェッショナルです。教育的要素は一切排除してください。"
+            system_message = (
+                "あなたは、お笑い台本の脚本家です。"
+                "バカバカしく面白いストーリー構成を設計するプロフェッショナルです。"
+                "教育的要素は一切排除してください。"
+                "重要: 与えられたタイトルとフック要素を必ずストーリーに反映させ、"
+                "視聴者の期待を裏切らない展開を作成してください。"
+            )
 
             # LLM呼び出し
             messages = [
@@ -415,6 +434,8 @@ class ComedyScriptGenerator:
             ]
 
             logger.info("アウトラインをLLMで生成中...")
+            logger.info(f"タイトル: {title.title}")
+            logger.info(f"フック要素: {title.clickbait_elements}")
             llm_response = llm.invoke(messages)
 
             # パース
