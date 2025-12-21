@@ -32,6 +32,9 @@ const ScriptGenerationPage = () => {
     referenceInfo: string;
     searchResults: Record<string, any>;
   } | null>(null);
+  const [generatingAction, setGeneratingAction] = useState<
+    "approve" | "regenerate" | null
+  >(null);
 
   const {
     mode,
@@ -133,6 +136,7 @@ const ScriptGenerationPage = () => {
 
     setGenerating(true);
     setError(null);
+    setStatusMessage("タイトルを生成中...");
 
     try {
       const result = await scriptApi.generateTitle({
@@ -192,7 +196,9 @@ const ScriptGenerationPage = () => {
     }
 
     setGenerating(true);
+    setGeneratingAction("approve");
     setError(null);
+    setStatusMessage("アウトラインを生成中...");
 
     try {
       const result = await scriptApi.generateOutline({
@@ -227,6 +233,7 @@ const ScriptGenerationPage = () => {
       console.error("Outline generation error:", err);
     } finally {
       setGenerating(false);
+      setGeneratingAction(null);
     }
   };
 
@@ -238,6 +245,7 @@ const ScriptGenerationPage = () => {
     }
 
     setGenerating(true);
+    setGeneratingAction("approve");
     setError(null);
     setProgress(0);
     setStatusMessage("台本を生成中...");
@@ -276,6 +284,7 @@ const ScriptGenerationPage = () => {
       console.error("Script generation error:", err);
     } finally {
       setGenerating(false);
+      setGeneratingAction(null);
     }
   };
 
@@ -284,12 +293,14 @@ const ScriptGenerationPage = () => {
     setGeneratedTitle(null);
     setSingleTitleCandidate(null);
     setCurrentStep("input");
+    setGeneratingAction("regenerate");
     await handleGenerateTitle();
   };
 
   // === アウトライン再生成 ===
   const handleRegenerateOutline = async () => {
     setGeneratedOutline(null);
+    setGeneratingAction("regenerate");
     await handleGenerateOutline();
   };
 
@@ -458,6 +469,8 @@ const ScriptGenerationPage = () => {
           mode={mode}
           title={generatedTitle}
           isGenerating={isGenerating}
+          isApprovingLoading={isGenerating && generatingAction === "approve"}
+          isRegeneratingLoading={isGenerating && generatingAction === "regenerate"}
           onApprove={handleGenerateOutline}
           onRegenerate={handleRegenerateTitle}
         />
@@ -469,12 +482,14 @@ const ScriptGenerationPage = () => {
           mode={mode}
           outline={generatedOutline}
           isGenerating={isGenerating}
+          isApprovingLoading={isGenerating && generatingAction === "approve"}
+          isRegeneratingLoading={isGenerating && generatingAction === "regenerate"}
           onApprove={handleGenerateScript}
           onRegenerate={handleRegenerateOutline}
         />
       )}
 
-      {/* 生成進捗 */}
+      {/* 台本生成中のローディング表示 */}
       {isGenerating && currentStep === "script" && (
         <div className="animate-fade-in">
           <ProgressBar

@@ -20,6 +20,8 @@ interface OutlineSectionProps {
   mode: ScriptMode;
   outline: FoodOutline | ComedyOutline;
   isGenerating: boolean;
+  isApprovingLoading?: boolean;
+  isRegeneratingLoading?: boolean;
   onApprove: () => void;
   onRegenerate: () => void;
 }
@@ -28,6 +30,8 @@ const OutlineSection = ({
   mode,
   outline,
   isGenerating,
+  isApprovingLoading = false,
+  isRegeneratingLoading = false,
   onApprove,
   onRegenerate,
 }: OutlineSectionProps) => {
@@ -185,6 +189,7 @@ const OutlineSection = ({
           <Button
             onClick={onApprove}
             disabled={isGenerating}
+            isLoading={isApprovingLoading}
             className="flex-1"
             leftIcon={<CheckCircle className="h-5 w-5" />}
           >
@@ -194,6 +199,7 @@ const OutlineSection = ({
             variant="outline"
             onClick={onRegenerate}
             disabled={isGenerating}
+            isLoading={isRegeneratingLoading}
             leftIcon={<RefreshCw className="h-5 w-5" />}
           >
             再生成
