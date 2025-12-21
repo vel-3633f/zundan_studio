@@ -17,7 +17,10 @@ from app.models.script_models import (
     ComedyTitleBatch,
     ComedyTitleCandidate,
 )
-from app.core.script_generators.generic_section_generator import GenericSectionGenerator, SectionContext
+from app.core.script_generators.generic_section_generator import (
+    GenericSectionGenerator,
+    SectionContext,
+)
 from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)
@@ -28,7 +31,6 @@ class ComedyScriptGenerator:
 
     def __init__(self):
         self.mode = ScriptMode.COMEDY
-        self.title_prompt_file = Path("app/prompts/comedy/title_generation.md")
         self.title_batch_prompt_file = Path(
             "app/prompts/comedy/title_batch_generation.md"
         )
@@ -101,148 +103,6 @@ class ComedyScriptGenerator:
                 return "感情的、容赦ないキレ方、塩対応"
             else:  # tsumugi
                 return "無関心、塩対応、やる気なし"
-
-    def generate_title(
-        self,
-        theme: str,
-        llm: Any,
-        progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> ComedyTitle:
-        """テーマからバカバカしいタイトルを生成
-
-        Args:
-            theme: 漫談のテーマ
-            llm: LLMインスタンス
-            progress_callback: 進捗通知用コールバック関数
-
-        Returns:
-            ComedyTitle: 生成されたタイトル
-        """
-        logger.info(f"お笑いモード タイトル生成開始: {theme}")
-
-        try:
-            if progress_callback:
-                progress_callback("📝 バカバカしいタイトルを生成中...")
-
-            # プロンプト読み込み
-            prompt_template = self.load_prompt(self.title_prompt_file)
-
-            # プロンプト構築
-            prompt_text = prompt_template.replace("{theme}", theme)
-
-            # パーサー設定
-            parser = PydanticOutputParser(pydantic_object=ComedyTitle)
-            format_instructions = parser.get_format_instructions()
-            prompt_text = prompt_text.replace(
-                "{format_instructions}", format_instructions
-            )
-
-            # システムメッセージ
-            system_message = "あなたは、お笑い動画のタイトル作成のプロフェッショナルです。バカバカしく煽り気味なタイトルを生成します。教育的要素は一切排除してください。"
-
-            # LLM呼び出し
-            messages = [
-                SystemMessage(content=system_message),
-                HumanMessage(content=prompt_text),
-            ]
-
-            logger.info("タイトルをLLMで生成中...")
-            llm_response = llm.invoke(messages)
-
-            # パース
-            title = parser.invoke(llm_response)
-            title.mode = ScriptMode.COMEDY
-
-            logger.info(f"タイトル生成成功: {title.title}")
-            logger.info(f"煽り要素: {', '.join(title.clickbait_elements)}")
-
-            return title
-
-        except Exception as e:
-            error_msg = f"タイトル生成エラー: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            raise
-
-    def generate_outline(
-        self,
-        title: ComedyTitle,
-        llm: Any,
-        progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> ComedyOutline:
-        """タイトルから動的セクション構造のアウトラインを生成
-
-        Args:
-            title: 生成されたタイトル
-            llm: LLMインスタンス
-            progress_callback: 進捗通知用コールバック関数
-
-        Returns:
-            ComedyOutline: 生成されたアウトライン
-        """
-        logger.info(f"お笑いモード アウトライン生成開始: {title.theme}")
-
-        try:
-            if progress_callback:
-                progress_callback("📋 アウトラインを生成中...")
-
-            # ランダム機嫌レベル生成
-            character_moods = self.generate_random_moods()
-
-            # プロンプト読み込み
-            prompt_template = self.load_prompt(self.outline_prompt_file)
-
-            # プロンプト構築
-            prompt_text = prompt_template.replace("{theme}", title.theme)
-            prompt_text = prompt_text.replace("{title}", title.title)
-            prompt_text = prompt_text.replace(
-                "{zundamon_mood}", str(character_moods.zundamon)
-            )
-            prompt_text = prompt_text.replace(
-                "{metan_mood}", str(character_moods.metan)
-            )
-            prompt_text = prompt_text.replace(
-                "{tsumugi_mood}", str(character_moods.tsumugi)
-            )
-
-            # パーサー設定
-            parser = PydanticOutputParser(pydantic_object=ComedyOutline)
-            format_instructions = parser.get_format_instructions()
-            prompt_text = prompt_text.replace(
-                "{format_instructions}", format_instructions
-            )
-
-            # システムメッセージ
-            system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白いストーリー構成を設計するプロフェッショナルです。教育的要素は一切排除してください。"
-
-            # LLM呼び出し
-            messages = [
-                SystemMessage(content=system_message),
-                HumanMessage(content=prompt_text),
-            ]
-
-            logger.info("アウトラインをLLMで生成中...")
-            llm_response = llm.invoke(messages)
-
-            # パース
-            outline = parser.invoke(llm_response)
-            outline.mode = ScriptMode.COMEDY
-            outline.title = title.title
-            outline.character_moods = character_moods
-
-            logger.info(f"アウトライン生成成功: {len(outline.sections)}セクション構成")
-            logger.info(f"強制終了タイプ: {outline.forced_ending_type}")
-            for i, section in enumerate(outline.sections, 1):
-                logger.info(
-                    f"  セクション{i}: {section.section_name} "
-                    f"({section.min_lines}-{section.max_lines}セリフ)"
-                )
-
-            return outline
-
-        except Exception as e:
-            error_msg = f"アウトライン生成エラー: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            raise
 
     def generate_script(
         self,
@@ -452,51 +312,43 @@ class ComedyScriptGenerator:
     ) -> ComedyTitle:
         """テーマからバカバカしいタイトルを生成
 
+        注意: themeパラメータは互換性のために残していますが、
+        実際にはtitle_batch_generationを使ってランダム生成し、
+        最初の候補を返します。
+
         Args:
-            theme: 漫談のテーマ
+            theme: 漫談のテーマ（使用されません）
             llm: LLMインスタンス
             progress_callback: 進捗通知用コールバック関数
 
         Returns:
             ComedyTitle: 生成されたタイトル
         """
-        logger.info(f"お笑いモード タイトル生成開始: {theme}")
+        logger.info(f"お笑いモード タイトル生成開始（バッチ生成から1つ選択）")
 
         try:
             if progress_callback:
                 progress_callback("📝 バカバカしいタイトルを生成中...")
 
-            # プロンプト読み込み
-            prompt_template = self.load_prompt(self.title_prompt_file)
+            # バッチ生成を使用
+            title_batch = self.generate_title_batch(llm, progress_callback)
 
-            # プロンプト構築
-            prompt_text = prompt_template.replace("{theme}", theme)
+            if not title_batch.titles:
+                raise ValueError("タイトル候補が生成されませんでした")
 
-            # パーサー設定
-            parser = PydanticOutputParser(pydantic_object=ComedyTitle)
-            format_instructions = parser.get_format_instructions()
-            prompt_text = prompt_text.replace(
-                "{format_instructions}", format_instructions
+            # 最初の候補を使用
+            candidate = title_batch.titles[0]
+
+            # ComedyTitleに変換
+            title = ComedyTitle(
+                title=candidate.title,
+                theme=theme,  # 互換性のためthemeを保持
+                clickbait_elements=[],  # バッチ生成にはclickbait_elementsがない
+                mode=ScriptMode.COMEDY,
             )
 
-            # システムメッセージ
-            system_message = "あなたは、お笑い動画のタイトル作成のプロフェッショナルです。バカバカしく煽り気味なタイトルを生成します。教育的要素は一切排除してください。"
-
-            # LLM呼び出し
-            messages = [
-                SystemMessage(content=system_message),
-                HumanMessage(content=prompt_text),
-            ]
-
-            logger.info("タイトルをLLMで生成中...")
-            llm_response = llm.invoke(messages)
-
-            # パース
-            title = parser.invoke(llm_response)
-            title.mode = ScriptMode.COMEDY
-
             logger.info(f"タイトル生成成功: {title.title}")
-            logger.info(f"煽り要素: {', '.join(title.clickbait_elements)}")
+            logger.info(f"フックパターン: {candidate.hook_pattern}")
 
             return title
 
