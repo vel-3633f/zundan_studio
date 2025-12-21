@@ -11,7 +11,7 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
         "temperature_range": (0.0, 1.0),
         "default_temperature": 1.0,
         "max_tokens": 64000,
-        "recommended": True,
+        "recommended": False,
     },
     {
         "id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
@@ -20,12 +20,12 @@ AVAILABLE_MODELS: List[Dict[str, Any]] = [
         "temperature_range": (0.0, 1.0),
         "default_temperature": 1.0,
         "max_tokens": 64000,
-        "recommended": False,
+        "recommended": True,
     },
 ]
 
 # デフォルトモデル設定
-DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+DEFAULT_MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 
 
 # モデル設定を取得する関数
