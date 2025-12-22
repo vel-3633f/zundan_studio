@@ -250,10 +250,13 @@
 - セクションの重要度に応じて調整
 - カオスセクションは多めに
 
-### fixed_background（任意）
+### background（必須）
 
-- 通常は指定しない（動的に選択される）
-- 特定の場所が必要な場合のみ指定
+- 背景シーンを必ず指定
+- **必ず 3 つの英単語をアンダースコアで区切った形式**
+- 形式: `{場所}_{詳細}_{時間帯または状態}`
+- 例: `home_livingroom_morning`, `cafe_counter_morning`, `modern_study_room`
+- お笑いモードでは通常リビングルームなど日常的な場所を使用
 
 ## 出力形式
 
@@ -278,7 +281,7 @@
       "content_summary": "ずんだもんが{theme}を自分勝手に解釈。めたんが呆れてツッコミ。つむぎが適当に煽る。",
       "min_lines": 10,
       "max_lines": 20,
-      "fixed_background": null
+      "background": "home_livingroom_morning"
     },
     {
       "section_key": "argument",
@@ -287,7 +290,7 @@
       "content_summary": "ずんだもんの暴走にめたんが本気でキレる。つむぎが煽りまくる。論点がずれ始める。",
       "min_lines": 15,
       "max_lines": 25,
-      "fixed_background": null
+      "background": "home_livingroom_morning"
     },
     {
       "section_key": "chaos",
@@ -296,7 +299,7 @@
       "content_summary": "全員が言いたいことを言い始める。話が完全に脱線。収拾がつかなくなる。",
       "min_lines": 20,
       "max_lines": 30,
-      "fixed_background": null
+      "background": "home_livingroom_morning"
     },
     {
       "section_key": "forced_ending",
@@ -305,7 +308,7 @@
       "content_summary": "話が盛り上がっている最中に停電。何も解決せずに終了。",
       "min_lines": 5,
       "max_lines": 10,
-      "fixed_background": null
+      "background": "home_livingroom_morning"
     }
   ]
 }

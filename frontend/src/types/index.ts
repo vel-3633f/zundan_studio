@@ -48,7 +48,7 @@ export interface SectionDefinition {
   content_summary: string;
   min_lines: number;
   max_lines: number;
-  fixed_background?: string | null;
+  background: string;
 }
 
 // === 食べ物モード ===

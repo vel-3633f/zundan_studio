@@ -164,11 +164,9 @@ const OutlineSection = ({
                     <span className="font-medium">内容:</span>{" "}
                     {section.content_summary}
                   </p>
-                  {section.fixed_background && (
-                    <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
-                      固定背景: {section.fixed_background}
-                    </p>
-                  )}
+                  <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                    <span className="font-medium">背景:</span> {section.background}
+                  </p>
                 </div>
               )
             )}

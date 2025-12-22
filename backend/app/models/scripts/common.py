@@ -11,8 +11,8 @@ class SectionDefinition(BaseModel):
     content_summary: str = Field(description="このセクションで扱う内容の要約")
     min_lines: int = Field(ge=5, le=50, description="最低セリフ数")
     max_lines: int = Field(ge=5, le=50, description="最大セリフ数")
-    fixed_background: Optional[str] = Field(
-        None, description="固定背景（指定がない場合は動的選択）"
+    background: str = Field(
+        description="背景シーン（3単語アンダースコア区切り形式、例: modern_study_room）"
     )
 
     @field_validator("section_key")
@@ -23,6 +23,13 @@ class SectionDefinition(BaseModel):
         if not v.replace("_", "").isalnum():
             raise ValueError("セクションキーは英数字とアンダースコアのみ使用できます")
         return v.strip().lower()
+
+    @field_validator("background")
+    @classmethod
+    def validate_background_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("背景は空にできません")
+        return v.strip()
 
     @field_validator("min_lines", "max_lines")
     @classmethod

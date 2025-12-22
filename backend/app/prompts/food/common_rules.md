@@ -189,14 +189,24 @@
 - 食べ物関連の場合は、その食べ物を食べる場所や関連する場所を選択
 - シーンが変わるごとに適切な背景を変更し、視覚的なバリエーションを持たせる
 
-**背景例**:
+**背景例（現実的な場所）**:
 
-- `modern_living_room_day`: 現代的なリビング（昼）
-- `cozy_bedroom_night`: 居心地の良い寝室（夜）
-- `bright_kitchen_morning`: 明るいキッチン（朝）
+- `home_livingroom_morning`: 自宅のリビング（朝）
+- `home_kitchen_afternoon`: 自宅のキッチン（午後）
+- `home_bedroom_night`: 自宅の寝室（夜）
+- `cafe_counter_morning`: カフェのカウンター（朝）
+- `restaurant_table_evening`: レストランのテーブル（夕方）
+- `restaurant_toilet_afternoon`: レストランのトイレ（午後）
 - `hospital_waiting_room_day`: 病院の待合室（昼）
-- `quiet_library_afternoon`: 静かな図書館（午後）
-- `busy_restaurant_evening`: 賑やかなレストラン（夕方）
+- `hospital_examination_room_day`: 病院の診察室（昼）
+- `office_meeting_afternoon`: オフィスの会議室（午後）
+- `modern_study_room`: モダンな書斎
+- `library`: 図書館
+- `park_bench_afternoon`: 公園のベンチ（午後）
+- `supermarket_aisle_day`: スーパーの通路（昼）
+- `convenience_store_night`: コンビニ（夜）
+
+**重要**: シーンの内容に合った現実的な場所を選択してください。ファンタジーや非現実的な場所は避けてください。
 
 ## 重要な注意事項
 

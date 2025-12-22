@@ -124,11 +124,12 @@
 - セクションの重要度に応じて調整
 - 重要なセクションは多めに、簡潔なセクションは少なめに
 
-### fixed_background（任意）
+### background（必須）
 
-- 固定背景が必要な場合のみ指定
-- 例: `modern_study_room`, `library`, `hospital_room`
-- 指定しない場合は動的に選択される
+- 背景シーンを必ず指定
+- **必ず 3 つの英単語をアンダースコアで区切った形式**
+- 形式: `{場所}_{詳細}_{時間帯または状態}`
+- 例: `modern_study_room`, `library`, `home_livingroom_morning`, `cafe_counter_morning`
 
 ## 参考情報の活用
 
@@ -159,7 +160,7 @@
       "content_summary": "ずんだもんが体調不良で倒れるシーン。めたんとつむぎが心配する様子。どうしてこうなったのかという疑問を提示。",
       "min_lines": 6,
       "max_lines": 10,
-      "fixed_background": null
+      "background": "home_livingroom_morning"
     },
     {
       "section_key": "background",
@@ -168,7 +169,7 @@
       "content_summary": "チョコレートの成分（カカオ、糖分、脂質）、一般的な効果（リラックス効果、抗酸化作用）、適切な摂取量について解説。",
       "min_lines": 10,
       "max_lines": 15,
-      "fixed_background": "modern_study_room"
+      "background": "modern_study_room"
     }
     // ... 他のセクション
   ]

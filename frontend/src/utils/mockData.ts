@@ -34,7 +34,7 @@ export const mockFoodOutline: FoodOutline = {
         "ずんだもんがレストランのトイレで苦しんでいる。めたんが心配する。",
       min_lines: 8,
       max_lines: 12,
-      fixed_background: "restaurant_toilet_afternoon",
+      background: "restaurant_toilet_afternoon",
     },
     {
       section_key: "background",
@@ -44,7 +44,7 @@ export const mockFoodOutline: FoodOutline = {
         "いきなりステーキの特徴、栄養成分、適切な摂取量について解説",
       min_lines: 15,
       max_lines: 25,
-      fixed_background: "modern_study_room",
+      background: "modern_study_room",
     },
     {
       section_key: "daily_life",
@@ -53,7 +53,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "ずんだもんがいきなりステーキを毎日食べ始める",
       min_lines: 10,
       max_lines: 15,
-      fixed_background: null,
+      background: "cafe_counter_morning",
     },
     {
       section_key: "honeymoon",
@@ -62,7 +62,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "美味しいステーキを楽しむずんだもん",
       min_lines: 8,
       max_lines: 12,
-      fixed_background: null,
+      background: "restaurant_ikinaristeak_day",
     },
     {
       section_key: "deterioration",
@@ -71,7 +71,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "胃もたれ、倦怠感などの症状が現れ始める",
       min_lines: 12,
       max_lines: 18,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
     {
       section_key: "crisis",
@@ -80,7 +80,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "激しい腹痛と吐き気で病院へ",
       min_lines: 10,
       max_lines: 15,
-      fixed_background: null,
+      background: "office_meeting_emergency",
     },
     {
       section_key: "learning",
@@ -89,7 +89,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "医師から栄養バランスの重要性を学ぶ",
       min_lines: 12,
       max_lines: 18,
-      fixed_background: "office_meeting_afternoon",
+      background: "office_meeting_afternoon",
     },
     {
       section_key: "recovery",
@@ -98,7 +98,7 @@ export const mockFoodOutline: FoodOutline = {
       content_summary: "バランスの取れた食事で回復し、適度な楽しみ方を学ぶ",
       min_lines: 10,
       max_lines: 15,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
   ],
 };
@@ -317,7 +317,7 @@ export const mockComedyOutline: ComedyOutline = {
       content_summary: "ずんだもんが突然「プロポーズする」と宣言",
       min_lines: 8,
       max_lines: 12,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
     {
       section_key: "development",
@@ -326,7 +326,7 @@ export const mockComedyOutline: ComedyOutline = {
       content_summary: "めたんとつむぎが相手を推測し始める",
       min_lines: 12,
       max_lines: 18,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
     {
       section_key: "climax",
@@ -335,7 +335,7 @@ export const mockComedyOutline: ComedyOutline = {
       content_summary: "プロポーズ相手が判明",
       min_lines: 10,
       max_lines: 15,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
     {
       section_key: "ending",
@@ -344,7 +344,7 @@ export const mockComedyOutline: ComedyOutline = {
       content_summary: "予想外のオチで終わる",
       min_lines: 6,
       max_lines: 10,
-      fixed_background: null,
+      background: "home_livingroom_morning",
     },
   ],
 };

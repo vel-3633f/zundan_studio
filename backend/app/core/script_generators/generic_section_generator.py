@@ -215,11 +215,11 @@ class GenericSectionGenerator:
                 f"BGM設定: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
             )
 
-            # 固定背景が指定されている場合は上書き
-            if context.section_definition.fixed_background:
-                section.scene_background = context.section_definition.fixed_background
+            # 背景が指定されている場合は上書き
+            if context.section_definition.background:
+                section.scene_background = context.section_definition.background
                 logger.info(
-                    f"背景を固定設定で上書き: {context.section_definition.fixed_background}"
+                    f"背景を設定で上書き: {context.section_definition.background}"
                 )
 
             segment_count = len(section.segments)

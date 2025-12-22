@@ -17,14 +17,14 @@ logger = get_logger(__name__)
 
 # セクション設定
 SECTION_CONFIGS = [
-    {"key": "hook", "name": "冒頭フック・危機の予告", "min": 6, "max": 10, "fixed_background": None},
-    {"key": "background", "name": "食品解説・背景情報", "min": 10, "max": 15, "fixed_background": "modern_study_room"},
-    {"key": "daily", "name": "日常導入・理由付け", "min": 12, "max": 18, "fixed_background": None},
-    {"key": "honeymoon", "name": "楽観期・ハネムーン期", "min": 15, "max": 25, "fixed_background": None},
-    {"key": "deterioration", "name": "異変期・段階的悪化", "min": 25, "max": 35, "fixed_background": None},
-    {"key": "crisis", "name": "危機・転機となる決定的イベント", "min": 20, "max": 30, "fixed_background": None},
-    {"key": "learning", "name": "真相解明・学習フェーズ", "min": 15, "max": 25, "fixed_background": "library"},
-    {"key": "recovery", "name": "回復・新しい習慣", "min": 10, "max": 20, "fixed_background": None},
+    {"key": "hook", "name": "冒頭フック・危機の予告", "min": 6, "max": 10, "background": "home_livingroom_morning"},
+    {"key": "background", "name": "食品解説・背景情報", "min": 10, "max": 15, "background": "modern_study_room"},
+    {"key": "daily", "name": "日常導入・理由付け", "min": 12, "max": 18, "background": "cafe_counter_morning"},
+    {"key": "honeymoon", "name": "楽観期・ハネムーン期", "min": 15, "max": 25, "background": "restaurant_ikinaristeak_day"},
+    {"key": "deterioration", "name": "異変期・段階的悪化", "min": 25, "max": 35, "background": "home_livingroom_morning"},
+    {"key": "crisis", "name": "危機・転機となる決定的イベント", "min": 20, "max": 30, "background": "office_meeting_emergency"},
+    {"key": "learning", "name": "真相解明・学習フェーズ", "min": 15, "max": 25, "background": "library"},
+    {"key": "recovery", "name": "回復・新しい習慣", "min": 10, "max": 20, "background": "home_livingroom_morning"},
 ]
 
 
@@ -138,7 +138,7 @@ def generate_sections_from_approved_outline(
                 section_name=config["name"],
                 min_lines=config["min"],
                 max_lines=config["max"],
-                fixed_background=config.get("fixed_background")
+                fixed_background=config.get("background")
             )
 
             context = SectionContext(

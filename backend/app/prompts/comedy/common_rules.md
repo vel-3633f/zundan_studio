@@ -213,13 +213,23 @@
 - **必ず 3 つの英単語をアンダースコアで区切った形式**
 - 形式: `{場所}_{詳細}_{時間帯または状態}`
 
-### 背景選択例
+### 背景選択例（現実的な日常の場所）
 
-- `modern_living_room_day`: 現代的なリビング（昼）
-- `cozy_bedroom_night`: 居心地の良い寝室（夜）
-- `messy_room_evening`: 散らかった部屋（夕方）
-- `dark_room_night`: 暗い部屋（夜）
-- `chaotic_room_day`: カオスな部屋（昼）
+- `home_livingroom_morning`: 自宅のリビング（朝）
+- `home_livingroom_night`: 自宅のリビング（夜）
+- `home_kitchen_afternoon`: 自宅のキッチン（午後）
+- `home_bedroom_evening`: 自宅の寝室（夕方）
+- `livingroom_window_morning`: リビングの窓際（朝）
+- `cafe_counter_morning`: カフェのカウンター（朝）
+- `cafe_table_afternoon`: カフェのテーブル（午後）
+- `park_bench_day`: 公園のベンチ（昼）
+- `convenience_store_night`: コンビニ（夜）
+- `modern_study_room`: モダンな書斎
+
+**重要**: 
+- お笑いモードでは主に日常的な場所を使用
+- 現実的な場所を選択（ファンタジーや非現実的な場所は避ける）
+- 漫談の雰囲気に合った親しみやすい場所を優先
 
 ## 強制終了ルール
 
