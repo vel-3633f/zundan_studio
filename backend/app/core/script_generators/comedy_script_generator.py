@@ -156,7 +156,7 @@ class ComedyScriptGenerator:
                     reference_information="",  # お笑いモードでは参照情報不要
                     previous_sections=previous_sections_summary,
                     character_moods=character_moods_dict,
-                    forced_ending_type=outline.forced_ending_type,
+                    forced_ending_type=outline.ending_type,
                     is_final_section=is_final,
                 )
 
@@ -229,7 +229,7 @@ class ComedyScriptGenerator:
                 character_moods=outline.character_moods,
                 sections=sections,
                 all_segments=all_segments,
-                ending_type=outline.forced_ending_type,
+                ending_type=outline.ending_type,
             )
 
             if progress_callback:
@@ -238,7 +238,7 @@ class ComedyScriptGenerator:
             logger.info(
                 f"台本生成成功: {total_segments}セリフ, "
                 f"推定時間: {estimated_duration}, "
-                f"強制終了: {outline.forced_ending_type}"
+                f"オチ: {outline.ending_type}"
             )
 
             return script
@@ -445,7 +445,7 @@ class ComedyScriptGenerator:
             outline.character_moods = character_moods
 
             logger.info(f"アウトライン生成成功: {len(outline.sections)}セクション構成")
-            logger.info(f"強制終了タイプ: {outline.forced_ending_type}")
+            logger.info(f"オチのタイプ: {outline.ending_type}")
             logger.info(
                 f"機嫌レベル: ずんだもん={character_moods.zundamon}, "
                 f"めたん={character_moods.metan}, つむぎ={character_moods.tsumugi}"

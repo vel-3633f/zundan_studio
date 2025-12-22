@@ -128,10 +128,10 @@ const OutlineSection = ({
 
             <div className="p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
               <p className="text-sm font-medium text-error-700 dark:text-error-400 mb-1">
-                強制終了タイプ
+                オチのタイプ
               </p>
               <p className="text-base font-semibold text-error-900 dark:text-error-100">
-                {comedyOutline.forced_ending_type}
+                {comedyOutline.ending_type}
               </p>
             </div>
           </>

@@ -308,7 +308,7 @@ export const mockComedyOutline: ComedyOutline = {
     metan: 5,
     tsumugi: 3,
   },
-  forced_ending_type: "突然の展開",
+  ending_type: "突然の展開",
   sections: [
     {
       section_key: "intro",

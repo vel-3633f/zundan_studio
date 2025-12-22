@@ -109,7 +109,7 @@ export interface ComedyOutline {
   theme: string;
   story_summary: string;
   character_moods: CharacterMood;
-  forced_ending_type: string;
+  ending_type: string;
   sections: SectionDefinition[];
 }
 

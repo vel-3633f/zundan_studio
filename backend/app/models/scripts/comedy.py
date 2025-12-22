@@ -69,12 +69,12 @@ class ComedyOutline(BaseOutlineModel):
     theme: str = Field(description="漫談のテーマ")
     story_summary: str = Field(description="漫談全体の流れ（2-3文）")
     character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
-    forced_ending_type: str = Field(description="強制終了のタイプ")
+    ending_type: str = Field(description="オチのタイプ")
     sections: List[SectionDefinition] = Field(
         description="動的に生成されたセクション定義リスト"
     )
 
-    @field_validator("theme", "story_summary", "forced_ending_type")
+    @field_validator("theme", "story_summary", "ending_type")
     @classmethod
     def validate_string_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
