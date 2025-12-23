@@ -13,8 +13,6 @@ from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)
 
-COMMON_RULES_FILE = Path("app/prompts/sections/common_rules.md")
-
 # セクションごとに必要なアウトライン変数のマッピング（8セクション構造）
 SECTION_OUTLINE_VARIABLES = {
     "hook": ["hook_content"],  # 冒頭フックで見せる決定的シーン
@@ -63,21 +61,6 @@ class SectionGeneratorBase:
         self.max_lines = max_lines
         self.fixed_background = fixed_background
         self.prompt_file = Path(f"app/prompts/sections/section_{section_key}.md")
-
-    def load_common_rules(self) -> str:
-        """共通ルールを読み込む"""
-        try:
-            if not COMMON_RULES_FILE.exists():
-                raise FileNotFoundError(
-                    f"共通ルールファイルが見つかりません: {COMMON_RULES_FILE}"
-                )
-
-            with open(COMMON_RULES_FILE, "r", encoding="utf-8") as f:
-                return f.read().strip()
-
-        except Exception as e:
-            logger.error(f"共通ルール読み込みエラー: {str(e)}")
-            raise
 
     def load_section_prompt(self) -> str:
         """セクション固有のプロンプトを読み込む"""
@@ -174,7 +157,6 @@ class SectionGeneratorBase:
         )
 
         try:
-            common_rules = self.load_common_rules()
             section_prompt_raw = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
@@ -188,10 +170,6 @@ class SectionGeneratorBase:
             section_prompt = section_prompt.replace("{{format_instructions}}", "")
 
             full_prompt = f"""
-                {common_rules}
-
-                ---
-
                 {section_prompt}
 
                 ---

@@ -127,9 +127,9 @@
 ### background（必須）
 
 - 背景シーンを必ず指定
-- **必ず 3 つの英単語をアンダースコアで区切った形式**
-- 形式: `{場所}_{詳細}_{時間帯または状態}`
-- 例: `modern_study_room`, `library`, `home_livingroom_morning`, `cafe_counter_morning`
+- **必ず 2 つの英単語をアンダースコアで区切った形式**
+- 形式: `{場所}_{詳細}`
+- 例: `modern_study`, `library_interior`, `home_livingroom`, `cafe_counter`
 
 ## 参考情報の活用
 

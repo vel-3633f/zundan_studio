@@ -38,25 +38,9 @@ class GenericSectionGenerator:
             mode: 生成モード（FOOD or COMEDY）
         """
         self.mode = mode
-        self.common_rules_file = Path(f"app/prompts/{mode.value}/common_rules.md")
         self.section_prompt_file = Path(
             f"app/prompts/{mode.value}/section_generation.md"
         )
-
-    def load_common_rules(self) -> str:
-        """共通ルールを読み込む"""
-        try:
-            if not self.common_rules_file.exists():
-                raise FileNotFoundError(
-                    f"共通ルールファイルが見つかりません: {self.common_rules_file}"
-                )
-
-            with open(self.common_rules_file, "r", encoding="utf-8") as f:
-                return f.read().strip()
-
-        except Exception as e:
-            logger.error(f"共通ルール読み込みエラー: {str(e)}")
-            raise
 
     def load_section_prompt(self) -> str:
         """セクション生成プロンプトを読み込む"""
@@ -159,7 +143,6 @@ class GenericSectionGenerator:
         )
 
         try:
-            common_rules = self.load_common_rules()
             section_prompt_template = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
@@ -168,10 +151,6 @@ class GenericSectionGenerator:
 
             # プロンプト構築
             full_prompt = f"""
-{common_rules}
-
----
-
 {section_prompt_template}
 
 ---
