@@ -281,8 +281,10 @@
 ### background（必須）
 
 - 背景シーンを必ず指定
-- **必ず 2 つの英単語をアンダースコアで区切った形式**
-- 形式: `{場所}_{詳細}`
+- **必ず 3 つの英単語をアンダースコアで区切った形式**
+- 形式: `{場所}_{詳細}_{状態}`
+- **人物や人数を含めない**（場所の特徴のみ）
+- 例: `home_livingroom_bright`, `studio_interior_empty`, `cafe_counter_daytime`
 
 ## 出力形式
 
@@ -307,7 +309,7 @@
       "content_summary": "ずんだもんが{theme}を自分勝手に解釈。めたんが呆れてツッコミ。つむぎが適当に煽る。",
       "min_lines": 10,
       "max_lines": 20,
-      "background": "home_livingroom_morning"
+      "background": "home_livingroom_bright"
     },
     {
       "section_key": "argument",
@@ -316,7 +318,7 @@
       "content_summary": "ずんだもんの暴走にめたんが本気でキレる。つむぎが煽りまくる。論点がずれ始める。",
       "min_lines": 15,
       "max_lines": 25,
-      "background": "home_livingroom_morning"
+      "background": "home_livingroom_afternoon"
     },
     {
       "section_key": "chaos",
@@ -325,7 +327,7 @@
       "content_summary": "全員が言いたいことを言い始める。話が完全に脱線。収拾がつかなくなる。",
       "min_lines": 20,
       "max_lines": 30,
-      "background": "home_livingroom_morning"
+      "background": "home_livingroom_evening"
     },
     {
       "section_key": "ending",
@@ -334,7 +336,7 @@
       "content_summary": "実は3人全員が{theme}について全く違う理解をしていたことが判明。カオスのまま終了。",
       "min_lines": 8,
       "max_lines": 15,
-      "background": "home_livingroom_morning"
+      "background": "home_livingroom_night"
     }
   ]
 }
