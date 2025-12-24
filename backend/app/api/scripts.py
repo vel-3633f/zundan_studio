@@ -280,6 +280,66 @@ async def generate_comedy_titles_batch():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/save")
+async def save_script_to_file(request: dict):
+    """
+    生成された台本をJSONファイルとして保存
+    
+    Args:
+        request: {"script": 台本データ, "filename": ファイル名（オプション）}
+    
+    Returns:
+        保存されたファイルのパス
+    """
+    try:
+        import json
+        from pathlib import Path
+        from datetime import datetime
+        
+        script_data = request.get("script")
+        if not script_data:
+            raise HTTPException(status_code=400, detail="台本データが必要です")
+        
+        # ファイル名生成（指定がない場合は自動生成）
+        filename = request.get("filename")
+        if not filename:
+            # タイトルから安全なファイル名を生成
+            title = script_data.get("title", "script")
+            # 日本語を削除し、英数字のみに
+            safe_title = "".join(c for c in title if c.isalnum() or c in ("-", "_"))
+            if not safe_title:
+                safe_title = "script"
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{safe_title}_{timestamp}.json"
+        
+        # 拡張子確認
+        if not filename.endswith(".json"):
+            filename += ".json"
+        
+        # 保存先ディレクトリ
+        output_dir = Path("outputs/json")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # ファイル保存
+        file_path = output_dir / filename
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(script_data, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"台本を保存しました: {file_path}")
+        
+        return {
+            "success": True,
+            "file_path": str(file_path),
+            "filename": filename
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"台本保存エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/models")
 async def get_available_models():
     """

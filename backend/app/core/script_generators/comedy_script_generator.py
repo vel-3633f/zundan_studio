@@ -84,21 +84,21 @@ class ComedyScriptGenerator:
         """
         if mood >= 70:
             if character == "zundamon":
-                return "より傲慢で自信満々、攻撃的"
+                return "傲慢で攻撃的、自信満々"
             elif character == "metan":
-                return "冷静で的確なツッコミ、論理的"
+                return "冷静で論理的、的確なツッコミ"
             else:  # tsumugi
-                return "陽気に煽る、積極的"
+                return "陽気に煽る、積極的に話をややこしくする"
         elif mood >= 30:
             if character == "zundamon":
                 return "標準的な傲慢さ"
             elif character == "metan":
                 return "普通のツッコミ、適度なイライラ"
             else:  # tsumugi
-                return "普通の煽り"
+                return "普通の煽り、適度に話をかき回す"
         else:
             if character == "zundamon":
-                return "消極的、言い訳がましい、被害者面"
+                return "言い訳がましい、被害者面"
             elif character == "metan":
                 return "感情的、容赦ないキレ方、塩対応"
             else:  # tsumugi

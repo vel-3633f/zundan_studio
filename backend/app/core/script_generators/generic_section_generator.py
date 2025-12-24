@@ -106,25 +106,25 @@ class GenericSectionGenerator:
         for char, mood in moods.items():
             if mood >= 70:
                 if char == "zundamon":
-                    descriptions[char] = "非常に積極的・自信満々・傲慢さ全開"
+                    descriptions[char] = "傲慢で攻撃的、自信満々"
                 elif char == "metan":
-                    descriptions[char] = "冷静で的確なツッコミ・論理的"
+                    descriptions[char] = "冷静で論理的、的確なツッコミ"
                 else:  # tsumugi
-                    descriptions[char] = "陽気に煽る・積極的に話をややこしくする"
+                    descriptions[char] = "陽気に煽る、積極的に話をややこしくする"
             elif mood >= 30:
                 if char == "zundamon":
-                    descriptions[char] = "普通の反応・標準的な傲慢さ"
+                    descriptions[char] = "標準的な傲慢さ"
                 elif char == "metan":
-                    descriptions[char] = "普通のツッコミ・適度なイライラ"
+                    descriptions[char] = "普通のツッコミ、適度なイライラ"
                 else:  # tsumugi
-                    descriptions[char] = "普通の煽り・適度に話をかき回す"
+                    descriptions[char] = "普通の煽り、適度に話をかき回す"
             else:
                 if char == "zundamon":
-                    descriptions[char] = "消極的・言い訳がましい・被害者面"
+                    descriptions[char] = "言い訳がましい、被害者面"
                 elif char == "metan":
-                    descriptions[char] = "感情的・容赦ないキレ方・塩対応"
+                    descriptions[char] = "感情的、容赦ないキレ方、塩対応"
                 else:  # tsumugi
-                    descriptions[char] = "無関心・塩対応・やる気なし"
+                    descriptions[char] = "無関心、塩対応、やる気なし"
         return descriptions
 
     def generate(self, context: SectionContext, llm: Any) -> VideoSection:
