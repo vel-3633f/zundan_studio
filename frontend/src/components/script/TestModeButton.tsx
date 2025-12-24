@@ -105,7 +105,7 @@ const TestModeButton = ({
                 テストデータを読み込む
               </p>
               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                {mode === "food" ? "食べ物モード" : "お笑いモード"}
+                お笑いモード
               </p>
             </div>
 

@@ -44,31 +44,17 @@ const InputSection = ({
   return (
     <Card
       icon={<Sparkles className="h-6 w-6" />}
-      title={mode === "food" ? "食べ物設定" : "漫談タイトル生成"}
+      title="漫談タイトル生成"
     >
       <div className="space-y-6">
-        {/* 入力フィールド（食べ物モードのみ） */}
-        {mode === "food" && (
-          <Input
-            label="調べたい食べ物"
-            value={inputText}
-            onChange={(e) => onInputTextChange(e.target.value)}
-            placeholder="例: チョコレート"
-            helperText="一般的な食べ物や飲み物の名前を入力してください"
-            leftIcon={<Sparkles className="h-5 w-5" />}
-          />
-        )}
-
-        {/* お笑いモード: 説明文 */}
-        {mode === "comedy" && (
-          <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-            <p className="text-sm text-primary-900 dark:text-primary-100">
-              🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
-              <br />
-              5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
-            </p>
-          </div>
-        )}
+        {/* 説明文 */}
+        <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+          <p className="text-sm text-primary-900 dark:text-primary-100">
+            🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
+            <br />
+            5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
+          </p>
+        </div>
 
         {/* 詳細設定 */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -110,9 +96,9 @@ const InputSection = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   創造性レベル: {temperature.toFixed(1)}
-                  {mode === "comedy" && temperature < 0.8 && (
+                  {temperature < 0.8 && (
                     <span className="ml-2 text-xs text-warning-600 dark:text-warning-400">
-                      （お笑いモードは0.8以上推奨）
+                      （0.8以上推奨）
                     </span>
                   )}
                 </label>
@@ -128,9 +114,7 @@ const InputSection = ({
                   className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary-600"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  {mode === "food"
-                    ? "高いほど創造的ですが、一貫性が下がる可能性があります"
-                    : "高いほどバカバカしく予測不可能な展開になります"}
+                  高いほどバカバカしく予測不可能な展開になります
                 </p>
               </div>
             </div>
@@ -138,7 +122,7 @@ const InputSection = ({
         </div>
 
         {/* 生成ボタン */}
-        {mode === "comedy" && onRandomGenerate ? (
+        {onRandomGenerate ? (
           <Button
             onClick={onRandomGenerate}
             disabled={isGenerating}

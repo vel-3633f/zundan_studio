@@ -46,7 +46,8 @@
 
 - `speaker: "narrator"`として指定
 - 淡々とした口調で喋る
-- `visible_characters`には含めない（声のみ）
+- `visible_characters: []`（空配列）にする（声のみ、画面には誰も出さない）
+- `character_expressions: {}`（空オブジェクト）にする
 
 ## 機嫌レベルの反映
 

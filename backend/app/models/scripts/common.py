@@ -64,7 +64,12 @@ class ConversationSegment(BaseModel):
 
     @field_validator("visible_characters")
     @classmethod
-    def validate_visible_characters_not_empty(cls, v: List[str]) -> List[str]:
+    def validate_visible_characters(cls, v: List[str], info) -> List[str]:
+        # ナレーターの場合は空配列を許可（声のみ）
+        if info.data.get("speaker") == "narrator":
+            return []
+        
+        # それ以外のキャラクターは空配列を許可しない
         if not v:
             raise ValueError("表示するキャラクターリストは空にできません")
         cleaned = [char.strip() for char in v if char and char.strip()]

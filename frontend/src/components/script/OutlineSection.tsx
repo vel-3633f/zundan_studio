@@ -10,15 +10,12 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import type {
-  FoodOutline,
   ComedyOutline,
-  ScriptMode,
   SectionDefinition,
 } from "@/types";
 
 interface OutlineSectionProps {
-  mode: ScriptMode;
-  outline: FoodOutline | ComedyOutline;
+  outline: ComedyOutline;
   isGenerating: boolean;
   isApprovingLoading?: boolean;
   isRegeneratingLoading?: boolean;
@@ -27,7 +24,6 @@ interface OutlineSectionProps {
 }
 
 const OutlineSection = ({
-  mode,
   outline,
   isGenerating,
   isApprovingLoading = false,
@@ -35,8 +31,6 @@ const OutlineSection = ({
   onApprove,
   onRegenerate,
 }: OutlineSectionProps) => {
-  const isFoodMode = mode === "food";
-  const comedyOutline = !isFoodMode ? (outline as ComedyOutline) : null;
 
   // 機嫌レベルのアイコンを取得
   const getMoodIcon = (mood: number) => {
@@ -79,63 +73,59 @@ const OutlineSection = ({
           </p>
         </div>
 
-        {/* お笑いモード専用: 機嫌レベルと強制終了タイプ */}
-        {!isFoodMode && comedyOutline && (
-          <>
-            <div className="p-4 bg-warning-50 dark:bg-warning-900/20 rounded-lg border border-warning-200 dark:border-warning-800">
-              <p className="text-sm font-medium text-warning-700 dark:text-warning-400 mb-3">
-                キャラクター機嫌レベル（ランダム生成）
-              </p>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex flex-col items-center">
-                  {getMoodIcon(comedyOutline.character_moods.zundamon)}
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
-                    ずんだもん
-                  </span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {comedyOutline.character_moods.zundamon}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {getMoodLabel(comedyOutline.character_moods.zundamon)}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  {getMoodIcon(comedyOutline.character_moods.metan)}
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
-                    めたん
-                  </span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {comedyOutline.character_moods.metan}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {getMoodLabel(comedyOutline.character_moods.metan)}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center">
-                  {getMoodIcon(comedyOutline.character_moods.tsumugi)}
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
-                    つむぎ
-                  </span>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {comedyOutline.character_moods.tsumugi}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {getMoodLabel(comedyOutline.character_moods.tsumugi)}
-                  </span>
-                </div>
-              </div>
+        {/* キャラクター機嫌レベルと強制終了タイプ */}
+        <div className="p-4 bg-warning-50 dark:bg-warning-900/20 rounded-lg border border-warning-200 dark:border-warning-800">
+          <p className="text-sm font-medium text-warning-700 dark:text-warning-400 mb-3">
+            キャラクター機嫌レベル（ランダム生成）
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col items-center">
+              {getMoodIcon(outline.character_moods.zundamon)}
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
+                ずんだもん
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                {outline.character_moods.zundamon}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {getMoodLabel(outline.character_moods.zundamon)}
+              </span>
             </div>
+            <div className="flex flex-col items-center">
+              {getMoodIcon(outline.character_moods.metan)}
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
+                めたん
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                {outline.character_moods.metan}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {getMoodLabel(outline.character_moods.metan)}
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              {getMoodIcon(outline.character_moods.tsumugi)}
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
+                つむぎ
+              </span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">
+                {outline.character_moods.tsumugi}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {getMoodLabel(outline.character_moods.tsumugi)}
+              </span>
+            </div>
+          </div>
+        </div>
 
-            <div className="p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
-              <p className="text-sm font-medium text-error-700 dark:text-error-400 mb-1">
-                オチのタイプ
-              </p>
-              <p className="text-base font-semibold text-error-900 dark:text-error-100">
-                {comedyOutline.ending_type}
-              </p>
-            </div>
-          </>
-        )}
+        <div className="p-4 bg-error-50 dark:bg-error-900/20 rounded-lg border border-error-200 dark:border-error-800">
+          <p className="text-sm font-medium text-error-700 dark:text-error-400 mb-1">
+            オチのタイプ
+          </p>
+          <p className="text-base font-semibold text-error-900 dark:text-error-100">
+            {outline.ending_type}
+          </p>
+        </div>
 
         {/* セクション構成 */}
         <div>

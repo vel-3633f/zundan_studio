@@ -1,7 +1,7 @@
 // 共通型定義
 
 // === 生成モード ===
-export type ScriptMode = "food" | "comedy";
+export type ScriptMode = "comedy";
 
 export interface ConversationLine {
   speaker: string;
@@ -51,32 +51,7 @@ export interface SectionDefinition {
   background: string;
 }
 
-// === 食べ物モード ===
-export interface FoodTitle {
-  title: string;
-  mode: ScriptMode;
-  food_name: string;
-  hook_phrase: string;
-}
-
-export interface FoodOutline {
-  title: string;
-  mode: ScriptMode;
-  food_name: string;
-  story_summary: string;
-  sections: SectionDefinition[];
-}
-
-export interface FoodScript {
-  title: string;
-  mode: ScriptMode;
-  food_name: string;
-  estimated_duration: string;
-  sections: VideoSection[];
-  all_segments: ConversationSegment[];
-}
-
-// === お笑いモード ===
+// === お笑いモード（Comedy） ===
 export interface CharacterMood {
   zundamon: number;
   metan: number;
@@ -171,23 +146,6 @@ export interface VideoSection {
   segments: ConversationSegment[];
 }
 
-export interface FoodOverconsumptionScript {
-  title: string;
-  food_name: string;
-  estimated_duration: string;
-  sections: VideoSection[];
-  all_segments: ConversationSegment[];
-}
-
-export interface SectionRequest {
-  outline: StoryOutline;
-  food_name: string;
-  reference_info: string;
-  model: string;
-  temperature: number;
-  model_config: Record<string, any>;
-}
-
 export interface Background {
   id: string;
   name: string;
@@ -201,16 +159,6 @@ export interface Item {
   description?: string;
 }
 
-export interface Food {
-  id: number;
-  name: string;
-  created_at?: string;
-}
-
-export interface FoodCreateRequest {
-  name: string;
-}
-
 // === 統合API型定義 ===
 export interface TitleRequest {
   mode: ScriptMode;
@@ -220,7 +168,7 @@ export interface TitleRequest {
 }
 
 export interface TitleResponse {
-  title: FoodTitle | ComedyTitle;
+  title: ComedyTitle;
   reference_info: string;
   search_results: Record<string, any>;
   model: string;
@@ -229,28 +177,28 @@ export interface TitleResponse {
 
 export interface UnifiedOutlineRequest {
   mode: ScriptMode;
-  title_data: FoodTitle | ComedyTitle;
+  title_data: ComedyTitle;
   reference_info?: string;
   model?: string;
   temperature?: number;
 }
 
 export interface UnifiedOutlineResponse {
-  outline: FoodOutline | ComedyOutline;
+  outline: ComedyOutline;
   model: string;
   temperature: number;
 }
 
 export interface ScriptRequest {
   mode: ScriptMode;
-  outline_data: FoodOutline | ComedyOutline;
+  outline_data: ComedyOutline;
   reference_info?: string;
   model?: string;
   temperature?: number;
 }
 
 export interface ScriptResponse {
-  script: FoodScript | ComedyScript;
+  script: ComedyScript;
 }
 
 export interface FullScriptRequest {
@@ -261,5 +209,5 @@ export interface FullScriptRequest {
 }
 
 export interface FullScriptResponse {
-  script: FoodScript | ComedyScript;
+  script: ComedyScript;
 }

@@ -9,7 +9,6 @@ from app.models.scripts.common import (
     ConversationSegment,
     VideoSection,
 )
-from app.models.scripts.food import FoodTitle, FoodOutline, FoodScript
 from app.models.scripts.comedy import (
     CharacterMood,
     ComedyTitleCandidate,
@@ -27,9 +26,6 @@ __all__ = [
     "SectionDefinition",
     "ConversationSegment",
     "VideoSection",
-    "FoodTitle",
-    "FoodOutline",
-    "FoodScript",
     "CharacterMood",
     "ComedyTitleCandidate",
     "ComedyTitleBatch",

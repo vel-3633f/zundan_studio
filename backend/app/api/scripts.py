@@ -1,15 +1,12 @@
-"""統合台本生成API（食べ物・お笑い両モード対応）"""
+"""お笑い漫談台本生成API（Comedy専用）"""
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 import logging
 
 from app.models.script_models import (
     ScriptMode,
-    FoodTitle,
-    FoodOutline,
-    FoodScript,
     ComedyTitle,
     ComedyOutline,
     ComedyScript,
@@ -25,10 +22,8 @@ router = APIRouter()
 class TitleRequest(BaseModel):
     """タイトル生成リクエスト"""
 
-    mode: ScriptMode = Field(..., description="生成モード（food or comedy）")
-    input_text: str = Field(
-        ..., description="食べ物名（foodモード）またはテーマ（comedyモード）"
-    )
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    input_text: str = Field(..., description="漫談のテーマ")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
 
@@ -36,11 +31,9 @@ class TitleRequest(BaseModel):
 class TitleResponse(BaseModel):
     """タイトル生成レスポンス"""
 
-    title: Union[FoodTitle, ComedyTitle]
-    reference_info: str = Field(description="参照情報（foodモードのみ）")
-    search_results: Dict[str, Any] = Field(
-        default_factory=dict, description="検索結果（foodモードのみ）"
-    )
+    title: ComedyTitle
+    reference_info: str = Field(default="", description="参照情報（常に空文字）")
+    search_results: Dict[str, Any] = Field(default_factory=dict, description="検索結果（常に空）")
     model: str
     temperature: float
 
@@ -48,13 +41,9 @@ class TitleResponse(BaseModel):
 class OutlineRequest(BaseModel):
     """アウトライン生成リクエスト"""
 
-    mode: ScriptMode = Field(..., description="生成モード（food or comedy）")
-    title_data: Union[FoodTitle, ComedyTitle] = Field(
-        ..., description="生成されたタイトル"
-    )
-    reference_info: Optional[str] = Field(
-        None, description="参照情報（foodモードのみ）"
-    )
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    title_data: ComedyTitle = Field(..., description="生成されたタイトル")
+    reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
 
@@ -62,7 +51,7 @@ class OutlineRequest(BaseModel):
 class OutlineResponse(BaseModel):
     """アウトライン生成レスポンス"""
 
-    outline: Union[FoodOutline, ComedyOutline]
+    outline: ComedyOutline
     model: str
     temperature: float
 
@@ -70,13 +59,9 @@ class OutlineResponse(BaseModel):
 class ScriptRequest(BaseModel):
     """台本生成リクエスト"""
 
-    mode: ScriptMode = Field(..., description="生成モード（food or comedy）")
-    outline_data: Union[FoodOutline, ComedyOutline] = Field(
-        ..., description="生成されたアウトライン"
-    )
-    reference_info: Optional[str] = Field(
-        None, description="参照情報（foodモードのみ）"
-    )
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    outline_data: ComedyOutline = Field(..., description="生成されたアウトライン")
+    reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
 
@@ -84,16 +69,14 @@ class ScriptRequest(BaseModel):
 class ScriptResponse(BaseModel):
     """台本生成レスポンス"""
 
-    script: Union[FoodScript, ComedyScript]
+    script: ComedyScript
 
 
 class FullScriptRequest(BaseModel):
     """完全台本生成リクエスト（3段階一括）"""
 
-    mode: ScriptMode = Field(..., description="生成モード（food or comedy）")
-    input_text: str = Field(
-        ..., description="食べ物名（foodモード）またはテーマ（comedyモード）"
-    )
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    input_text: str = Field(..., description="漫談のテーマ")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
 
@@ -101,7 +84,7 @@ class FullScriptRequest(BaseModel):
 class FullScriptResponse(BaseModel):
     """完全台本生成レスポンス"""
 
-    script: Union[FoodScript, ComedyScript]
+    script: ComedyScript
 
 
 # === エンドポイント ===
@@ -110,21 +93,18 @@ class FullScriptResponse(BaseModel):
 @router.post("/title", response_model=TitleResponse)
 async def generate_title(request: TitleRequest):
     """
-    モード別タイトル生成
+    タイトル生成（Comedy専用）
 
-    - **mode**: 生成モード（food or comedy）
-    - **input_text**: 食べ物名またはテーマ
+    - **input_text**: 漫談のテーマ
     - **model**: 使用するLLMモデル（省略可）
     - **temperature**: 生成温度（省略可）
     """
     try:
-        logger.info(
-            f"タイトル生成リクエスト ({request.mode.value}): {request.input_text}"
-        )
+        logger.info(f"タイトル生成リクエスト: テーマ={request.input_text}")
 
-        generator = UnifiedScriptGenerator(request.mode)
+        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
 
-        title, reference_info, model_settings = generator.generate_title(
+        title, reference_info, model_info = generator.generate_title(
             input_text=request.input_text,
             model=request.model,
             temperature=request.temperature,
@@ -133,9 +113,9 @@ async def generate_title(request: TitleRequest):
         return TitleResponse(
             title=title,
             reference_info=reference_info,
-            search_results=model_settings.get("search_results", {}),
-            model=model_settings["model"],
-            temperature=model_settings["temperature"],
+            search_results={},
+            model=model_info["model"],
+            temperature=model_info["temperature"],
         )
 
     except HTTPException:
@@ -148,20 +128,18 @@ async def generate_title(request: TitleRequest):
 @router.post("/outline", response_model=OutlineResponse)
 async def generate_outline(request: OutlineRequest):
     """
-    モード別アウトライン生成
+    アウトライン生成（Comedy専用）
 
-    - **mode**: 生成モード（food or comedy）
     - **title_data**: 生成されたタイトル
-    - **reference_info**: 参照情報（foodモードのみ）
     - **model**: 使用するLLMモデル（省略可）
     - **temperature**: 生成温度（省略可）
     """
     try:
-        logger.info(f"アウトライン生成リクエスト ({request.mode.value})")
+        logger.info(f"アウトライン生成リクエスト: タイトル={request.title_data.title}")
 
-        generator = UnifiedScriptGenerator(request.mode)
+        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
 
-        outline, model_settings = generator.generate_outline(
+        outline, model_info = generator.generate_outline(
             title_data=request.title_data,
             reference_info=request.reference_info or "",
             model=request.model,
@@ -170,8 +148,8 @@ async def generate_outline(request: OutlineRequest):
 
         return OutlineResponse(
             outline=outline,
-            model=model_settings["model"],
-            temperature=model_settings["temperature"],
+            model=model_info["model"],
+            temperature=model_info["temperature"],
         )
 
     except HTTPException:
@@ -184,20 +162,18 @@ async def generate_outline(request: OutlineRequest):
 @router.post("/script", response_model=ScriptResponse)
 async def generate_script(request: ScriptRequest):
     """
-    モード別台本生成
+    台本生成（Comedy専用）
 
-    - **mode**: 生成モード（food or comedy）
     - **outline_data**: 生成されたアウトライン
-    - **reference_info**: 参照情報（foodモードのみ）
     - **model**: 使用するLLMモデル（省略可）
     - **temperature**: 生成温度（省略可）
     """
     try:
-        logger.info(f"台本生成リクエスト ({request.mode.value})")
+        logger.info(f"台本生成リクエスト: タイトル={request.outline_data.title}")
 
-        generator = UnifiedScriptGenerator(request.mode)
+        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
 
-        script = generator.generate_script(
+        script, model_info = generator.generate_script(
             outline_data=request.outline_data,
             reference_info=request.reference_info or "",
             model=request.model,
@@ -216,22 +192,36 @@ async def generate_script(request: ScriptRequest):
 @router.post("/full", response_model=FullScriptResponse)
 async def generate_full_script(request: FullScriptRequest):
     """
-    3段階一括生成（Title → Outline → Script）
+    完全台本生成（3段階一括）（Comedy専用）
 
-    - **mode**: 生成モード（food or comedy）
-    - **input_text**: 食べ物名またはテーマ
+    - **input_text**: 漫談のテーマ
     - **model**: 使用するLLMモデル（省略可）
     - **temperature**: 生成温度（省略可）
     """
     try:
-        logger.info(
-            f"完全台本生成リクエスト ({request.mode.value}): {request.input_text}"
+        logger.info(f"完全台本生成リクエスト: テーマ={request.input_text}")
+
+        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
+
+        # 1. タイトル生成
+        title, reference_info, model_info = generator.generate_title(
+            input_text=request.input_text,
+            model=request.model,
+            temperature=request.temperature,
         )
 
-        generator = UnifiedScriptGenerator(request.mode)
+        # 2. アウトライン生成
+        outline, _ = generator.generate_outline(
+            title_data=title,
+            reference_info=reference_info,
+            model=request.model,
+            temperature=request.temperature,
+        )
 
-        script = generator.generate_full_script(
-            input_text=request.input_text,
+        # 3. 台本生成
+        script, _ = generator.generate_script(
+            outline_data=outline,
+            reference_info=reference_info,
             model=request.model,
             temperature=request.temperature,
         )
@@ -347,23 +337,27 @@ async def get_available_models():
     
     Returns:
         - models: 利用可能なモデルのリスト
-        - default_model_id: デフォルトモデルのID
-        - recommended_model_id: 推奨モデルのID
+        - default_model_id: デフォルトモデルID
+        - recommended_model_id: 推奨モデルID
     """
-    from app.config.models import (
-        AVAILABLE_MODELS,
-        DEFAULT_MODEL_ID,
-        get_recommended_model_id,
-    )
+    try:
+        from app.config.models import get_all_models, get_default_model_config
 
-    return {
-        "models": AVAILABLE_MODELS,
-        "default_model_id": DEFAULT_MODEL_ID,
-        "recommended_model_id": get_recommended_model_id(),
-    }
+        models = get_all_models()
+        default_config = get_default_model_config()
+
+        return {
+            "models": models,
+            "default_model_id": default_config["id"],
+            "recommended_model_id": default_config["id"],
+        }
+
+    except Exception as e:
+        logger.error(f"モデル一覧取得エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/health")
 async def health_check():
-    """スクリプト生成APIのヘルスチェック"""
-    return {"status": "healthy", "service": "scripts"}
+    """ヘルスチェック"""
+    return {"status": "healthy", "service": "comedy_script_generator"}

@@ -165,11 +165,8 @@ class GenericSectionGenerator:
 {format_instructions}
 """
 
-            # システムメッセージ
-            if self.mode == ScriptMode.FOOD:
-                system_message = "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"
-            else:  # COMEDY
-                system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
+            # システムメッセージ（Comedy専用）
+            system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
 
             # LLMを直接呼び出す
             messages = [

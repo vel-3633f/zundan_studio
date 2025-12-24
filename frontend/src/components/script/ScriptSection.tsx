@@ -5,11 +5,11 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
 import { scriptApi } from "@/api/scripts";
-import type { FoodScript, ComedyScript, ScriptMode } from "@/types";
+import type { ComedyScript, ScriptMode } from "@/types";
 
 interface ScriptSectionProps {
   mode: ScriptMode;
-  script: FoodScript | ComedyScript;
+  script: ComedyScript;
 }
 
 const ScriptSection = ({ mode, script }: ScriptSectionProps) => {
@@ -17,8 +17,7 @@ const ScriptSection = ({ mode, script }: ScriptSectionProps) => {
   const [savedFilePath, setSavedFilePath] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
   
-  const isFoodMode = mode === "food";
-  const comedyScript = !isFoodMode ? (script as ComedyScript) : null;
+  const comedyScript = script as ComedyScript;
 
   const handleDownload = () => {
     const dataStr = JSON.stringify(script, null, 2);
@@ -93,7 +92,7 @@ const ScriptSection = ({ mode, script }: ScriptSectionProps) => {
         </div>
 
         {/* お笑いモード専用情報 */}
-        {!isFoodMode && comedyScript && (
+        {comedyScript && (
           <div className="space-y-4">
             {/* 機嫌レベル */}
             <div className="p-4 bg-warning-50 dark:bg-warning-900/20 rounded-lg border border-warning-200 dark:border-warning-800">
