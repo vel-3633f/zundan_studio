@@ -48,7 +48,17 @@ class Paths:
     @staticmethod
     def get_project_root() -> str:
         """プロジェクトルートディレクトリを取得"""
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        current_file = os.path.abspath(__file__)
+        app_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+
+        if os.path.exists(os.path.join(app_dir, "outputs")):
+            return app_dir
+
+        parent_dir = os.path.dirname(app_dir)
+        if os.path.exists(os.path.join(parent_dir, "outputs")):
+            return parent_dir
+
+        return app_dir
 
     @staticmethod
     def get_assets_dir() -> str:

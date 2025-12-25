@@ -4,7 +4,7 @@
 AIは使わずに固定の内容を追加します。
 """
 
-from app.models.food_over import VideoSection, ConversationSegment
+from app.models.scripts.common import VideoSection, ConversationSegment
 
 
 def create_closing_section() -> VideoSection:

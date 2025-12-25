@@ -12,7 +12,7 @@ from app.services.audio_combiner import AudioCombiner
 from app.services.subtitle_generator import SubtitleGenerator
 from app.services.frame_generator import FrameGenerator
 from app.services.bgm_mixer import BGMMixer
-from app.models.food_over import VideoSection
+from app.models.scripts.common import VideoSection
 
 logger = logging.getLogger(__name__)
 

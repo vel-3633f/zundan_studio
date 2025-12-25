@@ -14,7 +14,7 @@ from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
 from app.config.resource_config.bgm_library import get_bgm_file_path, get_bgm_track
-from app.models.food_over import VideoSection
+from app.models.scripts.common import VideoSection
 
 logger = logging.getLogger(__name__)
 

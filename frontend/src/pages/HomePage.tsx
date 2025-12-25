@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   Video,
@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Trash2,
   User,
+  Upload,
 } from "lucide-react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -17,15 +18,23 @@ import ProgressBar from "@/components/ProgressBar";
 import Badge from "@/components/Badge";
 import IconButton from "@/components/IconButton";
 import { useVideoStore } from "@/stores/videoStore";
+import { videoApi } from "@/api/videos";
+import type { ConversationLine, VideoSection, ConversationSegment } from "@/types";
 
 const HomePage = () => {
   const [speaker, setSpeaker] = useState("zundamon");
   const [text, setText] = useState("");
+  const [jsonFiles, setJsonFiles] = useState<Array<{ filename: string; path: string }>>([]);
+  const [selectedJsonFile, setSelectedJsonFile] = useState<string>("");
+  const [isLoadingJsonFiles, setIsLoadingJsonFiles] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     conversations,
     addConversation,
     removeConversation,
+    setConversations,
+    setSections,
     isGenerating,
     progress,
     statusMessage,
@@ -60,16 +69,156 @@ const HomePage = () => {
     toast.success("セリフを削除しました");
   };
 
+  // 話者名の変換マップ
+  const speakerMap: Record<string, string> = {
+    "めたん": "metan",
+    "ずんだもん": "zundamon",
+    "つむぎ": "tsumugi",
+  };
+
+  // JSONデータを処理してvideoStoreに設定する共通関数
+  const processJsonData = (jsonData: any) => {
+    // JSON構造の検証
+    if (!jsonData.sections || !Array.isArray(jsonData.sections)) {
+      toast.error("無効なJSON形式です。sections配列が見つかりません。");
+      return false;
+    }
+
+    // セクション情報をVideoSection形式に変換
+    const videoSections: VideoSection[] = jsonData.sections.map(
+      (section: any) => ({
+        section_name: section.section_name || "",
+        section_key: section.section_key,
+        scene_background: section.scene_background || "",
+        bgm_id: section.bgm_id || "none",
+        bgm_volume: section.bgm_volume ?? 0,
+        segments: section.segments || [],
+      })
+    );
+
+    // 全セクションのsegmentsをフラット化してConversationLineに変換
+    const conversationLines: ConversationLine[] = [];
+    videoSections.forEach((section) => {
+      section.segments.forEach((segment: ConversationSegment) => {
+        // 話者名を変換
+        const speakerKey = speakerMap[segment.speaker] || segment.speaker;
+
+        conversationLines.push({
+          speaker: speakerKey,
+          text: segment.text,
+          text_for_voicevox: segment.text_for_voicevox,
+          expression: segment.expression || "normal",
+          background: section.scene_background,
+        });
+      });
+    });
+
+    if (conversationLines.length === 0) {
+      toast.error("会話データが見つかりませんでした。");
+      return false;
+    }
+
+    // videoStoreに設定
+    setConversations(conversationLines);
+    setSections(videoSections);
+
+    toast.success(`${conversationLines.length}件の会話を読み込みました`);
+    return true;
+  };
+
+  // JSONファイル一覧を取得
+  useEffect(() => {
+    const loadJsonFiles = async () => {
+      try {
+        setIsLoadingJsonFiles(true);
+        const files = await videoApi.listJsonFiles();
+        setJsonFiles(files);
+        if (files.length > 0 && !selectedJsonFile) {
+          setSelectedJsonFile(files[0].filename);
+        }
+      } catch (error) {
+        console.error("JSONファイル一覧取得エラー:", error);
+        toast.error("JSONファイル一覧の取得に失敗しました");
+      } finally {
+        setIsLoadingJsonFiles(false);
+      }
+    };
+
+    loadJsonFiles();
+  }, []);
+
+  // 選択されたJSONファイルから会話データを読み込む
+  const handleLoadSelectedJson = async () => {
+    if (!selectedJsonFile) {
+      toast.error("JSONファイルを選択してください");
+      return;
+    }
+
+    try {
+      const jsonData = await videoApi.getJsonFile(selectedJsonFile);
+      processJsonData(jsonData);
+    } catch (error: any) {
+      console.error("JSON読み込みエラー:", error);
+      if (error.response?.status === 404) {
+        toast.error("ファイルが見つかりませんでした。");
+      } else {
+        toast.error("ファイルの読み込みに失敗しました。");
+      }
+    }
+  };
+
+  // ファイルアップロード用（後方互換性のため保持）
+  const handleLoadJson = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // ファイル拡張子の確認
+    if (!file.name.endsWith(".json")) {
+      toast.error("JSONファイルを選択してください");
+      return;
+    }
+
+    try {
+      const fileContent = await file.text();
+      const jsonData = JSON.parse(fileContent);
+      processJsonData(jsonData);
+
+      // ファイル入力のリセット（同じファイルを再度選択できるように）
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("JSON読み込みエラー:", error);
+      if (error instanceof SyntaxError) {
+        toast.error("JSONファイルの形式が正しくありません。");
+      } else {
+        toast.error("ファイルの読み込みに失敗しました。");
+      }
+    }
+  };
+
+  const handleJsonLoadClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const speakerColors = {
     zundamon:
       "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700",
     metan:
       "bg-pink-100 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700",
+    tsumugi:
+      "bg-purple-100 dark:bg-purple-900/30 border-purple-300 dark:border-purple-700",
+    narrator:
+      "bg-gray-100 dark:bg-gray-800/30 border-gray-300 dark:border-gray-700",
   };
 
   const speakerTextColors = {
     zundamon: "text-green-700 dark:text-green-400",
     metan: "text-pink-700 dark:text-pink-400",
+    tsumugi: "text-purple-700 dark:text-purple-400",
+    narrator: "text-gray-700 dark:text-gray-400",
   };
 
   return (
@@ -85,6 +234,60 @@ const HomePage = () => {
 
       <Card icon={<Video className="h-6 w-6" />} title="会話設定">
         <div className="space-y-6">
+          {/* JSON読み込み */}
+          <div className="space-y-3">
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Select
+                  label="JSONファイルを選択"
+                  value={selectedJsonFile}
+                  onChange={(e) => setSelectedJsonFile(e.target.value)}
+                  disabled={isLoadingJsonFiles || jsonFiles.length === 0}
+                >
+                  <option value="">
+                    {isLoadingJsonFiles
+                      ? "読み込み中..."
+                      : jsonFiles.length === 0
+                      ? "JSONファイルが見つかりません"
+                      : "ファイルを選択してください"}
+                  </option>
+                  {jsonFiles.map((file) => (
+                    <option key={file.filename} value={file.filename}>
+                      {file.filename}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                onClick={handleLoadSelectedJson}
+                variant="outline"
+                disabled={!selectedJsonFile || isLoadingJsonFiles}
+                leftIcon={<Upload className="h-5 w-5" />}
+              >
+                読み込む
+              </Button>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              または
+            </div>
+            <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleLoadJson}
+                className="hidden"
+              />
+              <Button
+                onClick={handleJsonLoadClick}
+                variant="outline"
+                leftIcon={<Upload className="h-5 w-5" />}
+              >
+                ファイルから読み込む
+              </Button>
+            </div>
+          </div>
+
           {/* 会話入力 */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-1">
@@ -149,10 +352,18 @@ const HomePage = () => {
                     className={`text-sm font-semibold mb-1 ${
                       speakerTextColors[
                         conv.speaker as keyof typeof speakerTextColors
-                      ]
+                      ] || "text-gray-700 dark:text-gray-400"
                     }`}
                   >
-                    {conv.speaker === "zundamon" ? "ずんだもん" : "四国めたん"}
+                    {conv.speaker === "zundamon"
+                      ? "ずんだもん"
+                      : conv.speaker === "metan"
+                      ? "四国めたん"
+                      : conv.speaker === "tsumugi"
+                      ? "つむぎ"
+                      : conv.speaker === "narrator"
+                      ? "ナレーター"
+                      : conv.speaker}
                   </p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
                     {conv.text}

@@ -7,7 +7,7 @@ import os
 from app.tasks.celery_app import celery_app
 from app.services.video_generator import VideoGenerator
 from app.core.asset_generators.voice_generator import VoiceGenerator
-from app.models.food_over import VideoSection
+from app.models.scripts.common import VideoSection
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ def generate_video_task(
         # セクション情報の変換
         video_sections = None
         if sections:
-            from app.models.food_over import VideoSection
+            from app.models.scripts.common import VideoSection
             video_sections = [VideoSection(**section) for section in sections]
         
         # 動画生成

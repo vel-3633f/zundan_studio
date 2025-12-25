@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
-from app.models.food_over import VideoSection, StoryOutline, ConversationSegment
+from app.models.scripts.common import VideoSection, ConversationSegment
+
+# StoryOutlineは古いモデルで、現在は存在しないためAnyとして扱う
+StoryOutline = Any
 from app.config.resource_config.bgm_library import format_bgm_choices_for_prompt, get_section_bgm
 from app.utils_legacy.logger import get_logger
 

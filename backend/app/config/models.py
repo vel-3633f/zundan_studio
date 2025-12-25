@@ -48,3 +48,8 @@ def get_recommended_model_id() -> str:
         if model.get("recommended", False):
             return model["id"]
     return DEFAULT_MODEL_ID
+
+
+def get_all_models() -> List[Dict[str, Any]]:
+    """利用可能なすべてのモデル設定を取得する"""
+    return AVAILABLE_MODELS
