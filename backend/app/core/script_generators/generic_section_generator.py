@@ -9,25 +9,11 @@ from langchain_core.output_parsers import PydanticOutputParser
 
 from app.models.script_models import VideoSection, SectionDefinition, ScriptMode
 from app.config.resource_config.bgm_library import get_section_bgm
+from app.core.script_generators.section_context import SectionContext
 from app.core.script_generators.context.section_context_builder import build_context_text
 from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)
-
-
-@dataclass
-class SectionContext:
-    """セクション生成時のコンテキスト情報"""
-
-    mode: ScriptMode
-    section_definition: SectionDefinition
-    story_summary: str
-    reference_information: str
-    previous_sections: List[Dict[str, Any]]
-    # お笑いモード専用
-    character_moods: Optional[Dict[str, int]] = None
-    forced_ending_type: Optional[str] = None
-    is_final_section: bool = False
 
 
 class GenericSectionGenerator:

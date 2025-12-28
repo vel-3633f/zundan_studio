@@ -12,10 +12,8 @@ from app.models.script_models import (
     ComedyOutline,
     ComedyScript,
 )
-from app.core.script_generators.generic_section_generator import (
-    GenericSectionGenerator,
-    SectionContext,
-)
+from app.core.script_generators.generic_section_generator import GenericSectionGenerator
+from app.core.script_generators.section_context import SectionContext
 from .comedy_mood_generator import ComedyMoodGenerator
 from .comedy_title_generator import ComedyTitleGenerator
 from app.utils_legacy.logger import get_logger

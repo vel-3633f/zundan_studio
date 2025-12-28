@@ -2,7 +2,7 @@
 
 from typing import Dict, List, Any
 from app.models.script_models import ScriptMode
-from app.core.script_generators.generic_section_generator import SectionContext
+from app.core.script_generators.section_context import SectionContext
 
 
 def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
