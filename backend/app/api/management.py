@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 import logging
 import os
 
@@ -104,7 +104,6 @@ async def generate_background(request: BackgroundGenerateRequest):
         generator = BackgroundImageGenerator()
         output_path = generator.generate_background_image(request.name)
 
-        # 相対パスに変換（必要に応じて）
         from app.config import Paths
 
         backgrounds_dir = Paths.get_backgrounds_dir()
@@ -122,6 +121,77 @@ async def generate_background(request: BackgroundGenerateRequest):
     except Exception as e:
         logger.error(f"背景生成エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"背景生成に失敗しました: {str(e)}")
+
+
+class BackgroundGenerateFromJsonRequest(BaseModel):
+    """JSONファイルから背景生成リクエスト"""
+
+    filename: str = Field(..., description="JSONファイル名")
+
+
+class BackgroundGenerateFromJsonResponse(BaseModel):
+    """JSONファイルから背景生成レスポンス"""
+
+    success: bool
+    message: str
+    generated: Dict[str, str]
+    total: int
+    generated_count: int
+
+
+@router.post(
+    "/backgrounds/generate-from-json",
+    response_model=BackgroundGenerateFromJsonResponse,
+)
+async def generate_backgrounds_from_json(
+    request: BackgroundGenerateFromJsonRequest,
+):
+    """JSONファイルから背景画像を一括生成する"""
+    try:
+        from app.api.videos.videos_handlers import handle_get_json_file
+        from app.utils.json_utils import extract_background_names_from_json
+        from app.core.asset_generators.background_generator import (
+            BackgroundImageGenerator,
+        )
+
+        json_data = await handle_get_json_file(request.filename)
+        background_names = extract_background_names_from_json(json_data)
+
+        if not background_names:
+            return BackgroundGenerateFromJsonResponse(
+                success=True,
+                message="JSONファイルに背景画像の指定がありません",
+                generated={},
+                total=0,
+                generated_count=0,
+            )
+
+        generator = BackgroundImageGenerator()
+        generated = generator.generate_missing_backgrounds(background_names)
+
+        generated_count = len(generated)
+        total = len(background_names)
+
+        message = f"{generated_count}個の背景画像を生成しました（合計{total}個中）"
+        if generated_count < total:
+            skipped_count = total - generated_count
+            message += f"（{skipped_count}個は既に存在するためスキップ）"
+
+        return BackgroundGenerateFromJsonResponse(
+            success=True,
+            message=message,
+            generated=generated,
+            total=total,
+            generated_count=generated_count,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"JSONから背景生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"背景生成に失敗しました: {str(e)}"
+        )
 
 
 class Item(BaseModel):

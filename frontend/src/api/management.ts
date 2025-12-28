@@ -39,6 +39,25 @@ export const managementApi = {
       return response.data;
     },
 
+    generateFromJson: async (
+      filename: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+      generated: Record<string, string>;
+      total: number;
+      generated_count: number;
+    }> => {
+      const response = await apiClient.post<{
+        success: boolean;
+        message: string;
+        generated: Record<string, string>;
+        total: number;
+        generated_count: number;
+      }>("/management/backgrounds/generate-from-json", { filename });
+      return response.data;
+    },
+
     check: async (
       backgroundNames: string[]
     ): Promise<BackgroundCheckResponse> => {

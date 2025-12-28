@@ -13,7 +13,6 @@ export const useJsonLoader = () => {
   const { setConversations, setSections, setJsonScriptData } = useVideoStore();
 
   const processJson = async (jsonData: any) => {
-    // JSONデータを処理
     const success = processJsonData(
       jsonData,
       setConversations,
@@ -22,16 +21,13 @@ export const useJsonLoader = () => {
     );
 
     if (success) {
-      // 背景画像名を抽出して確認
       const backgroundNames = extractBackgroundNames(jsonData);
       if (backgroundNames.length > 0) {
         await checkBackgrounds(backgroundNames);
       } else {
-        // 背景画像が指定されていない場合は結果をクリア
         setBackgroundCheckResult(null);
       }
     } else {
-      // JSONの処理に失敗した場合は結果をクリア
       setBackgroundCheckResult(null);
     }
   };
@@ -44,8 +40,6 @@ export const useJsonLoader = () => {
       setBackgroundCheckResult(result);
     } catch (error: any) {
       console.error("背景画像確認エラー:", error);
-      // エラーが発生してもJSONの読み込みは成功しているので、エラーは表示しない
-      // エラー時は結果をnullにして、UIに表示しない
       setBackgroundCheckResult(null);
     } finally {
       setIsCheckingBackgrounds(false);
@@ -60,6 +54,7 @@ export const useJsonLoader = () => {
   const [backgroundCheckResult, setBackgroundCheckResult] =
     useState<BackgroundCheckResponse | null>(null);
   const [isCheckingBackgrounds, setIsCheckingBackgrounds] = useState(false);
+  const [isGeneratingBackgrounds, setIsGeneratingBackgrounds] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -130,6 +125,37 @@ export const useJsonLoader = () => {
     }
   };
 
+  const generateMissingBackgrounds = async (filename: string) => {
+    if (!filename || isGeneratingBackgrounds) {
+      return;
+    }
+
+    setIsGeneratingBackgrounds(true);
+    try {
+      const result = await managementApi.backgrounds.generateFromJson(filename);
+      if (result.success) {
+        toast.success(result.message);
+        if (backgroundCheckResult) {
+          const backgroundNames = extractBackgroundNames(
+            await videoApi.getJsonFile(filename)
+          );
+          await checkBackgrounds(backgroundNames);
+        }
+      } else {
+        toast.error(result.message || "背景画像の生成に失敗しました");
+      }
+    } catch (error: any) {
+      console.error("背景画像生成エラー:", error);
+      const errorMessage =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "背景画像の生成に失敗しました";
+      toast.error(errorMessage);
+    } finally {
+      setIsGeneratingBackgrounds(false);
+    }
+  };
+
   return {
     jsonFiles,
     selectedJsonFile,
@@ -140,6 +166,8 @@ export const useJsonLoader = () => {
     handleLoadJson,
     backgroundCheckResult,
     isCheckingBackgrounds,
+    isGeneratingBackgrounds,
+    generateMissingBackgrounds,
   };
 };
 

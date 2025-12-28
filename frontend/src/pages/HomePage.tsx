@@ -32,6 +32,8 @@ const HomePage = () => {
     handleLoadJson,
     backgroundCheckResult,
     isCheckingBackgrounds,
+    isGeneratingBackgrounds,
+    generateMissingBackgrounds,
   } = useJsonLoader();
 
   const { handleGenerate } = useVideoGeneration();
@@ -84,6 +86,12 @@ const HomePage = () => {
       <BackgroundCheckCard
         result={backgroundCheckResult}
         isLoading={isCheckingBackgrounds}
+        isGenerating={isGeneratingBackgrounds}
+        onGenerateMissing={
+          selectedJsonFile
+            ? () => generateMissingBackgrounds(selectedJsonFile)
+            : undefined
+        }
       />
 
       {jsonScriptData && <JsonMetadata jsonScriptData={jsonScriptData} />}
