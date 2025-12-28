@@ -11,7 +11,7 @@ from app.core.script_generators.generate_food_over import (
 )
 from app.config.models import get_model_config, get_default_model_config
 from app.config.content_config.closing_section import create_closing_section
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

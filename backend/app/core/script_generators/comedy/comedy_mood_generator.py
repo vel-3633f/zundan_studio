@@ -4,7 +4,7 @@ import random
 from typing import Dict
 
 from app.models.script_models import CharacterMood
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

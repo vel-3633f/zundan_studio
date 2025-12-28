@@ -90,6 +90,17 @@ class Paths:
         """フォントディレクトリを取得"""
         return os.path.join(Paths.get_assets_dir(), "fonts")
 
+    @staticmethod
+    def get_required_directories() -> list[str]:
+        """必要なディレクトリのリストを取得"""
+        base_dir = Paths.get_project_root()
+        return [
+            os.path.join(base_dir, "temp"),
+            os.path.join(base_dir, "outputs"),
+            os.path.join(base_dir, "assets", "zundamon"),
+            os.path.join(base_dir, "assets", "backgrounds"),
+        ]
+
 
 # グローバル設定インスタンス
 APP_CONFIG = AppConfig()

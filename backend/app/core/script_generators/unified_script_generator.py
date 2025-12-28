@@ -9,7 +9,7 @@ from app.models.script_models import (
 from app.core.script_generators.comedy import ComedyScriptGenerator
 from app.core.script_generators.generate_food_over import create_llm_instance
 from app.config.models import get_model_config, get_default_model_config
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

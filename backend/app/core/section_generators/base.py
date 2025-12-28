@@ -16,7 +16,7 @@ from app.core.section_generators.section_context_builder_legacy import (
     build_context_text,
     replace_outline_variables,
 )
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

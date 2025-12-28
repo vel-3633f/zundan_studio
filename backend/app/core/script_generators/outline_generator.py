@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
 from app.models.food_over import StoryOutline
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -11,7 +11,7 @@ from app.models.script_models import VideoSection, SectionDefinition, ScriptMode
 from app.config.resource_config.bgm_library import get_section_bgm
 from app.core.script_generators.section_context import SectionContext
 from app.core.script_generators.context.section_context_builder import build_context_text
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
