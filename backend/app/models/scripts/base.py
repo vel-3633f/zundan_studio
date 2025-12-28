@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 
 
 class ScriptMode(str, Enum):
-    FOOD = "food"
     COMEDY = "comedy"
 
 

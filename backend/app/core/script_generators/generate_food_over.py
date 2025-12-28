@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from typing import Dict, List, Any, Union
-from app.models.food_over import FoodOverconsumptionScript
 from app.config.app import TAVILY_SEARCH_RESULTS_COUNT
 from app.utils_legacy.logger import get_logger
 
@@ -111,7 +110,7 @@ def create_llm_instance(model: str, temperature: float, model_config: Dict[str, 
 
 def generate_food_overconsumption_script(
     food_name: str, model: str = None, temperature: float = None
-) -> Union[FoodOverconsumptionScript, Dict[str, Any]]:
+) -> Dict[str, Any]:
     """食べ物摂取過多動画脚本を生成する
 
     注: この関数は後方互換性のために残されています。

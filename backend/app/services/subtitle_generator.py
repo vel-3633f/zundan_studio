@@ -47,14 +47,12 @@ class SubtitleGenerator:
             # duration取得（キャッシュがあればそれを使用）
             if audio_durations and audio_path in audio_durations:
                 duration = audio_durations[audio_path]
-                logger.debug(f"Using cached duration for {audio_path}: {duration:.3f}s")
             elif os.path.exists(audio_path):
                 # フォールバック：AudioFileClipで読み込み
                 from moviepy import AudioFileClip
                 audio_clip = AudioFileClip(audio_path)
                 duration = audio_clip.duration
                 audio_clip.close()
-                logger.debug(f"Loaded duration for {audio_path}: {duration:.3f}s")
             else:
                 logger.warning(f"Audio file not found: {audio_path}")
                 continue

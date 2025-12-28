@@ -92,7 +92,6 @@ class AssetImageGenerator(ABC):
         for ext in extensions:
             path = os.path.join(self.output_dir, f"{image_name}{ext}")
             if os.path.exists(path):
-                logger.debug(f"Image exists: {path}")
                 return True
         return False
 
@@ -216,9 +215,6 @@ class AssetImageGenerator(ABC):
                 width=border_width,
             )
 
-        logger.debug(
-            f"Applied rounded corners: radius={radius}px, border={border_width}px, color={border_color}"
-        )
 
         return rounded_image
 

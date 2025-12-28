@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import type {
   ScriptMode,
-  FoodTitle,
-  FoodOutline,
-  FoodScript,
   ComedyTitle,
   ComedyOutline,
   ComedyScript,
@@ -34,16 +31,16 @@ interface ScriptState {
   recommendedModelId: string;
 
   // === 入力データ ===
-  inputText: string; // 食べ物名 or テーマ
+  inputText: string; // テーマ
   model: string;
   temperature: number;
 
   // === 生成データ ===
-  generatedTitle: FoodTitle | ComedyTitle | null;
-  generatedOutline: FoodOutline | ComedyOutline | null;
-  generatedScript: FoodScript | ComedyScript | null;
+  generatedTitle: ComedyTitle | null;
+  generatedOutline: ComedyOutline | null;
+  generatedScript: ComedyScript | null;
 
-  // === 参照情報（食べ物モードのみ） ===
+  // === 参照情報（後方互換性のため保持） ===
   referenceInfo: string;
   searchResults: Record<string, any>;
 
@@ -64,9 +61,9 @@ interface ScriptState {
   setDefaultModelId: (id: string) => void;
   setRecommendedModelId: (id: string) => void;
 
-  setGeneratedTitle: (title: FoodTitle | ComedyTitle | null) => void;
-  setGeneratedOutline: (outline: FoodOutline | ComedyOutline | null) => void;
-  setGeneratedScript: (script: FoodScript | ComedyScript | null) => void;
+  setGeneratedTitle: (title: ComedyTitle | null) => void;
+  setGeneratedOutline: (outline: ComedyOutline | null) => void;
+  setGeneratedScript: (script: ComedyScript | null) => void;
 
   setReferenceInfo: (info: string) => void;
   setSearchResults: (results: Record<string, any>) => void;

@@ -38,25 +38,9 @@ class GenericSectionGenerator:
             mode: 生成モード（FOOD or COMEDY）
         """
         self.mode = mode
-        self.common_rules_file = Path(f"app/prompts/{mode.value}/common_rules.md")
         self.section_prompt_file = Path(
             f"app/prompts/{mode.value}/section_generation.md"
         )
-
-    def load_common_rules(self) -> str:
-        """共通ルールを読み込む"""
-        try:
-            if not self.common_rules_file.exists():
-                raise FileNotFoundError(
-                    f"共通ルールファイルが見つかりません: {self.common_rules_file}"
-                )
-
-            with open(self.common_rules_file, "r", encoding="utf-8") as f:
-                return f.read().strip()
-
-        except Exception as e:
-            logger.error(f"共通ルール読み込みエラー: {str(e)}")
-            raise
 
     def load_section_prompt(self) -> str:
         """セクション生成プロンプトを読み込む"""
@@ -159,7 +143,6 @@ class GenericSectionGenerator:
         )
 
         try:
-            common_rules = self.load_common_rules()
             section_prompt_template = self.load_section_prompt()
             context_text = self.build_context_text(context)
 
@@ -168,10 +151,6 @@ class GenericSectionGenerator:
 
             # プロンプト構築
             full_prompt = f"""
-{common_rules}
-
----
-
 {section_prompt_template}
 
 ---
@@ -186,11 +165,8 @@ class GenericSectionGenerator:
 {format_instructions}
 """
 
-            # システムメッセージ
-            if self.mode == ScriptMode.FOOD:
-                system_message = "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"
-            else:  # COMEDY
-                system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
+            # システムメッセージ（Comedy専用）
+            system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
 
             # LLMを直接呼び出す
             messages = [
@@ -215,11 +191,11 @@ class GenericSectionGenerator:
                 f"BGM設定: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
             )
 
-            # 固定背景が指定されている場合は上書き
-            if context.section_definition.fixed_background:
-                section.scene_background = context.section_definition.fixed_background
+            # 背景が指定されている場合は上書き
+            if context.section_definition.background:
+                section.scene_background = context.section_definition.background
                 logger.info(
-                    f"背景を固定設定で上書き: {context.section_definition.fixed_background}"
+                    f"背景を設定で上書き: {context.section_definition.background}"
                 )
 
             segment_count = len(section.segments)

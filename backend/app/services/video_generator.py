@@ -4,7 +4,7 @@ import gc
 from typing import List, Dict, Optional
 from moviepy import VideoFileClip
 
-from config import Paths
+from app.config.app import Paths
 from app.core.processors.audio_processor import AudioProcessor
 from app.core.processors.video_processor import VideoProcessor
 from app.services.resource_manager import ResourceManager
@@ -12,7 +12,7 @@ from app.services.audio_combiner import AudioCombiner
 from app.services.subtitle_generator import SubtitleGenerator
 from app.services.frame_generator import FrameGenerator
 from app.services.bgm_mixer import BGMMixer
-from app.models.food_over import VideoSection
+from app.models.scripts.common import VideoSection
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,14 @@ logger = logging.getLogger(__name__)
 class VideoGenerator:
     def __init__(self):
         # 口パクデバッグ用: ログレベルを一時的にINFOに設定
-        for logger_name in ['src.services.audio_combiner', 'src.services.frame_generator',
-                           'src.core.video_processor', 'src.core.audio_processor',
-                           'src.services.bgm_mixer', 'config.bgm_library']:
+        for logger_name in [
+            "src.services.audio_combiner",
+            "src.services.frame_generator",
+            "src.core.video_processor",
+            "src.core.audio_processor",
+            "src.services.bgm_mixer",
+            "config.bgm_library",
+        ]:
             logging.getLogger(logger_name).setLevel(logging.INFO)
 
         self.audio_processor = AudioProcessor()
@@ -64,14 +69,13 @@ class VideoGenerator:
             ):
                 return None
 
-            combined_audio, audio_clips, audio_durations = self.audio_combiner.combine_audio_files(
-                audio_file_list
+            combined_audio, audio_clips, audio_durations = (
+                self.audio_combiner.combine_audio_files(audio_file_list)
             )
             if combined_audio is None:
                 return None
 
             if sections:
-                logger.info("BGMをミキシング中...")
                 section_durations = self._calculate_section_durations(
                     sections, audio_durations, audio_file_list
                 )
@@ -82,12 +86,12 @@ class VideoGenerator:
             actual_total_duration = combined_audio.duration
             total_frames = int(actual_total_duration * self.fps)
 
-            logger.info(
-                f"Audio duration: {actual_total_duration:.3f}s, Total frames: {total_frames} at {self.fps} FPS"
-            )
-
             subtitle_lines = self.subtitle_generator.generate_subtitles(
-                conversations, audio_file_list, backgrounds, enable_subtitles, audio_durations
+                conversations,
+                audio_file_list,
+                backgrounds,
+                enable_subtitles,
+                audio_durations,
             )
 
             segment_audio_intensities = self.audio_combiner.analyze_audio_segments(
@@ -119,7 +123,6 @@ class VideoGenerator:
             if not success:
                 return None
 
-            logger.info("Adding audio to video...")
             final_output_path = self._combine_video_with_audio(
                 temp_video_path, combined_audio, output_path
             )
@@ -156,14 +159,7 @@ class VideoGenerator:
         audio_duration = combined_audio.duration
         duration_diff = abs(video_duration - audio_duration)
 
-        logger.info(
-            f"Video duration: {video_duration:.3f}s, Audio duration: {audio_duration:.3f}s, Diff: {duration_diff:.3f}s"
-        )
-
         if duration_diff > 0.001:
-            logger.info(
-                f"Adjusting video duration from {video_duration:.3f}s to {audio_duration:.3f}s"
-            )
             video_clip = video_clip.with_duration(audio_duration)
 
         final_clip = video_clip.with_audio(combined_audio)
@@ -175,6 +171,8 @@ class VideoGenerator:
             temp_audiofile="temp-audio.m4a",
             remove_temp=True,
             ffmpeg_params=["-crf", "18", "-preset", "medium"],
+            verbose=False,
+            logger=None,
         )
 
         video_clip.close()
@@ -186,7 +184,10 @@ class VideoGenerator:
         return output_path
 
     def _calculate_section_durations(
-        self, sections: List[VideoSection], audio_durations: Dict[str, float], audio_file_list: List[str]
+        self,
+        sections: List[VideoSection],
+        audio_durations: Dict[str, float],
+        audio_file_list: List[str],
     ) -> List[float]:
         """各セクションの長さを計算
 
@@ -204,18 +205,16 @@ class VideoGenerator:
         for section in sections:
             segment_count = len(section.segments)
             # このセクションに属する音声ファイルのパスを取得
-            section_audio_files = audio_file_list[current_segment_index : current_segment_index + segment_count]
+            section_audio_files = audio_file_list[
+                current_segment_index : current_segment_index + segment_count
+            ]
             # このセクションに属する音声の長さを合計
             section_duration = sum(
-                audio_durations.get(audio_path, 0.0) for audio_path in section_audio_files
+                audio_durations.get(audio_path, 0.0)
+                for audio_path in section_audio_files
             )
             section_durations.append(section_duration)
             current_segment_index += segment_count
-
-        logger.info(
-            f"セクション長さ計算完了: {len(sections)}セクション, "
-            f"合計 {sum(section_durations):.2f}秒"
-        )
 
         return section_durations
 
@@ -223,28 +222,27 @@ class VideoGenerator:
         """メモリリソースのクリーンアップ"""
         try:
             # BGMキャッシュのクリア
-            if hasattr(self, 'bgm_mixer') and self.bgm_mixer:
+            if hasattr(self, "bgm_mixer") and self.bgm_mixer:
                 self.bgm_mixer.clear_cache()
 
-            if hasattr(self.video_processor, '_resize_cache'):
+            if hasattr(self.video_processor, "_resize_cache"):
                 cache_size = len(self.video_processor._resize_cache)
                 self.video_processor._resize_cache.clear()
-                logger.info(f"Cleared resize cache ({cache_size} entries)")
 
             try:
-                from app.core.processors.video_processor import _load_character_images_cached
+                from app.core.processors.video_processor import (
+                    _load_character_images_cached,
+                )
+
                 cache_info = _load_character_images_cached.cache_info()
                 _load_character_images_cached.cache_clear()
-                logger.info(f"Cleared LRU cache (hits: {cache_info.hits}, misses: {cache_info.misses}, size: {cache_info.currsize})")
             except Exception as e:
                 logger.warning(f"Failed to clear LRU cache: {e}")
 
-            if hasattr(self.video_processor, '_cached_font'):
+            if hasattr(self.video_processor, "_cached_font"):
                 self.video_processor._cached_font = None
-                logger.info("Cleared font cache")
 
             collected = gc.collect()
-            logger.info(f"Garbage collection: collected {collected} objects")
 
         except Exception as e:
             logger.error(f"Cleanup failed: {e}")

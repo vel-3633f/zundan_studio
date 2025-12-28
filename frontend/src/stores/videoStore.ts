@@ -24,6 +24,7 @@ interface VideoState {
   updateConversation: (index: number, conversation: ConversationLine) => void;
   removeConversation: (index: number) => void;
   clearConversations: () => void;
+  setConversations: (conversations: ConversationLine[]) => void;
 
   setEnableSubtitles: (enabled: boolean) => void;
   setConversationMode: (mode: string) => void;
@@ -69,6 +70,8 @@ export const useVideoStore = create<VideoState>((set) => ({
     })),
 
   clearConversations: () => set({ conversations: [] }),
+
+  setConversations: (conversations) => set({ conversations }),
 
   setEnableSubtitles: (enabled) => set({ enableSubtitles: enabled }),
 

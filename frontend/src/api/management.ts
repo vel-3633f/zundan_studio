@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { Background, Item, Food, FoodCreateRequest } from "@/types";
+import type { Background, Item } from "@/types";
 
 export const managementApi = {
   // Background Management
@@ -25,6 +25,14 @@ export const managementApi = {
       );
       return response.data;
     },
+
+    generate: async (name: string): Promise<{ success: boolean; message: string; path?: string }> => {
+      const response = await apiClient.post<{ success: boolean; message: string; path?: string }>(
+        "/management/backgrounds/generate",
+        { name }
+      );
+      return response.data;
+    },
   },
 
   // Item Management
@@ -47,23 +55,6 @@ export const managementApi = {
         }
       );
       return response.data;
-    },
-  },
-
-  // Food Management
-  foods: {
-    list: async (): Promise<Food[]> => {
-      const response = await apiClient.get<Food[]>("/management/foods");
-      return response.data;
-    },
-
-    create: async (data: FoodCreateRequest): Promise<Food> => {
-      const response = await apiClient.post<Food>("/management/foods", data);
-      return response.data;
-    },
-
-    delete: async (foodId: number): Promise<void> => {
-      await apiClient.delete(`/management/foods/${foodId}`);
     },
   },
 

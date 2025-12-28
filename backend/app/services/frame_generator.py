@@ -115,32 +115,6 @@ class FrameGenerator:
                                     )
                                 current_section_key = new_section_key
 
-                            # アイテム表示が許可されているセクションでのみアイテムを処理
-                            if current_section_key in ITEM_ALLOWED_SECTIONS:
-                                display_item_id = conv.get("display_item")
-
-                                if display_item_id is not None:
-                                    # "none" または空文字列の場合はアイテムを非表示
-                                    if display_item_id == "none" or display_item_id == "":
-                                        if current_item is not None:
-                                            logger.debug(
-                                                f"Item cleared at time={current_time:.3f}s"
-                                            )
-                                            current_item = None
-                                    # アイテムIDが指定されている場合
-                                    elif item_images and display_item_id in item_images:
-                                        current_item = item_images[display_item_id]
-                                        logger.debug(
-                                            f"Item switched to '{display_item_id}' at time={current_time:.3f}s"
-                                        )
-                                    # アイテムIDが指定されているが画像が見つからない場合
-                                    elif item_images is not None:
-                                        logger.warning(
-                                            f"Item image not found: '{display_item_id}' at time={current_time:.3f}s\n"
-                                            f"  → アイテム画像を assets/items/{display_item_id}.png として用意してください\n"
-                                            f"  → 命名規則: 3つの英単語をアンダースコアで区切る（例: steaming_hot_ramen）\n"
-                                            f"  → 実物のビジュアルを表現し、表や図は使用しないでください"
-                                        )
                             break
 
                 # フレーム合成（アイテム付き）
@@ -215,14 +189,6 @@ class FrameGenerator:
                             )
 
                         current_frame_idx = int(current_time * self.fps)
-                        # 1秒ごとまたは高い強度値のときにログ出力
-                        if current_frame_idx % self.fps == 0 or intensity > 0.5:
-                            logger.info(
-                                f"Frame {current_frame_idx} (time={current_time:.3f}s): "
-                                f"segment[{i}], local_time={local_time:.3f}s, "
-                                f"progress={frame_progress:.3f}, idx={exact_frame_index:.2f}, "
-                                f"intensity={intensity:.3f}"
-                            )
                     else:
                         intensity = 0
 
@@ -283,13 +249,6 @@ class FrameGenerator:
                                 "intensity": intensity,
                                 "expression": char_expression,
                             }
-                            # 話者の強度値を常に記録（重要な情報）
-                            current_frame_idx = int(current_time * self.fps)
-                            if current_frame_idx % (self.fps * 2) == 0:  # 2秒ごと
-                                logger.info(
-                                    f"Active speaker: {char_name}, time={current_time:.3f}s, "
-                                    f"intensity={intensity:.3f}, expression={char_expression}"
-                                )
                         else:
                             active_speakers[char_name] = {
                                 "intensity": 0,

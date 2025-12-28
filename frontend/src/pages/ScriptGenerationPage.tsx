@@ -14,9 +14,6 @@ import ScriptSection from "@/components/script/ScriptSection";
 import TestModeButton from "@/components/script/TestModeButton";
 import type { ComedyTitleBatch, ComedyTitle } from "@/types";
 import {
-  mockFoodTitle,
-  mockFoodOutline,
-  mockFoodScript,
   mockComedyTitle,
   mockComedyOutline,
   mockComedyScript,
@@ -126,11 +123,7 @@ const ScriptGenerationPage = () => {
   // === タイトル生成 ===
   const handleGenerateTitle = async () => {
     if (!inputText.trim()) {
-      toast.error(
-        mode === "food"
-          ? "食べ物の名前を入力してください"
-          : "漫談のテーマを入力してください"
-      );
+      toast.error("漫談のテーマを入力してください");
       return;
     }
 
@@ -331,54 +324,27 @@ const ScriptGenerationPage = () => {
   // === テストデータ読み込み ===
   const handleLoadTestData = (step: "title" | "outline" | "script") => {
     try {
-      if (mode === "food") {
-        // 食べ物モードのテストデータ
-        if (step === "title") {
-          setGeneratedTitle(mockFoodTitle);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("title");
-          toast.success("テストデータ（タイトル）を読み込みました");
-        } else if (step === "outline") {
-          setGeneratedTitle(mockFoodTitle);
-          setGeneratedOutline(mockFoodOutline);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("outline");
-          toast.success("テストデータ（アウトライン）を読み込みました");
-        } else if (step === "script") {
-          setGeneratedTitle(mockFoodTitle);
-          setGeneratedOutline(mockFoodOutline);
-          setGeneratedScript(mockFoodScript);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("script");
-          toast.success("テストデータ（完成台本）を読み込みました");
-        }
-      } else {
-        // お笑いモードのテストデータ
-        if (step === "title") {
-          setGeneratedTitle(mockComedyTitle);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("title");
-          toast.success("テストデータ（タイトル）を読み込みました");
-        } else if (step === "outline") {
-          setGeneratedTitle(mockComedyTitle);
-          setGeneratedOutline(mockComedyOutline);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("outline");
-          toast.success("テストデータ（アウトライン）を読み込みました");
-        } else if (step === "script") {
-          setGeneratedTitle(mockComedyTitle);
-          setGeneratedOutline(mockComedyOutline);
-          setGeneratedScript(mockComedyScript);
-          setReferenceInfo(mockReferenceInfo);
-          setSearchResults(mockSearchResults);
-          setCurrentStep("script");
-          toast.success("テストデータ（完成台本）を読み込みました");
-        }
+      if (step === "title") {
+        setGeneratedTitle(mockComedyTitle);
+        setReferenceInfo(mockReferenceInfo);
+        setSearchResults(mockSearchResults);
+        setCurrentStep("title");
+        toast.success("テストデータ（タイトル）を読み込みました");
+      } else if (step === "outline") {
+        setGeneratedTitle(mockComedyTitle);
+        setGeneratedOutline(mockComedyOutline);
+        setReferenceInfo(mockReferenceInfo);
+        setSearchResults(mockSearchResults);
+        setCurrentStep("outline");
+        toast.success("テストデータ（アウトライン）を読み込みました");
+      } else if (step === "script") {
+        setGeneratedTitle(mockComedyTitle);
+        setGeneratedOutline(mockComedyOutline);
+        setGeneratedScript(mockComedyScript);
+        setReferenceInfo(mockReferenceInfo);
+        setSearchResults(mockSearchResults);
+        setCurrentStep("script");
+        toast.success("テストデータ（完成台本）を読み込みました");
       }
     } catch (error) {
       console.error("Test data load error:", error);
@@ -396,9 +362,7 @@ const ScriptGenerationPage = () => {
               動画台本生成
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              {mode === "food"
-                ? "食べ物を食べすぎるとどうなるのか？をテーマに、ずんだもんたちが面白く解説する動画脚本を作成します"
-                : "ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します"}
+              ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します
             </p>
           </div>
           <TestModeButton
@@ -410,12 +374,8 @@ const ScriptGenerationPage = () => {
         </div>
       </div>
 
-      {/* モード選択 */}
-      <ModeSelector
-        mode={mode}
-        onModeChange={handleModeChange}
-        disabled={isGenerating}
-      />
+      {/* モード表示 */}
+      <ModeSelector />
 
       {/* ステップインジケーター */}
       <StepIndicator currentStep={currentStep} />
@@ -454,7 +414,6 @@ const ScriptGenerationPage = () => {
       {/* 単一タイトル候補選択（通常生成） */}
       {currentStep === "input" && singleTitleCandidate && (
         <SingleTitleCandidateSection
-          mode={mode}
           title={singleTitleCandidate.title}
           isGenerating={isGenerating}
           onSelectTitle={handleSelectSingleTitle}
@@ -466,7 +425,6 @@ const ScriptGenerationPage = () => {
       {/* タイトル確認 */}
       {currentStep === "title" && generatedTitle && (
         <TitleSection
-          mode={mode}
           title={generatedTitle}
           isGenerating={isGenerating}
           isApprovingLoading={isGenerating && generatingAction === "approve"}
@@ -479,7 +437,6 @@ const ScriptGenerationPage = () => {
       {/* アウトライン確認 */}
       {currentStep === "outline" && generatedOutline && (
         <OutlineSection
-          mode={mode}
           outline={generatedOutline}
           isGenerating={isGenerating}
           isApprovingLoading={isGenerating && generatingAction === "approve"}
@@ -502,7 +459,7 @@ const ScriptGenerationPage = () => {
 
       {/* 完成台本 */}
       {currentStep === "script" && generatedScript && !isGenerating && (
-        <ScriptSection mode={mode} script={generatedScript} />
+        <ScriptSection script={generatedScript} />
       )}
 
       {/* 最初からやり直すボタン */}

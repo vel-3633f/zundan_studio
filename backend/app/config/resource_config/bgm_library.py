@@ -99,6 +99,14 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         mood="uplifting",
         description="爽やかで前向きな雰囲気、夏の明るいイメージのBGM",
     ),
+    "oikakekko_kyahha": BGMTrack(
+        id="oikakekko_kyahha",
+        name="おいかけっこきゃっは",
+        file_path="assets/bgm/oikakekko_kyahha.mp3",
+        default_volume=0.05,
+        mood="playful",
+        description="遊び心のある楽しい雰囲気のBGM",
+    ),
 }
 
 
@@ -168,13 +176,20 @@ def get_section_bgm(section_type: str) -> Dict[str, any]:
     Returns:
         Dict[str, any]: BGM設定 (bgm_id と volume)、存在しない場合はデフォルト
     """
-    bgm_id = SECTION_BGM_MAP.get(section_type, "none")
+    # 全てのセクションでoikakekko_kyahhaを使用（音量0.05）
+    bgm_id = "oikakekko_kyahha"
     track = get_bgm_track(bgm_id)
 
     if track:
-        return {"bgm_id": bgm_id, "volume": track.default_volume}
+        return {"bgm_id": bgm_id, "volume": 0.05}
     else:
-        return {"bgm_id": "none", "volume": 0.0}
+        # フォールバック: 元のロジックを使用
+        bgm_id = SECTION_BGM_MAP.get(section_type, "none")
+        track = get_bgm_track(bgm_id)
+        if track:
+            return {"bgm_id": bgm_id, "volume": track.default_volume}
+        else:
+            return {"bgm_id": "none", "volume": 0.0}
 
 
 def format_bgm_choices_for_prompt() -> str:

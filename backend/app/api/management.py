@@ -40,6 +40,46 @@ async def upload_background(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class BackgroundGenerateRequest(BaseModel):
+    """背景生成リクエスト"""
+    name: str = Field(..., description="背景名", min_length=1, max_length=100)
+
+
+class BackgroundGenerateResponse(BaseModel):
+    """背景生成レスポンス"""
+    success: bool
+    message: str
+    path: Optional[str] = None
+
+
+@router.post("/backgrounds/generate", response_model=BackgroundGenerateResponse)
+async def generate_background(request: BackgroundGenerateRequest):
+    """背景画像を生成する"""
+    try:
+        from app.core.asset_generators.background_generator import BackgroundImageGenerator
+        
+        generator = BackgroundImageGenerator()
+        output_path = generator.generate_background_image(request.name)
+        
+        # 相対パスに変換（必要に応じて）
+        from app.config import Paths
+        backgrounds_dir = Paths.get_backgrounds_dir()
+        if output_path.startswith(backgrounds_dir):
+            relative_path = output_path[len(backgrounds_dir) + 1:]
+        else:
+            relative_path = output_path
+        
+        return BackgroundGenerateResponse(
+            success=True,
+            message=f"背景画像 '{request.name}' を生成しました",
+            path=relative_path
+        )
+        
+    except Exception as e:
+        logger.error(f"背景生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"背景生成に失敗しました: {str(e)}")
+
+
 class Item(BaseModel):
     """アイテム情報"""
     id: str
@@ -69,55 +109,6 @@ async def upload_item(file: UploadFile = File(...)):
         raise
     except Exception as e:
         logger.error(f"アイテムアップロードエラー: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-class Food(BaseModel):
-    """食べ物情報"""
-    id: int
-    name: str
-    created_at: Optional[str] = None
-
-
-class FoodCreateRequest(BaseModel):
-    """食べ物作成リクエスト"""
-    name: str = Field(..., description="食べ物名")
-
-
-@router.get("/foods", response_model=List[Food])
-async def list_foods():
-    """食べ物一覧を取得する"""
-    try:
-        return []
-        
-    except Exception as e:
-        logger.error(f"食べ物一覧取得エラー: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/foods", response_model=Food)
-async def create_food(request: FoodCreateRequest):
-    """食べ物を追加する"""
-    try:
-        raise HTTPException(status_code=501, detail="食べ物追加機能は実装中です")
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"食べ物追加エラー: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.delete("/foods/{food_id}")
-async def delete_food(food_id: int):
-    """食べ物を削除する"""
-    try:
-        raise HTTPException(status_code=501, detail="食べ物削除機能は実装中です")
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"食べ物削除エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

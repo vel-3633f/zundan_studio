@@ -103,6 +103,21 @@ export const scriptApi = {
     return response.data;
   },
 
+  /**
+   * 台本をサーバーに保存
+   */
+  saveScript: async (data: {
+    script: any;
+    filename?: string;
+  }): Promise<{
+    success: boolean;
+    file_path: string;
+    filename: string;
+  }> => {
+    const response = await apiClient.post("/scripts/save", data);
+    return response.data;
+  },
+
   // === 旧API（後方互換性のため保持） ===
   /**
    * アウトラインを生成（旧API）

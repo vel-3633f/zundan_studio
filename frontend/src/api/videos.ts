@@ -36,4 +36,22 @@ export const videoApi = {
     const response = await apiClient.get("/videos/health");
     return response.data;
   },
+
+  /**
+   * JSONファイル一覧を取得
+   */
+  listJsonFiles: async (): Promise<Array<{ filename: string; path: string }>> => {
+    const response = await apiClient.get<Array<{ filename: string; path: string }>>(
+      "/videos/json-files"
+    );
+    return response.data;
+  },
+
+  /**
+   * JSONファイルの内容を取得
+   */
+  getJsonFile: async (filename: string): Promise<any> => {
+    const response = await apiClient.get(`/videos/json-files/${encodeURIComponent(filename)}`);
+    return response.data;
+  },
 };

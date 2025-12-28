@@ -14,7 +14,7 @@ from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.fx import AudioFadeIn, AudioFadeOut
 
 from app.config.resource_config.bgm_library import get_bgm_file_path, get_bgm_track
-from app.models.food_over import VideoSection
+from app.models.scripts.common import VideoSection
 
 logger = logging.getLogger(__name__)
 
@@ -42,14 +42,12 @@ class BGMMixer:
         """
         # キャッシュチェックはロック外で実行（読み取りのみなので安全）
         if bgm_file_path in self._bgm_cache:
-            logger.debug(f"BGMキャッシュから取得: {bgm_file_path}")
             return self._bgm_cache[bgm_file_path]
 
         # ファイル読み込みは完全に直列化（ffmpegのデッドロック回避）
         with self._load_lock:
             # ダブルチェック: ロック取得中に他スレッドが読み込んだ可能性
             if bgm_file_path in self._bgm_cache:
-                logger.debug(f"BGMキャッシュから取得（ロック後）: {bgm_file_path}")
                 return self._bgm_cache[bgm_file_path]
 
             # リトライ機構
@@ -62,11 +60,9 @@ class BGMMixer:
                         # ガベージコレクションを実行してファイルハンドルを解放
                         gc.collect()
 
-                    logger.info(f"BGMファイルを読み込み中: {bgm_file_path}")
                     bgm_clip = AudioFileClip(bgm_file_path)
                     self._bgm_cache[bgm_file_path] = bgm_clip
                     self._active_clips.append(bgm_clip)
-                    logger.info(f"BGMファイル読み込み完了: {bgm_file_path}")
                     return bgm_clip
 
                 except Exception as e:
@@ -184,32 +180,22 @@ class BGMMixer:
             return voiceover_audio
 
         # 事前にすべての必要なBGMファイルを読み込む（デッドロック回避）
-        logger.info("=" * 60)
-        logger.info("BGM事前読み込み開始")
         unique_bgm_ids = set()
         for section in sections:
             if section.bgm_id and section.bgm_id != "none":
                 bgm_file_path = get_bgm_file_path(section.bgm_id)
                 if bgm_file_path and os.path.exists(bgm_file_path):
                     unique_bgm_ids.add(bgm_file_path)
-                    logger.info(f"  セクション BGM: {section.bgm_id} -> {os.path.basename(bgm_file_path)}")
-
-        logger.info(f"読み込む必要があるBGMファイル数: {len(unique_bgm_ids)}")
-        logger.info(f"現在のキャッシュ数: {len(self._bgm_cache)}")
 
         # すべてのBGMファイルを順次読み込み
         success_count = 0
         for idx, bgm_path in enumerate(unique_bgm_ids, 1):
-            logger.info(f"[{idx}/{len(unique_bgm_ids)}] BGMファイル読み込み開始: {os.path.basename(bgm_path)}")
             result = self._load_bgm_file(bgm_path)
             if result:
                 success_count += 1
             # ファイル間で少し待機（ffmpegプロセスのクリーンアップ時間を確保）
             if idx < len(unique_bgm_ids):
                 time.sleep(0.2)
-
-        logger.info(f"BGM事前読み込み完了: {success_count}/{len(unique_bgm_ids)}個成功")
-        logger.info("=" * 60)
 
         bgm_clips = []
         current_time = 0.0
@@ -227,11 +213,9 @@ class BGMMixer:
             current_time += duration
 
         if not bgm_clips:
-            logger.info("BGMが設定されていないため、ボイスオーバーのみ使用")
             return voiceover_audio
 
         # ボイスオーバーとBGMを合成
-        logger.info(f"BGMトラック数: {len(bgm_clips)}")
         composite_audio = CompositeAudioClip([voiceover_audio] + bgm_clips)
 
         return composite_audio
@@ -259,10 +243,8 @@ class BGMMixer:
                 if clip:
                     clip.close()
                     closed_count += 1
-                    logger.debug(f"BGMクリップをクローズ: {bgm_path}")
             except Exception as e:
                 logger.warning(f"BGMキャッシュのクリーンアップエラー ({bgm_path}): {e}")
 
         self._bgm_cache.clear()
         self._active_clips.clear()
-        logger.info(f"BGMキャッシュをクリアしました ({closed_count}個のクリップをクローズ)")

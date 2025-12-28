@@ -2,11 +2,10 @@ import { Sparkles, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
-import type { FoodTitle, ComedyTitle, ScriptMode } from "@/types";
+import type { ComedyTitle } from "@/types";
 
 interface SingleTitleCandidateSectionProps {
-  mode: ScriptMode;
-  title: FoodTitle | ComedyTitle;
+  title: ComedyTitle;
   isGenerating: boolean;
   onSelectTitle: () => void;
   onRegenerate: () => void;
@@ -14,16 +13,12 @@ interface SingleTitleCandidateSectionProps {
 }
 
 const SingleTitleCandidateSection = ({
-  mode,
   title,
   isGenerating,
   onSelectTitle,
   onRegenerate,
   onBack,
 }: SingleTitleCandidateSectionProps) => {
-  const isFoodMode = mode === "food";
-  const foodTitle = isFoodMode ? (title as FoodTitle) : null;
-  const comedyTitle = !isFoodMode ? (title as ComedyTitle) : null;
 
   return (
     <Card
@@ -47,53 +42,28 @@ const SingleTitleCandidateSection = ({
           </h2>
         </div>
 
-        {/* モード別の詳細情報 */}
+        {/* 詳細情報 */}
         <div className="grid gap-4">
-          {isFoodMode && foodTitle && (
-            <>
-              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  食べ物
-                </p>
-                <p className="text-base text-gray-900 dark:text-white">
-                  {foodTitle.food_name}
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  フック要素
-                </p>
-                <p className="text-base text-gray-900 dark:text-white">
-                  {foodTitle.hook_phrase}
-                </p>
-              </div>
-            </>
-          )}
-
-          {!isFoodMode && comedyTitle && (
-            <>
-              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  テーマ
-                </p>
-                <p className="text-base text-gray-900 dark:text-white">
-                  {comedyTitle.theme}
-                </p>
-              </div>
-              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-                  煽り要素
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {comedyTitle.clickbait_elements.map((element, index) => (
-                    <Badge key={index} variant="warning">
-                      {element}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              テーマ
+            </p>
+            <p className="text-base text-gray-900 dark:text-white">
+              {title.theme}
+            </p>
+          </div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+              煽り要素
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {title.clickbait_elements.map((element, index) => (
+                <Badge key={index} variant="warning">
+                  {element}
+                </Badge>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* アクションボタン */}
