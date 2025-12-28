@@ -199,7 +199,9 @@ class ComedyScriptGenerator:
             logger.error(error_msg, exc_info=True)
             raise
 
-    def generate_title_batch(self, llm: Any, progress_callback: Optional[Callable[[str], None]] = None):
+    def generate_title_batch(
+        self, llm: Any, progress_callback: Optional[Callable[[str], None]] = None
+    ):
         """ランダムにタイトルを20-30個量産（後方互換性のため）"""
         return self.title_generator.generate_title_batch(llm, progress_callback)
 
