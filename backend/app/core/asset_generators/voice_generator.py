@@ -162,12 +162,37 @@ class VoiceGenerator:
             characters = Characters.get_all()
             char_config = characters.get(speaker)
 
-            # 音声パラメータを決定（グローバル設定があればそれを優先、なければキャラクター個別設定）
-            final_speed = speed if speed is not None else (char_config.default_speed if char_config else 1.0)
-            final_pitch = pitch if pitch is not None else (char_config.default_pitch if char_config else 0.0)
-            final_intonation = intonation if intonation is not None else (char_config.default_intonation if char_config else 1.0)
+            # 表情を取得（デフォルトはnormal）
+            expression = conv.get("expression", "normal")
 
-            logger.info(f"Speaker: {speaker}, Final params - Speed: {final_speed}, Pitch: {final_pitch}, Intonation: {final_intonation}")
+            # 音声パラメータを決定（優先順位: 個別指定 > 表情ベース > キャラデフォルト > グローバル）
+            # Speed
+            if conv.get("voice_speed") is not None:
+                final_speed = conv.get("voice_speed")
+            elif char_config and expression in char_config.expression_voice_map:
+                final_speed = char_config.expression_voice_map[expression].speed
+            elif char_config:
+                final_speed = char_config.default_speed
+            else:
+                final_speed = speed if speed is not None else 1.0
+
+            # Pitch
+            if conv.get("voice_pitch") is not None:
+                final_pitch = conv.get("voice_pitch")
+            elif char_config and expression in char_config.expression_voice_map:
+                final_pitch = char_config.expression_voice_map[expression].pitch
+            elif char_config:
+                final_pitch = char_config.default_pitch
+            else:
+                final_pitch = pitch if pitch is not None else 0.0
+
+            # Intonation
+            if char_config and expression in char_config.expression_voice_map:
+                final_intonation = char_config.expression_voice_map[expression].intonation
+            elif char_config:
+                final_intonation = char_config.default_intonation
+            else:
+                final_intonation = intonation if intonation is not None else 1.0
 
             # 出力ファイル名（会話順序を含む）
             audio_filename = f"conv_{i:03d}_{speaker}.wav"

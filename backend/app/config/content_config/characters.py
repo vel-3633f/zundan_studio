@@ -2,8 +2,8 @@
 キャラクター + 表情設定
 """
 
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -14,6 +14,60 @@ class ExpressionConfig:
     display_name: str
     emoji: str
     description: str = ""
+
+
+@dataclass
+class ExpressionVoiceConfig:
+    speed: float
+    pitch: float
+    intonation: float = 1.0
+
+
+ZUNDAMON_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "excited": ExpressionVoiceConfig(speed=1.25, pitch=0.03, intonation=1.3),
+    "angry": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.3),
+    "happy": ExpressionVoiceConfig(speed=1.25, pitch=0.03, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.03, intonation=1.3),
+    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.2),
+    "sad": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
+}
+
+
+METAN_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "excited": ExpressionVoiceConfig(speed=1.25, pitch=0.03, intonation=1.3),
+    "angry": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.25, pitch=0.01, intonation=1.2),
+    "happy": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.2),
+    "thinking": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
+}
+
+
+TSUMUGI_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "excited": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.3),
+    "angry": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.2),
+    "happy": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.3),
+    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+}
+
+
+NARRATOR_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "normal": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.2),
+    "excited": ExpressionVoiceConfig(speed=1.25, pitch=0.05, intonation=1.4),
+    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+}
 
 
 @dataclass
@@ -33,6 +87,7 @@ class CharacterConfig:
     default_speed: float = 1.0
     default_pitch: float = 0.0
     default_intonation: float = 1.0
+    expression_voice_map: Dict[str, ExpressionVoiceConfig] = field(default_factory=dict)
 
 
 class Characters:
@@ -42,7 +97,7 @@ class Characters:
         name="zundamon",
         speaker_id=3,
         position="right",
-        subtitle_color=(34, 139, 34),  # 緑
+        subtitle_color=(34, 139, 34),
         size_ratio=1.5,
         x_offset_ratio=0.78,
         y_offset_ratio=0.05,
@@ -51,14 +106,15 @@ class Characters:
         display_position="right",
         default_speed=1.2,
         default_pitch=0.0,
-        default_intonation=1.5,  # 抑揚を強めに
+        default_intonation=1.5,
+        expression_voice_map=ZUNDAMON_EXPRESSION_VOICE_MAP,
     )
 
     METAN = CharacterConfig(
         name="metan",
         speaker_id=2,
         position="left",
-        subtitle_color=(255, 105, 180),  # ピンク
+        subtitle_color=(255, 105, 180),
         size_ratio=1.5,
         x_offset_ratio=0.25,
         y_offset_ratio=0.2,
@@ -68,6 +124,7 @@ class Characters:
         default_speed=1.0,
         default_pitch=0.0,
         default_intonation=1.2,
+        expression_voice_map=METAN_EXPRESSION_VOICE_MAP,
     )
 
     TSUMUGI = CharacterConfig(
@@ -84,22 +141,24 @@ class Characters:
         default_speed=1,
         default_pitch=0.0,
         default_intonation=1.2,
+        expression_voice_map=TSUMUGI_EXPRESSION_VOICE_MAP,
     )
 
     NARRATOR = CharacterConfig(
         name="narrator",
-        speaker_id=13,  # VOICEVOXナレーション用
-        position="narrator",  # ナレーター専用ポジション
-        subtitle_color=(100, 100, 100),  # ダークグレー
-        size_ratio=0.0,  # キャラクター画像は表示しない
+        speaker_id=13,
+        position="narrator",
+        subtitle_color=(100, 100, 100),
+        size_ratio=0.0,
         x_offset_ratio=0.5,
         y_offset_ratio=0.5,
         display_name="ナレーター",
         emoji="🎙️",
         display_position="ナレーション",
-        default_speed=1,  # 落ち着いた感じで遅め
+        default_speed=1,
         default_pitch=0.0,
-        default_intonation=1,  # 抑揚は控えめ
+        default_intonation=1,
+        expression_voice_map=NARRATOR_EXPRESSION_VOICE_MAP,
     )
 
     @classmethod
@@ -173,7 +232,6 @@ class Expressions:
     SICK = ExpressionConfig(
         name="sick", display_name="体調不良", emoji="🤢", description="具合が悪い表情"
     )
-
 
     @classmethod
     def get_all(cls) -> Dict[str, ExpressionConfig]:

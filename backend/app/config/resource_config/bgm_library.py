@@ -1,8 +1,3 @@
-"""BGM管理モジュール
-
-セクションごとに使用できるBGMを管理します。
-"""
-
 from dataclasses import dataclass
 from typing import Dict, Optional
 from pathlib import Path
@@ -102,7 +97,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
     "oikakekko_kyahha": BGMTrack(
         id="oikakekko_kyahha",
         name="おいかけっこきゃっは",
-        file_path="assets/bgm/oikakekko_kyahha.mp3",
+        file_path="assets/bgm/追いかけっこキャッハー.mp3",
         default_volume=0.05,
         mood="playful",
         description="遊び心のある楽しい雰囲気のBGM",
