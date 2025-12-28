@@ -12,7 +12,6 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:5173"],
@@ -22,19 +21,16 @@ app.add_middleware(
 )
 
 
-# Health check endpoint
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "zundan-studio-api"}
 
 
-# Root endpoint
 @app.get("/")
 async def root():
     return {"message": "Zundan Studio API", "version": "2.0.0", "docs": "/docs"}
 
 
-# Mount static files for outputs
 outputs_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "outputs"
 )
@@ -46,12 +42,9 @@ if os.path.exists(outputs_dir):
 else:
     logger.warning(f"Outputs directory not found: {outputs_dir}")
 
-# Mount static files for assets
-# Docker環境では /app/assets にマウントされている
 assets_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets"
 )
-# 絶対パスに変換
 assets_dir = os.path.abspath(assets_dir)
 
 if os.path.exists(assets_dir):
@@ -64,12 +57,10 @@ if os.path.exists(assets_dir):
         if bg_files:
             logger.info(f"Sample background files: {bg_files[:5]}")
 
-    # StaticFilesでhtml=Falseを指定（HTMLファイルとして扱わない）
     app.mount("/assets", StaticFiles(directory=assets_dir, html=False), name="assets")
     logger.info(f"Mounted assets directory: {assets_dir} at /assets")
 else:
     logger.warning(f"Assets directory not found: {assets_dir}")
-
 # Import and include routers
 from app.api import videos, scripts, voices, management, websocket
 
