@@ -4,9 +4,12 @@ from typing import List, Dict, Optional, Any
 import logging
 import os
 from pathlib import Path
+from celery.result import AsyncResult
 
 from app.models.scripts.common import VideoSection
 from app.config.app import Paths
+from app.tasks.video_tasks import generate_video_task
+from app.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +70,31 @@ async def generate_video(request: VideoGenerationRequest):
     try:
         logger.info(f"動画生成リクエスト: {len(request.conversations)}会話")
 
+        # リクエストデータをDict形式に変換
+        conversations_dict = [conv.model_dump() for conv in request.conversations]
+        
+        # セクション情報をDict形式に変換
+        sections_dict = None
+        if request.sections:
+            sections_dict = [section.model_dump() for section in request.sections]
+
+        # Celeryタスクを呼び出し
+        task = generate_video_task.delay(
+            conversations=conversations_dict,
+            enable_subtitles=request.enable_subtitles,
+            conversation_mode=request.conversation_mode,
+            sections=sections_dict,
+            speed=request.speed,
+            pitch=request.pitch,
+            intonation=request.intonation
+        )
+
+        logger.info(f"動画生成タスク開始: task_id={task.id}")
+
         return VideoGenerationResponse(
-            task_id="temp-task-id",
+            task_id=task.id,
             status="pending",
-            message="動画生成機能は実装中です（Celeryタスク統合待ち）",
+            message="動画生成を開始しました",
         )
 
     except Exception as e:
@@ -86,12 +110,53 @@ async def get_video_status(task_id: str):
     - **task_id**: タスクID
     """
     try:
-        return VideoStatusResponse(
-            task_id=task_id,
-            status="pending",
-            progress=0.0,
-            message="ステータス取得機能は実装中です（Celeryタスク統合待ち）",
-        )
+        # Celeryタスクの結果を取得
+        task_result = AsyncResult(task_id, app=celery_app)
+
+        # タスクの状態に応じてレスポンスを構築
+        if task_result.state == "PENDING":
+            response = VideoStatusResponse(
+                task_id=task_id,
+                status="pending",
+                progress=0.0,
+                message="タスクは待機中です",
+            )
+        elif task_result.state == "PROGRESS":
+            info = task_result.info or {}
+            response = VideoStatusResponse(
+                task_id=task_id,
+                status="processing",
+                progress=info.get("progress", 0.0),
+                message=info.get("message", "処理中..."),
+            )
+        elif task_result.state == "SUCCESS":
+            result = task_result.result or {}
+            response = VideoStatusResponse(
+                task_id=task_id,
+                status="completed",
+                progress=1.0,
+                message=result.get("message", "完了しました"),
+                result=result,
+            )
+        elif task_result.state == "FAILURE":
+            info = task_result.info or {}
+            error_msg = str(info.get("error", task_result.info)) if isinstance(task_result.info, dict) else str(task_result.info)
+            response = VideoStatusResponse(
+                task_id=task_id,
+                status="failed",
+                progress=0.0,
+                message=info.get("message", "タスクが失敗しました") if isinstance(info, dict) else "タスクが失敗しました",
+                error=error_msg,
+            )
+        else:
+            response = VideoStatusResponse(
+                task_id=task_id,
+                status=task_result.state.lower(),
+                progress=0.0,
+                message=f"状態: {task_result.state}",
+            )
+
+        return response
 
     except Exception as e:
         logger.error(f"ステータス取得エラー: {str(e)}", exc_info=True)

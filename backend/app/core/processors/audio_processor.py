@@ -56,7 +56,6 @@ class AudioProcessor:
                 try:
                     rms_resampled = signal.resample(rms, target_frames)
                     rms = rms_resampled
-                    logger.debug(f"Resampled RMS from {len(rms)} to {target_frames} frames")
                 except Exception as resample_error:
                     logger.warning(f"Resampling failed, using interpolation: {resample_error}")
                     # フォールバック：線形補間
@@ -72,7 +71,6 @@ class AudioProcessor:
                 logger.warning(f"RMS max is zero for: {audio_path}")
                 rms = np.zeros_like(rms)
 
-            logger.debug(f"Audio analysis: {audio_path}, duration: {actual_duration:.3f}s, frames: {len(rms)}")
             return rms.tolist(), actual_duration
 
         except Exception as e:

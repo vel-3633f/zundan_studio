@@ -24,4 +24,5 @@ celery_app.conf.update(
 )
 
 # タスクの自動検出
+# app.tasksパッケージ内のすべてのタスクを自動検出
 celery_app.autodiscover_tasks(['app.tasks'])

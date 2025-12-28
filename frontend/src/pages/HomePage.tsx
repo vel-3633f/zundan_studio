@@ -19,6 +19,7 @@ import Badge from "@/components/Badge";
 import IconButton from "@/components/IconButton";
 import { useVideoStore } from "@/stores/videoStore";
 import { videoApi } from "@/api/videos";
+import { createWebSocketClient, type WebSocketClient } from "@/api/websocket";
 import type { ConversationLine, VideoSection, ConversationSegment } from "@/types";
 
 const HomePage = () => {
@@ -28,6 +29,7 @@ const HomePage = () => {
   const [selectedJsonFile, setSelectedJsonFile] = useState<string>("");
   const [isLoadingJsonFiles, setIsLoadingJsonFiles] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wsClientRef = useRef<WebSocketClient | null>(null);
 
   const {
     conversations,
@@ -39,6 +41,15 @@ const HomePage = () => {
     progress,
     statusMessage,
     generatedVideoPath,
+    enableSubtitles,
+    conversationMode,
+    sections,
+    setGenerating,
+    setTaskId,
+    setProgress,
+    setStatusMessage,
+    setGeneratedVideoPath,
+    reset,
   } = useVideoStore();
 
   const handleAddConversation = () => {
@@ -59,9 +70,82 @@ const HomePage = () => {
       toast.error("セリフを追加してください");
       return;
     }
-    // TODO: 動画生成APIを呼び出す
-    toast.success("動画生成を開始します");
-    console.log("Generate video with conversations:", conversations);
+
+    try {
+      // 既存のWebSocket接続を切断
+      if (wsClientRef.current) {
+        wsClientRef.current.disconnect();
+        wsClientRef.current = null;
+      }
+
+      // 状態をリセット
+      reset();
+      setGenerating(true);
+      setProgress(0);
+      setStatusMessage("動画生成を開始しています...");
+
+      // 動画生成APIを呼び出す
+      const response = await videoApi.generate({
+        conversations,
+        enable_subtitles: enableSubtitles,
+        conversation_mode: conversationMode,
+        sections: sections || undefined,
+      });
+
+      // タスクIDを保存
+      setTaskId(response.task_id);
+      setStatusMessage("動画生成タスクを開始しました");
+
+      // WebSocketクライアントを作成して接続
+      const wsClient = createWebSocketClient(
+        response.task_id,
+        (data) => {
+          // 進捗更新
+          setProgress(data.progress);
+          if (data.message) {
+            setStatusMessage(data.message);
+          }
+
+          // 完了時の処理
+          if (data.status === "completed") {
+            setGenerating(false);
+            if (data.result?.video_path) {
+              setGeneratedVideoPath(data.result.video_path);
+              toast.success("動画生成が完了しました！");
+            } else {
+              toast.error("動画パスが取得できませんでした");
+            }
+          }
+
+          // 失敗時の処理
+          if (data.status === "failed") {
+            setGenerating(false);
+            const errorMsg = data.error || "動画生成に失敗しました";
+            toast.error(errorMsg);
+            setStatusMessage(`エラー: ${errorMsg}`);
+          }
+        },
+        (error) => {
+          console.error("WebSocket error:", error);
+          toast.error("進捗取得中にエラーが発生しました");
+        },
+        () => {
+          console.log("WebSocket disconnected");
+        }
+      );
+
+      wsClientRef.current = wsClient;
+      wsClient.connect();
+
+      toast.success("動画生成を開始しました");
+    } catch (error: any) {
+      console.error("動画生成エラー:", error);
+      setGenerating(false);
+      const errorMsg =
+        error.response?.data?.detail || "動画生成の開始に失敗しました";
+      toast.error(errorMsg);
+      setStatusMessage(`エラー: ${errorMsg}`);
+    }
   };
 
   const handleRemove = (index: number) => {
@@ -145,6 +229,16 @@ const HomePage = () => {
     };
 
     loadJsonFiles();
+  }, []);
+
+  // コンポーネントのアンマウント時にWebSocket接続を切断
+  useEffect(() => {
+    return () => {
+      if (wsClientRef.current) {
+        wsClientRef.current.disconnect();
+        wsClientRef.current = null;
+      }
+    };
   }, []);
 
   // 選択されたJSONファイルから会話データを読み込む

@@ -62,7 +62,7 @@ async def generate_background(request: BackgroundGenerateRequest):
         output_path = generator.generate_background_image(request.name)
         
         # 相対パスに変換（必要に応じて）
-        from config import Paths
+        from app.config import Paths
         backgrounds_dir = Paths.get_backgrounds_dir()
         if output_path.startswith(backgrounds_dir):
             relative_path = output_path[len(backgrounds_dir) + 1:]

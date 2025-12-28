@@ -4,7 +4,7 @@ import os
 from typing import List, Dict, Optional
 from pathlib import Path
 
-from config import Paths
+from app.config import Paths
 from app.utils_legacy.logger import get_logger
 from app.utils_legacy.llm_factory import create_bedrock_llm
 from app.config.models import get_default_model_config
@@ -82,7 +82,6 @@ class BackgroundImageGenerator:
         for ext in extensions:
             path = os.path.join(self.backgrounds_dir, f"{bg_name}{ext}")
             if os.path.exists(path):
-                logger.debug(f"Background exists: {path}")
                 return True
         return False
 

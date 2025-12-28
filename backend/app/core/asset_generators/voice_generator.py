@@ -3,7 +3,7 @@ import json
 import os
 import logging
 from typing import Dict, Any, Optional, List
-from config import Characters
+from app.config import Characters
 
 logger = logging.getLogger(__name__)
 

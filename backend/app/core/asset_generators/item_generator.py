@@ -4,7 +4,7 @@ import os
 from typing import List, Dict, Optional
 from pathlib import Path
 
-from config import Paths
+from app.config import Paths
 from app.core.asset_generators.asset_generator_base import AssetImageGenerator
 from app.utils_legacy.logger import get_logger
 
