@@ -16,8 +16,8 @@ from app.core.script_generators.generic_section_generator import (
     GenericSectionGenerator,
     SectionContext,
 )
-from app.core.script_generators.comedy_mood_generator import ComedyMoodGenerator
-from app.core.script_generators.comedy_title_generator import ComedyTitleGenerator
+from .comedy_mood_generator import ComedyMoodGenerator
+from .comedy_title_generator import ComedyTitleGenerator
 from app.utils_legacy.logger import get_logger
 
 logger = get_logger(__name__)

@@ -6,7 +6,7 @@ from app.models.script_models import (
     ComedyOutline,
     ComedyScript,
 )
-from app.core.script_generators.comedy_script_generator import ComedyScriptGenerator
+from app.core.script_generators.comedy import ComedyScriptGenerator
 from app.core.script_generators.generate_food_over import create_llm_instance
 from app.config.models import get_model_config, get_default_model_config
 from app.utils_legacy.logger import get_logger

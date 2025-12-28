@@ -10,9 +10,9 @@ from app.core.processors.video_processor import VideoProcessor
 from app.services.resource_manager import ResourceManager
 from app.services.audio_combiner import AudioCombiner
 from app.services.subtitle_generator import SubtitleGenerator
-from app.services.frame_generator import FrameGenerator
+from app.services.video.frame_generator import FrameGenerator
 from app.services.bgm_mixer import BGMMixer
-from app.services.video_generator_utils import (
+from app.services.video.video_generator_utils import (
     combine_video_with_audio,
     calculate_section_durations,
 )
@@ -165,7 +165,7 @@ class VideoGenerator:
                 self.video_processor._resize_cache.clear()
 
             try:
-                from app.core.processors.video_processor import (
+                from app.core.processors.video_processor.video_processor_image_loader import (
                     _load_character_images_cached,
                 )
 

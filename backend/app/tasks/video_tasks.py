@@ -5,7 +5,7 @@ import logging
 import os
 
 from app.tasks.celery_app import celery_app
-from app.services.video_generator import VideoGenerator
+from app.services.video.video_generator import VideoGenerator
 from app.core.asset_generators.voice_generator import VoiceGenerator
 from app.models.scripts.common import VideoSection
 

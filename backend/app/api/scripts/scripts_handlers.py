@@ -142,7 +142,7 @@ async def handle_generate_comedy_titles_batch() -> ComedyTitleBatch:
     try:
         logger.info("お笑いタイトル量産リクエスト")
 
-        from app.core.script_generators.comedy_script_generator import ComedyScriptGenerator
+        from app.core.script_generators.comedy import ComedyScriptGenerator
         from app.core.script_generators.generate_food_over import create_llm_instance
         from app.config.models import get_default_model_config
 
