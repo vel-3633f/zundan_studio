@@ -9,17 +9,7 @@ def apply_rounded_corners(
     border_width: int = 20,
     border_color: tuple = (200, 200, 200),
 ) -> Image.Image:
-    """画像に角丸と枠線を適用
-
-    Args:
-        image: 元画像（PIL Image）
-        radius: 角の丸みの半径（ピクセル）
-        border_width: 枠線の太さ（ピクセル）
-        border_color: 枠線の色（RGB）
-
-    Returns:
-        Image.Image: 加工後の画像
-    """
+    """画像に角丸と枠線を適用する"""
     # 元画像のサイズを取得
     width, height = image.size
 

@@ -44,15 +44,7 @@ class ComedyTitleGenerator:
         llm: Any,
         progress_callback: Optional[Callable[[str], None]] = None,
     ) -> ComedyTitleBatch:
-        """ランダムにタイトルを20-30個量産
-
-        Args:
-            llm: LLMインスタンス
-            progress_callback: 進捗通知用コールバック関数
-
-        Returns:
-            ComedyTitleBatch: 生成されたタイトル候補リスト（20-30個）
-        """
+        """ランダムにタイトルを20-30個量産する"""
         logger.info("お笑いモード タイトル量産開始")
 
         try:
@@ -101,20 +93,7 @@ class ComedyTitleGenerator:
         llm: Any,
         progress_callback: Optional[Callable[[str], None]] = None,
     ) -> ComedyTitle:
-        """テーマからバカバカしいタイトルを生成
-
-        注意: themeパラメータは互換性のために残していますが、
-        実際にはtitle_batch_generationを使ってランダム生成し、
-        最初の候補を返します。
-
-        Args:
-            theme: 漫談のテーマ（使用されません）
-            llm: LLMインスタンス
-            progress_callback: 進捗通知用コールバック関数
-
-        Returns:
-            ComedyTitle: 生成されたタイトル
-        """
+        """テーマからバカバカしいタイトルを生成する（バッチ生成から1つ選択）"""
         logger.info(f"お笑いモード タイトル生成開始（バッチ生成から1つ選択）")
 
         try:

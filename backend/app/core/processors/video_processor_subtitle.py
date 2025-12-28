@@ -17,15 +17,7 @@ class SubtitleMixin:
     """字幕描画機能を提供するMixin"""
 
     def _split_text_into_lines(self, text: str, max_chars_per_line: int) -> List[str]:
-        """budouxを使って自然な位置でテキストを複数行に分割
-
-        Args:
-            text: 分割するテキスト
-            max_chars_per_line: 1行あたりの最大文字数
-
-        Returns:
-            分割されたテキストの行リスト
-        """
+        """budouxを使って自然な位置でテキストを複数行に分割する"""
         if len(text) <= max_chars_per_line:
             return [text]
 

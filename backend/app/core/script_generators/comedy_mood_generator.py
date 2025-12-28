@@ -13,11 +13,7 @@ class ComedyMoodGenerator:
     """機嫌レベル生成クラス"""
 
     def generate_random_moods(self) -> CharacterMood:
-        """ランダムな機嫌レベルを生成
-
-        Returns:
-            CharacterMood: 各キャラクターの機嫌レベル（0-100）
-        """
+        """ランダムな機嫌レベルを生成する"""
         moods = CharacterMood(
             zundamon=random.randint(0, 100),
             metan=random.randint(0, 100),
@@ -34,15 +30,7 @@ class ComedyMoodGenerator:
         return moods
 
     def get_mood_description(self, character: str, mood: int) -> str:
-        """機嫌レベルから説明文を生成
-
-        Args:
-            character: キャラクター名
-            mood: 機嫌レベル（0-100）
-
-        Returns:
-            str: 機嫌レベルの説明
-        """
+        """機嫌レベルから説明文を生成する"""
         if mood >= 70:
             if character == "zundamon":
                 return "傲慢で攻撃的、自信満々"
