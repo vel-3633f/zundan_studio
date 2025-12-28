@@ -177,6 +177,15 @@ class GenericSectionGenerator:
             logger.info(f"{context.section_definition.section_name} をLLMで生成中...")
             llm_response = llm.invoke(messages)
 
+            # LLMの応答内のタイポを修正（text_for_voivevox → text_for_voicevox）
+            if isinstance(llm_response.content, str):
+                llm_response.content = llm_response.content.replace(
+                    "text_for_voivevox", "text_for_voicevox"
+                )
+                llm_response.content = llm_response.content.replace(
+                    '"text_for_voivevox"', '"text_for_voicevox"'
+                )
+
             # LLMの応答をパース
             section = parser.invoke(llm_response)
 

@@ -40,19 +40,16 @@ class SectionDefinition(BaseModel):
 
 
 class ConversationSegment(BaseModel):
-    speaker: str = Field(description="話者名")
+    speaker: str = Field(description="話者名（ローマ字で指定: zundamon, metan, tsumugi, narrator のいずれか）")
     text: str = Field(description="セリフ内容（字幕表示用・漢字カタカナ含む）")
     text_for_voicevox: str = Field(
         description="VOICEVOX読み上げ用テキスト（完全ひらがな）"
     )
     expression: str = Field(description="話者の表情名（後方互換性のため維持）")
-    visible_characters: List[str] = Field(description="表示するキャラクターのリスト")
+    visible_characters: List[str] = Field(description="表示するキャラクターのリスト（ローマ字で指定: zundamon, metan, tsumugi のいずれか）")
     character_expressions: Dict[str, str] = Field(
         default_factory=dict,
-        description="各キャラクターの表情を個別に指定 {キャラクター名: 表情名}",
-    )
-    display_item: Optional[str] = Field(
-        default=None, description="このセリフで表示する教育アイテム画像のID"
+        description="各キャラクターの表情を個別に指定 {キャラクター名（ローマ字）: 表情名}。例: {\"zundamon\": \"excited\", \"metan\": \"angry\"}",
     )
 
     @field_validator("speaker", "text", "text_for_voicevox", "expression")
@@ -65,9 +62,14 @@ class ConversationSegment(BaseModel):
     @field_validator("visible_characters")
     @classmethod
     def validate_visible_characters(cls, v: List[str], info) -> List[str]:
-        # ナレーターの場合は空配列を許可（声のみ）
+        # ナレーターの場合は空配列を許可（声のみ）、または最大2人までキャラクターを表示可能
         if info.data.get("speaker") == "narrator":
-            return []
+            if not v:
+                return []
+            cleaned = [char.strip() for char in v if char and char.strip()]
+            if len(cleaned) > 2:
+                raise ValueError(f"ナレーターの場合、表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}")
+            return cleaned
         
         # それ以外のキャラクターは空配列を許可しない
         if not v:
@@ -75,6 +77,11 @@ class ConversationSegment(BaseModel):
         cleaned = [char.strip() for char in v if char and char.strip()]
         if not cleaned:
             raise ValueError("有効な表示キャラクターが必要です")
+        
+        # 3人以上は許可しない（必ず2人まで）
+        if len(cleaned) > 2:
+            raise ValueError(f"表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}")
+        
         return cleaned
 
 
