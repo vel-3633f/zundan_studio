@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Zundan Studio API",
@@ -36,7 +39,36 @@ outputs_dir = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "outputs"
 )
 if os.path.exists(outputs_dir):
-    app.mount("/outputs", StaticFiles(directory=outputs_dir), name="outputs")
+    app.mount(
+        "/outputs", StaticFiles(directory=outputs_dir, html=False), name="outputs"
+    )
+    logger.info(f"Mounted outputs directory: {outputs_dir}")
+else:
+    logger.warning(f"Outputs directory not found: {outputs_dir}")
+
+# Mount static files for assets
+# Docker環境では /app/assets にマウントされている
+assets_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets"
+)
+# 絶対パスに変換
+assets_dir = os.path.abspath(assets_dir)
+
+if os.path.exists(assets_dir):
+    backgrounds_dir = os.path.join(assets_dir, "backgrounds")
+    logger.info(f"Assets directory: {assets_dir}")
+    logger.info(f"Backgrounds directory exists: {os.path.exists(backgrounds_dir)}")
+    if os.path.exists(backgrounds_dir):
+        bg_files = os.listdir(backgrounds_dir)
+        logger.info(f"Background files count: {len(bg_files)}")
+        if bg_files:
+            logger.info(f"Sample background files: {bg_files[:5]}")
+
+    # StaticFilesでhtml=Falseを指定（HTMLファイルとして扱わない）
+    app.mount("/assets", StaticFiles(directory=assets_dir, html=False), name="assets")
+    logger.info(f"Mounted assets directory: {assets_dir} at /assets")
+else:
+    logger.warning(f"Assets directory not found: {assets_dir}")
 
 # Import and include routers
 from app.api import videos, scripts, voices, management, websocket

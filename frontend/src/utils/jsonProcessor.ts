@@ -6,6 +6,23 @@ import type {
   JsonScriptData,
 } from "@/types";
 
+/**
+ * JSONデータから使用されている背景画像名を抽出
+ */
+export const extractBackgroundNames = (jsonData: any): string[] => {
+  const backgroundNames = new Set<string>();
+
+  if (jsonData.sections && Array.isArray(jsonData.sections)) {
+    jsonData.sections.forEach((section: any) => {
+      if (section.scene_background) {
+        backgroundNames.add(section.scene_background);
+      }
+    });
+  }
+
+  return Array.from(backgroundNames);
+};
+
 const speakerMap: Record<string, string> = {
   めたん: "metan",
   ずんだもん: "zundamon",

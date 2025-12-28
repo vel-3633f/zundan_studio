@@ -1,5 +1,10 @@
 import apiClient from "./client";
-import type { Background, Item } from "@/types";
+import type {
+  Background,
+  Item,
+  BackgroundCheckRequest,
+  BackgroundCheckResponse,
+} from "@/types";
 
 export const managementApi = {
   // Background Management
@@ -31,6 +36,37 @@ export const managementApi = {
         "/management/backgrounds/generate",
         { name }
       );
+      return response.data;
+    },
+
+    check: async (
+      backgroundNames: string[]
+    ): Promise<BackgroundCheckResponse> => {
+      const response = await apiClient.post<BackgroundCheckResponse>(
+        "/management/backgrounds/check",
+        { background_names: backgroundNames } as BackgroundCheckRequest
+      );
+      return response.data;
+    },
+
+    delete: async (
+      ids: string[]
+    ): Promise<{
+      success: boolean;
+      message: string;
+      deleted_count: number;
+      failed_count: number;
+      failed_ids: string[];
+    }> => {
+      const response = await apiClient.delete<{
+        success: boolean;
+        message: string;
+        deleted_count: number;
+        failed_count: number;
+        failed_ids: string[];
+      }>("/management/backgrounds", {
+        data: { ids },
+      });
       return response.data;
     },
   },

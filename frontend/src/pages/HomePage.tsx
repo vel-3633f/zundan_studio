@@ -10,6 +10,7 @@ import { JsonLoader } from "@/components/video/JsonLoader";
 import { JsonMetadata } from "@/components/video/JsonMetadata";
 import { useJsonLoader } from "@/hooks/useJsonLoader";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import BackgroundCheckCard from "@/components/resources/BackgroundCheckCard";
 
 const HomePage = () => {
   const {
@@ -29,6 +30,8 @@ const HomePage = () => {
     setSelectedJsonFile,
     handleLoadSelectedJson,
     handleLoadJson,
+    backgroundCheckResult,
+    isCheckingBackgrounds,
   } = useJsonLoader();
 
   const { handleGenerate } = useVideoGeneration();
@@ -77,6 +80,11 @@ const HomePage = () => {
           onLoadFromFile={handleLoadJson}
         />
       </Card>
+
+      <BackgroundCheckCard
+        result={backgroundCheckResult}
+        isLoading={isCheckingBackgrounds}
+      />
 
       {jsonScriptData && <JsonMetadata jsonScriptData={jsonScriptData} />}
 

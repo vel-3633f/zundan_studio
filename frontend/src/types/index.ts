@@ -171,6 +171,27 @@ export interface Item {
   description?: string;
 }
 
+export interface BackgroundCheckFile {
+  name: string;
+  exists: boolean;
+  path?: string | null;
+}
+
+export interface BackgroundCheckRequest {
+  background_names: string[];
+}
+
+export interface BackgroundCheckRequest {
+  background_names: string[];
+}
+
+export interface BackgroundCheckResponse {
+  total: number;
+  available: number;
+  missing: number;
+  files: BackgroundCheckFile[];
+}
+
 // === 統合API型定義 ===
 export interface TitleRequest {
   mode: ScriptMode;
