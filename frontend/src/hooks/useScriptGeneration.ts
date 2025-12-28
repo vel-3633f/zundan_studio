@@ -1,0 +1,140 @@
+import { useState } from "react";
+import { useScriptStore } from "@/stores/scriptStore";
+import { useScriptTitleHandlers } from "./useScriptTitleHandlers";
+import { useScriptGenerationHandlers } from "./useScriptGenerationHandlers";
+import { useScriptRegenerateHandlers } from "./useScriptRegenerateHandlers";
+import { useScriptTestData } from "./useScriptTestData";
+import { createScriptGenerationReturn } from "./useScriptGenerationReturn";
+import type { ComedyTitleBatch } from "@/types";
+
+export const useScriptGeneration = () => {
+  const [titleCandidates, setTitleCandidates] =
+    useState<ComedyTitleBatch | null>(null);
+  const [singleTitleCandidate, setSingleTitleCandidate] = useState<{
+    title: any;
+    referenceInfo: string;
+    searchResults: Record<string, any>;
+  } | null>(null);
+  const [generatingAction, setGeneratingAction] = useState<
+    "approve" | "regenerate" | null
+  >(null);
+
+  const {
+    mode,
+    currentStep,
+    inputText,
+    model,
+    temperature,
+    generatedTitle,
+    generatedOutline,
+    generatedScript,
+    referenceInfo,
+    isGenerating,
+    progress,
+    statusMessage,
+    setCurrentStep,
+    setInputText,
+    setModel,
+    setTemperature,
+    setGeneratedTitle,
+    setGeneratedOutline,
+    setGeneratedScript,
+    setReferenceInfo,
+    setSearchResults,
+    setGenerating,
+    setProgress,
+    setStatusMessage,
+    setError,
+    resetToInput,
+  } = useScriptStore();
+
+  const titleHandlers = useScriptTitleHandlers(
+    setGenerating,
+    setError,
+    setTitleCandidates,
+    setSingleTitleCandidate,
+    setGeneratedTitle,
+    setReferenceInfo,
+    setSearchResults,
+    setCurrentStep,
+    setInputText,
+    setStatusMessage,
+    mode,
+    inputText,
+    model,
+    temperature,
+    titleCandidates,
+    singleTitleCandidate
+  );
+
+  const generationHandlers = useScriptGenerationHandlers(
+    setGenerating,
+    setError,
+    setStatusMessage,
+    setProgress,
+    setGeneratedOutline,
+    setGeneratedScript,
+    setCurrentStep,
+    setGeneratingAction,
+    mode,
+    generatedTitle,
+    generatedOutline,
+    referenceInfo,
+    model,
+    temperature
+  );
+
+  const { handleRegenerateTitle, handleRegenerateOutline } =
+    useScriptRegenerateHandlers(
+      setGeneratedTitle,
+      setSingleTitleCandidate,
+      setGeneratedOutline,
+      setCurrentStep,
+      setGeneratingAction,
+      titleHandlers,
+      generationHandlers
+    );
+
+  const handleResetToInput = () => {
+    setTitleCandidates(null);
+    setSingleTitleCandidate(null);
+    resetToInput();
+  };
+
+  const { handleLoadTestData } = useScriptTestData(
+    setGeneratedTitle,
+    setGeneratedOutline,
+    setGeneratedScript,
+    setReferenceInfo,
+    setSearchResults,
+    setCurrentStep
+  );
+
+  return createScriptGenerationReturn(
+    titleCandidates,
+    singleTitleCandidate,
+    generatingAction,
+    mode,
+    currentStep,
+    inputText,
+    model,
+    temperature,
+    generatedTitle,
+    generatedOutline,
+    generatedScript,
+    isGenerating,
+    progress,
+    statusMessage,
+    setInputText,
+    setModel,
+    setTemperature,
+    setTitleCandidates,
+    setSingleTitleCandidate,
+    titleHandlers,
+    generationHandlers,
+    handleRegenerateTitle,
+    handleRegenerateOutline,
+    handleResetToInput,
+    handleLoadTestData
+  );
+};

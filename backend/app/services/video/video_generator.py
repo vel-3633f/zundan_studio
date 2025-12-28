@@ -17,6 +17,7 @@ from app.services.video.video_generator_utils import (
     calculate_section_durations,
 )
 from app.models.scripts.common import VideoSection
+from app.utils_legacy.files import FileManager
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +141,9 @@ class VideoGenerator:
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
+            # 音声ファイルのクリーンアップ
+            FileManager.cleanup_audio_files(audio_file_list)
+
             logger.info(f"Conversation video generated: {final_output_path}")
             return final_output_path
 
@@ -151,6 +155,11 @@ class VideoGenerator:
                     self.bgm_mixer.clear_cache()
                 except Exception:
                     pass
+            # エラー時も音声ファイルをクリーンアップ
+            try:
+                FileManager.cleanup_audio_files(audio_file_list)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup audio files on error: {cleanup_error}")
             return None
 
     def cleanup(self):

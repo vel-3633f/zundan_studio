@@ -131,3 +131,28 @@ class FileManager:
             return None
         except Exception:
             return None
+
+    @staticmethod
+    def cleanup_audio_files(audio_file_list: list[str]) -> int:
+        """
+        音声ファイルリストを安全に削除する
+        
+        Args:
+            audio_file_list: 削除する音声ファイルのパスリスト
+            
+        Returns:
+            削除に成功したファイル数
+        """
+        if not audio_file_list:
+            return 0
+        
+        deleted_count = 0
+        for audio_path in audio_file_list:
+            if audio_path and os.path.exists(audio_path):
+                if FileOperations.delete_file_safe(audio_path, "audio file"):
+                    deleted_count += 1
+        
+        if deleted_count > 0:
+            logger.info(f"Cleaned up {deleted_count} audio file(s)")
+        
+        return deleted_count

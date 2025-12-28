@@ -1,9 +1,12 @@
 import { create } from "zustand";
-import type { ConversationLine, VideoSection } from "@/types";
+import type { ConversationLine, VideoSection, JsonScriptData } from "@/types";
 
 interface VideoState {
   // 会話データ
   conversations: ConversationLine[];
+
+  // JSON全体のデータ（メタ情報を含む）
+  jsonScriptData: JsonScriptData | null;
 
   // 生成設定
   enableSubtitles: boolean;
@@ -29,6 +32,7 @@ interface VideoState {
   setEnableSubtitles: (enabled: boolean) => void;
   setConversationMode: (mode: string) => void;
   setSections: (sections: VideoSection[] | null) => void;
+  setJsonScriptData: (data: JsonScriptData | null) => void;
 
   setGenerating: (generating: boolean) => void;
   setTaskId: (taskId: string | null) => void;
@@ -42,6 +46,7 @@ interface VideoState {
 export const useVideoStore = create<VideoState>((set) => ({
   // 初期状態
   conversations: [],
+  jsonScriptData: null,
   enableSubtitles: true,
   conversationMode: "duo",
   sections: null,
@@ -78,6 +83,7 @@ export const useVideoStore = create<VideoState>((set) => ({
   setConversationMode: (mode) => set({ conversationMode: mode }),
 
   setSections: (sections) => set({ sections }),
+  setJsonScriptData: (data) => set({ jsonScriptData: data }),
 
   setGenerating: (generating) => set({ isGenerating: generating }),
 

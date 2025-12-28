@@ -28,8 +28,6 @@ def combine_video_with_audio(
         temp_audiofile="temp-audio.m4a",
         remove_temp=True,
         ffmpeg_params=["-crf", "18", "-preset", "medium"],
-        verbose=False,
-        logger=None,
     )
 
     video_clip.close()
