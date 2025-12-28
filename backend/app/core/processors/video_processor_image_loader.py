@@ -16,17 +16,7 @@ logger = logging.getLogger(__name__)
 def _load_character_images_cached(
     character_name: str, expression: str, base_path: str
 ) -> tuple:
-    """キャラクター画像を読み込み（キャッシュ機能付き）
-
-    Args:
-        character_name: キャラクター名
-        expression: 表情名
-        base_path: ベースディレクトリパス
-
-    Returns:
-        tuple: (images_dict_items, target_size) のタプル
-            images_dict_items は (key, image_bytes) のタプルのリスト
-    """
+    """キャラクター画像を読み込む（キャッシュ機能付き）"""
     expression_dir = os.path.join(base_path, expression)
 
     images = {}
@@ -74,7 +64,7 @@ class ImageLoaderMixin:
     def load_character_images(
         self, character_name: str = "zundamon", expression: str = "normal"
     ) -> Dict[str, np.ndarray]:
-        """キャラクター画像を読み込み（特定の表情）"""
+        """キャラクター画像を読み込む（特定の表情）"""
         base_path = Paths.get_character_dir(character_name)
 
         cached_data, target_size = _load_character_images_cached(
@@ -119,7 +109,7 @@ class ImageLoaderMixin:
     def load_character_images_all_expressions(
         self, character_name: str
     ) -> Dict[str, Dict[str, np.ndarray]]:
-        """キャラクターの全表情画像を読み込み"""
+        """キャラクターの全表情画像を読み込む"""
         available_expressions = self.get_available_expressions(character_name)
         if not available_expressions:
             available_expressions = ["normal"]
@@ -133,7 +123,7 @@ class ImageLoaderMixin:
         return all_expressions
 
     def load_all_character_images(self) -> Dict[str, Dict[str, Dict[str, np.ndarray]]]:
-        """全キャラクターの全表情画像を読み込み"""
+        """全キャラクターの全表情画像を読み込む"""
         all_images = {}
         for char_key, char_info in self.characters.items():
             char_expressions = self.load_character_images_all_expressions(char_key)
@@ -143,7 +133,7 @@ class ImageLoaderMixin:
         return all_images
 
     def load_backgrounds(self) -> Dict[str, np.ndarray]:
-        """すべての背景画像を読み込み"""
+        """すべての背景画像を読み込む"""
         bg_dir = Paths.get_backgrounds_dir()
 
         backgrounds = {}
