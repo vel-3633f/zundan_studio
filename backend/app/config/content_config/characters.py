@@ -24,49 +24,49 @@ class ExpressionVoiceConfig:
 
 
 ZUNDAMON_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
-    "excited": ExpressionVoiceConfig(speed=1.1, pitch=0.05, intonation=1.7),
-    "angry": ExpressionVoiceConfig(speed=1.05, pitch=0.02, intonation=1.6),
-    "normal": ExpressionVoiceConfig(speed=1.0, pitch=-0.02, intonation=1.5),
-    "happy": ExpressionVoiceConfig(speed=1.05, pitch=0.05, intonation=1.6),
-    "surprised": ExpressionVoiceConfig(speed=1.05, pitch=0.05, intonation=1.5),
-    "thinking": ExpressionVoiceConfig(speed=1.0, pitch=-0.05, intonation=1.3),
-    "sad": ExpressionVoiceConfig(speed=1.0, pitch=-0.08, intonation=1.1),
-    "worried": ExpressionVoiceConfig(speed=1.0, pitch=-0.03, intonation=1.2),
-    "sick": ExpressionVoiceConfig(speed=1.0, pitch=-0.1, intonation=1.0),
+    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.05, intonation=1.4),
+    "angry": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.4),
+    "happy": ExpressionVoiceConfig(speed=1.25, pitch=0.05, intonation=1.4),
+    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.05, intonation=1.3),
+    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.2),
+    "sad": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
 }
 
 
 METAN_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
-    "excited": ExpressionVoiceConfig(speed=1.4, pitch=0.08, intonation=1.6),
-    "angry": ExpressionVoiceConfig(speed=1.35, pitch=0.06, intonation=1.7),
+    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.04, intonation=1.4),
+    "angry": ExpressionVoiceConfig(speed=1.3, pitch=0.03, intonation=1.4),
     "normal": ExpressionVoiceConfig(speed=1.25, pitch=0.02, intonation=1.3),
-    "happy": ExpressionVoiceConfig(speed=1.3, pitch=0.04, intonation=1.4),
-    "surprised": ExpressionVoiceConfig(speed=1.35, pitch=0.1, intonation=1.8),
-    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.0, intonation=1.1),
-    "sad": ExpressionVoiceConfig(speed=1.1, pitch=-0.05, intonation=1.0),
-    "worried": ExpressionVoiceConfig(speed=1.2, pitch=0.03, intonation=1.2),
-    "sick": ExpressionVoiceConfig(speed=1.0, pitch=-0.05, intonation=1.0),
+    "happy": ExpressionVoiceConfig(speed=1.25, pitch=0.03, intonation=1.4),
+    "surprised": ExpressionVoiceConfig(speed=1.3, pitch=0.1, intonation=1.4),
+    "thinking": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.3, pitch=0.03, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.1),
 }
 
 
 TSUMUGI_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
-    "excited": ExpressionVoiceConfig(speed=1.15, pitch=-0.02, intonation=1.2),
-    "angry": ExpressionVoiceConfig(speed=1.15, pitch=-0.04, intonation=1.1),
-    "normal": ExpressionVoiceConfig(speed=1.1, pitch=-0.06, intonation=1.0),
-    "happy": ExpressionVoiceConfig(speed=1.15, pitch=-0.04, intonation=1.1),
-    "surprised": ExpressionVoiceConfig(speed=1.1, pitch=-0.02, intonation=1.1),
-    "thinking": ExpressionVoiceConfig(speed=1.0, pitch=-0.08, intonation=0.9),
-    "sad": ExpressionVoiceConfig(speed=1.0, pitch=-0.1, intonation=0.8),
-    "worried": ExpressionVoiceConfig(speed=1.05, pitch=-0.05, intonation=1.0),
-    "sick": ExpressionVoiceConfig(speed=1.0, pitch=-0.08, intonation=0.9),
+    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.4),
+    "angry": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.2),
+    "happy": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.3),
+    "thinking": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
+    "worried": ExpressionVoiceConfig(speed=1.3, pitch=0.01, intonation=1.2),
+    "sick": ExpressionVoiceConfig(speed=1.2, pitch=0.01, intonation=1.1),
 }
 
 
 NARRATOR_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
-    "normal": ExpressionVoiceConfig(speed=1.15, pitch=0.0, intonation=1.0),
-    "excited": ExpressionVoiceConfig(speed=1.25, pitch=0.05, intonation=1.2),
-    "thinking": ExpressionVoiceConfig(speed=1.05, pitch=-0.02, intonation=0.95),
-    "sad": ExpressionVoiceConfig(speed=1.0, pitch=-0.05, intonation=0.9),
+    "normal": ExpressionVoiceConfig(speed=1.15, pitch=0.01, intonation=1.2),
+    "excited": ExpressionVoiceConfig(speed=1.25, pitch=0.05, intonation=1.4),
+    "thinking": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=1.1, pitch=0.01, intonation=1.1),
 }
 
 

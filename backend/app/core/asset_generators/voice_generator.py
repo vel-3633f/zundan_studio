@@ -194,11 +194,6 @@ class VoiceGenerator:
             else:
                 final_intonation = intonation if intonation is not None else 1.0
 
-            logger.info(
-                f"Speaker: {speaker}, Expression: {expression}, "
-                f"Final params - Speed: {final_speed}, Pitch: {final_pitch}, Intonation: {final_intonation}"
-            )
-
             # 出力ファイル名（会話順序を含む）
             audio_filename = f"conv_{i:03d}_{speaker}.wav"
             audio_path = os.path.join(output_dir, audio_filename)

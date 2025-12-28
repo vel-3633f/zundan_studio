@@ -10,6 +10,7 @@ const speakerMap: Record<string, string> = {
   めたん: "metan",
   ずんだもん: "zundamon",
   つむぎ: "tsumugi",
+  ナレーター: "narrator",
 };
 
 export const processJsonData = (
