@@ -23,20 +23,7 @@ class ExpressionVoiceConfig:
     intonation: float = 1.0
 
 
-DEFAULT_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
-    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.08, intonation=1.4),
-    "angry": ExpressionVoiceConfig(speed=1.2, pitch=0.04, intonation=1.3),
-    "normal": ExpressionVoiceConfig(speed=1.0, pitch=0.0, intonation=1.2),
-    "happy": ExpressionVoiceConfig(speed=1.15, pitch=0.02, intonation=1.3),
-    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.06, intonation=1.4),
-    "thinking": ExpressionVoiceConfig(speed=0.85, pitch=-0.03, intonation=1.1),
-    "sad": ExpressionVoiceConfig(speed=0.9, pitch=-0.08, intonation=1.0),
-    "worried": ExpressionVoiceConfig(speed=0.95, pitch=-0.02, intonation=1.1),
-    "sick": ExpressionVoiceConfig(speed=0.8, pitch=-0.06, intonation=1.0),
-}
-
-
-ZUNDAMON_EXPRESSION_OVERRIDES: Dict[str, ExpressionVoiceConfig] = {
+ZUNDAMON_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
     "excited": ExpressionVoiceConfig(speed=1.4, pitch=0.1, intonation=1.6),
     "angry": ExpressionVoiceConfig(speed=1.3, pitch=0.05, intonation=1.5),
     "normal": ExpressionVoiceConfig(speed=1.2, pitch=0.0, intonation=1.5),
@@ -49,21 +36,38 @@ ZUNDAMON_EXPRESSION_OVERRIDES: Dict[str, ExpressionVoiceConfig] = {
 }
 
 
-NARRATOR_EXPRESSION_OVERRIDES: Dict[str, ExpressionVoiceConfig] = {
+METAN_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.08, intonation=1.4),
+    "angry": ExpressionVoiceConfig(speed=1.2, pitch=0.04, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.0, pitch=0.0, intonation=1.2),
+    "happy": ExpressionVoiceConfig(speed=1.15, pitch=0.02, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.06, intonation=1.4),
+    "thinking": ExpressionVoiceConfig(speed=0.85, pitch=-0.03, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=0.9, pitch=-0.08, intonation=1.0),
+    "worried": ExpressionVoiceConfig(speed=0.95, pitch=-0.02, intonation=1.1),
+    "sick": ExpressionVoiceConfig(speed=0.8, pitch=-0.06, intonation=1.0),
+}
+
+
+TSUMUGI_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
+    "excited": ExpressionVoiceConfig(speed=1.3, pitch=0.08, intonation=1.4),
+    "angry": ExpressionVoiceConfig(speed=1.2, pitch=0.04, intonation=1.3),
+    "normal": ExpressionVoiceConfig(speed=1.0, pitch=0.0, intonation=1.2),
+    "happy": ExpressionVoiceConfig(speed=1.15, pitch=0.02, intonation=1.3),
+    "surprised": ExpressionVoiceConfig(speed=1.25, pitch=0.06, intonation=1.4),
+    "thinking": ExpressionVoiceConfig(speed=0.85, pitch=-0.03, intonation=1.1),
+    "sad": ExpressionVoiceConfig(speed=0.9, pitch=-0.08, intonation=1.0),
+    "worried": ExpressionVoiceConfig(speed=0.95, pitch=-0.02, intonation=1.1),
+    "sick": ExpressionVoiceConfig(speed=0.8, pitch=-0.06, intonation=1.0),
+}
+
+
+NARRATOR_EXPRESSION_VOICE_MAP: Dict[str, ExpressionVoiceConfig] = {
     "normal": ExpressionVoiceConfig(speed=1.0, pitch=0.0, intonation=1.0),
     "excited": ExpressionVoiceConfig(speed=1.15, pitch=0.05, intonation=1.2),
     "thinking": ExpressionVoiceConfig(speed=0.9, pitch=-0.02, intonation=0.95),
     "sad": ExpressionVoiceConfig(speed=0.95, pitch=-0.05, intonation=0.9),
 }
-
-
-def _merge_expression_voice_map(
-    defaults: Dict[str, ExpressionVoiceConfig],
-    overrides: Dict[str, ExpressionVoiceConfig],
-) -> Dict[str, ExpressionVoiceConfig]:
-    result = defaults.copy()
-    result.update(overrides)
-    return result
 
 
 @dataclass
@@ -103,9 +107,7 @@ class Characters:
         default_speed=1.2,
         default_pitch=0.0,
         default_intonation=1.5,
-        expression_voice_map=_merge_expression_voice_map(
-            DEFAULT_EXPRESSION_VOICE_MAP, ZUNDAMON_EXPRESSION_OVERRIDES
-        ),
+        expression_voice_map=ZUNDAMON_EXPRESSION_VOICE_MAP,
     )
 
     METAN = CharacterConfig(
@@ -122,7 +124,7 @@ class Characters:
         default_speed=1.0,
         default_pitch=0.0,
         default_intonation=1.2,
-        expression_voice_map=DEFAULT_EXPRESSION_VOICE_MAP.copy(),
+        expression_voice_map=METAN_EXPRESSION_VOICE_MAP,
     )
 
     TSUMUGI = CharacterConfig(
@@ -139,7 +141,7 @@ class Characters:
         default_speed=1,
         default_pitch=0.0,
         default_intonation=1.2,
-        expression_voice_map=DEFAULT_EXPRESSION_VOICE_MAP.copy(),
+        expression_voice_map=TSUMUGI_EXPRESSION_VOICE_MAP,
     )
 
     NARRATOR = CharacterConfig(
@@ -156,9 +158,7 @@ class Characters:
         default_speed=1,
         default_pitch=0.0,
         default_intonation=1,
-        expression_voice_map=_merge_expression_voice_map(
-            DEFAULT_EXPRESSION_VOICE_MAP, NARRATOR_EXPRESSION_OVERRIDES
-        ),
+        expression_voice_map=NARRATOR_EXPRESSION_VOICE_MAP,
     )
 
     @classmethod
@@ -232,7 +232,6 @@ class Expressions:
     SICK = ExpressionConfig(
         name="sick", display_name="体調不良", emoji="🤢", description="具合が悪い表情"
     )
-
 
     @classmethod
     def get_all(cls) -> Dict[str, ExpressionConfig]:
