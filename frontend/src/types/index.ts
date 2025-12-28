@@ -17,6 +17,8 @@ export interface ConversationLine {
   bgm_volume?: number;
   visible_characters?: string[];
   character_expressions?: Record<string, string>;
+  voice_speed?: number; // 個別指定: 話速（オプション、表情ベース設定より優先）
+  voice_pitch?: number; // 個別指定: 音高（オプション、表情ベース設定より優先）
 }
 
 export interface VideoGenerationRequest {
@@ -143,6 +145,8 @@ export interface ConversationSegment {
   visible_characters: string[];
   character_expressions: Record<string, string>;
   display_item?: string;
+  voice_speed?: number; // 個別指定: 話速（オプション、表情ベース設定より優先）
+  voice_pitch?: number; // 個別指定: 音高（オプション、表情ベース設定より優先）
 }
 
 export interface VideoSection {
