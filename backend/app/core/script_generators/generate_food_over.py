@@ -2,14 +2,14 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Union
 from app.config.app import TAVILY_SEARCH_RESULTS_COUNT
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from langchain_community.retrievers import TavilySearchAPIRetriever
-from app.utils_legacy.llm_factory import create_llm_from_model_config
+from app.utils.llm_factory import create_llm_from_model_config
 
 _prompt_cache = {}
 

@@ -5,9 +5,10 @@ import logging
 import os
 
 from app.tasks.celery_app import celery_app
-from app.services.video_generator import VideoGenerator
+from app.services.video.video_generator import VideoGenerator
 from app.core.asset_generators.voice_generator import VoiceGenerator
 from app.models.scripts.common import VideoSection
+from app.utils_legacy.files import FileManager
 
 logger = logging.getLogger(__name__)
 
@@ -63,15 +64,25 @@ def generate_video_task(
         
         # 音声生成
         voice_generator = VoiceGenerator()
-        audio_file_list = voice_generator.generate_conversation_voices(
-            conversations=conversations,
-            speed=speed,
-            pitch=pitch,
-            intonation=intonation
-        )
-        
-        if not audio_file_list:
-            raise ValueError("音声生成に失敗しました")
+        audio_file_list = None
+        try:
+            audio_file_list = voice_generator.generate_conversation_voices(
+                conversations=conversations,
+                speed=speed,
+                pitch=pitch,
+                intonation=intonation
+            )
+            
+            if not audio_file_list:
+                raise ValueError("音声生成に失敗しました")
+        except Exception as e:
+            # 音声生成失敗時は既に生成されたファイルがあれば削除
+            if audio_file_list:
+                try:
+                    FileManager.cleanup_audio_files(audio_file_list)
+                except Exception:
+                    pass
+            raise
         
         # 進捗更新: 動画生成開始
         self.update_state(
@@ -129,10 +140,22 @@ def generate_video_task(
         
     except Exception as e:
         logger.error(f"動画生成タスクエラー (task_id={self.request.id}): {str(e)}", exc_info=True)
+        # エラー時も音声ファイルをクリーンアップ
+        if 'audio_file_list' in locals() and audio_file_list:
+            try:
+                FileManager.cleanup_audio_files(audio_file_list)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup audio files on task error: {cleanup_error}")
+        # Celeryの例外情報を正しく設定
         self.update_state(
             state='FAILURE',
-            meta={'error': str(e), 'message': '動画生成に失敗しました'}
+            meta={
+                'error': str(e),
+                'error_type': type(e).__name__,
+                'message': '動画生成に失敗しました'
+            }
         )
+        # 元の例外をそのまま再発生させる
         raise
 
 

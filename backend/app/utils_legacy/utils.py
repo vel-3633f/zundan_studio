@@ -1,7 +1,6 @@
 from typing import Optional, Tuple, Dict
 
 from app.utils_legacy.constants import Constants
-from app.utils_legacy.paths import PathManager
 from app.utils_legacy.files import FileManager, FileOperations
 from app.utils_legacy.validators import TextValidator
 from app.utils_legacy.logging_config import LoggingConfig
@@ -49,7 +48,6 @@ def sanitize_filename(filename: str) -> str:
 
 __all__ = [
     "Constants",
-    "PathManager",
     "FileManager",
     "FileOperations",
     "TextValidator",

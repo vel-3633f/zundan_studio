@@ -1,14 +1,10 @@
 import { useState } from "react";
-import {
-  Image,
-  Wand2,
-} from "lucide-react";
-import Card from "@/components/Card";
-import Button from "@/components/Button";
-import Input from "@/components/Input";
+import { Image, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { managementApi } from "@/api/management";
+import { BackgroundManagementTab } from "@/components/management/BackgroundManagementTab";
+import { BackgroundGenerationTab } from "@/components/management/BackgroundGenerationTab";
 
 const ManagementPage = () => {
   const [activeTab, setActiveTab] = useState<"backgrounds" | "generation">(
@@ -27,7 +23,9 @@ const ManagementPage = () => {
 
     setIsGenerating(true);
     try {
-      const response = await managementApi.backgrounds.generate(backgroundName.trim());
+      const response = await managementApi.backgrounds.generate(
+        backgroundName.trim()
+      );
       if (response.success) {
         toast.success(response.message || "背景画像を生成しました");
         setBackgroundName("");
@@ -35,7 +33,10 @@ const ManagementPage = () => {
         toast.error("背景生成に失敗しました");
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.detail || error?.message || "背景生成に失敗しました";
+      const errorMessage =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "背景生成に失敗しました";
       toast.error(errorMessage);
       console.error(error);
     } finally {
@@ -76,55 +77,15 @@ const ManagementPage = () => {
         })}
       </div>
 
-      {/* 背景画像管理タブ */}
-      {activeTab === "backgrounds" && (
-        <Card icon={<Image className="h-6 w-6" />} title="背景画像管理">
-          <div className="text-center py-12">
-            <Image className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
-              背景画像のアップロード機能は実装中です
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              近日公開予定
-            </p>
-          </div>
-        </Card>
-      )}
+      {activeTab === "backgrounds" && <BackgroundManagementTab />}
 
-      {/* 背景生成タブ */}
       {activeTab === "generation" && (
-        <Card icon={<Wand2 className="h-6 w-6" />} title="背景生成">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  AIを使用して背景画像を自動生成します。背景名を入力して生成ボタンをクリックしてください。
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={backgroundName}
-                  onChange={(e) => setBackgroundName(e.target.value)}
-                  placeholder="例: オフィス、カフェ、図書館など"
-                  className="flex-1"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter" && backgroundName.trim() && !isGenerating) {
-                      handleGenerate();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!backgroundName.trim() || isGenerating}
-                  isLoading={isGenerating}
-                  leftIcon={<Wand2 className="h-5 w-5" />}
-                >
-                  生成
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <BackgroundGenerationTab
+          backgroundName={backgroundName}
+          isGenerating={isGenerating}
+          onBackgroundNameChange={setBackgroundName}
+          onGenerate={handleGenerate}
+        />
       )}
     </div>
   );

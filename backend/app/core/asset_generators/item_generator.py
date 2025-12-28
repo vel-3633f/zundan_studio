@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.config import Paths
 from app.core.asset_generators.asset_generator_base import AssetImageGenerator
-from app.utils_legacy.logger import get_logger
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -9,6 +9,14 @@ export interface ConversationLine {
   text_for_voicevox?: string;
   expression?: string;
   background?: string;
+  // セクション情報（JSONから読み込んだ場合）
+  section_name?: string;
+  section_key?: string;
+  scene_background?: string;
+  bgm_id?: string;
+  bgm_volume?: number;
+  visible_characters?: string[];
+  character_expressions?: Record<string, string>;
 }
 
 export interface VideoGenerationRequest {
@@ -210,4 +218,14 @@ export interface FullScriptRequest {
 
 export interface FullScriptResponse {
   script: ComedyScript;
+}
+
+// === JSONファイル全体のデータ構造 ===
+export interface JsonScriptData {
+  title: string;
+  mode: string;
+  estimated_duration?: string;
+  theme?: string;
+  character_moods?: CharacterMood;
+  sections: VideoSection[];
 }

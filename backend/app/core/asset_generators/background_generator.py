@@ -5,8 +5,8 @@ from typing import List, Dict, Optional
 from pathlib import Path
 
 from app.config import Paths
-from app.utils_legacy.logger import get_logger
-from app.utils_legacy.llm_factory import create_bedrock_llm
+from app.utils.logger import get_logger
+from app.utils.llm_factory import create_bedrock_llm
 from app.config.models import get_default_model_config
 from langchain_core.prompts import ChatPromptTemplate
 

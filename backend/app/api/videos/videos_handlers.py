@@ -1,84 +1,35 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional, Any
+"""動画生成APIのエンドポイントハンドラー"""
+
+from fastapi import HTTPException
+from typing import Dict, Any, List
 import logging
-import os
 from pathlib import Path
 from celery.result import AsyncResult
 
-from app.models.scripts.common import VideoSection
-from app.config.app import Paths
 from app.tasks.video_tasks import generate_video_task
 from app.tasks.celery_app import celery_app
+from app.config.app import Paths
+from .videos_models import (
+    VideoGenerationRequest,
+    VideoGenerationResponse,
+    VideoStatusResponse,
+    JsonFileInfo,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
 
-
-class ConversationLine(BaseModel):
-    """会話行"""
-
-    speaker: str = Field(..., description="話者名")
-    text: str = Field(..., description="セリフ内容")
-    text_for_voicevox: Optional[str] = Field(None, description="VOICEVOX用テキスト")
-    expression: str = Field(default="normal", description="表情")
-    background: str = Field(default="default", description="背景")
-
-
-class VideoGenerationRequest(BaseModel):
-    """動画生成リクエスト"""
-
-    conversations: List[ConversationLine] = Field(..., description="会話リスト")
-    enable_subtitles: bool = Field(default=True, description="字幕を有効にする")
-    conversation_mode: str = Field(default="duo", description="会話モード")
-    sections: Optional[List[VideoSection]] = Field(None, description="セクション情報")
-    speed: Optional[float] = Field(None, description="話速")
-    pitch: Optional[float] = Field(None, description="音高")
-    intonation: Optional[float] = Field(None, description="抑揚")
-
-
-class VideoGenerationResponse(BaseModel):
-    """動画生成レスポンス"""
-
-    task_id: str = Field(..., description="タスクID")
-    status: str = Field(..., description="ステータス")
-    message: str = Field(..., description="メッセージ")
-
-
-class VideoStatusResponse(BaseModel):
-    """動画生成ステータスレスポンス"""
-
-    task_id: str
-    status: str
-    progress: float = Field(default=0.0, ge=0.0, le=1.0)
-    message: Optional[str] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-
-
-@router.post("/generate", response_model=VideoGenerationResponse)
-async def generate_video(request: VideoGenerationRequest):
-    """
-    会話動画を生成する
-
-    - **conversations**: 会話リスト
-    - **enable_subtitles**: 字幕を有効にするか
-    - **conversation_mode**: 会話モード（duo, solo等）
-    - **sections**: セクション情報（オプション）
-    """
+async def handle_generate_video(request: VideoGenerationRequest) -> VideoGenerationResponse:
+    """会話動画を生成する"""
     try:
         logger.info(f"動画生成リクエスト: {len(request.conversations)}会話")
 
-        # リクエストデータをDict形式に変換
         conversations_dict = [conv.model_dump() for conv in request.conversations]
         
-        # セクション情報をDict形式に変換
         sections_dict = None
         if request.sections:
             sections_dict = [section.model_dump() for section in request.sections]
 
-        # Celeryタスクを呼び出し
         task = generate_video_task.delay(
             conversations=conversations_dict,
             enable_subtitles=request.enable_subtitles,
@@ -102,18 +53,11 @@ async def generate_video(request: VideoGenerationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/status/{task_id}", response_model=VideoStatusResponse)
-async def get_video_status(task_id: str):
-    """
-    動画生成のステータスを取得する
-
-    - **task_id**: タスクID
-    """
+async def handle_get_video_status(task_id: str) -> VideoStatusResponse:
+    """動画生成のステータスを取得する"""
     try:
-        # Celeryタスクの結果を取得
         task_result = AsyncResult(task_id, app=celery_app)
 
-        # タスクの状態に応じてレスポンスを構築
         if task_result.state == "PENDING":
             response = VideoStatusResponse(
                 task_id=task_id,
@@ -163,24 +107,8 @@ async def get_video_status(task_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/health")
-async def health_check():
-    """動画生成APIのヘルスチェック"""
-    return {"status": "healthy", "service": "videos"}
-
-
-class JsonFileInfo(BaseModel):
-    """JSONファイル情報"""
-
-    filename: str = Field(..., description="ファイル名")
-    path: str = Field(..., description="ファイルパス")
-
-
-@router.get("/json-files", response_model=List[JsonFileInfo])
-async def list_json_files():
-    """
-    outputs/json/ディレクトリ内のJSONファイル一覧を取得する
-    """
+async def handle_list_json_files() -> List[JsonFileInfo]:
+    """outputs/json/ディレクトリ内のJSONファイル一覧を取得する"""
     try:
         outputs_dir = Paths.get_outputs_dir()
         json_dir = Path(outputs_dir) / "json"
@@ -213,18 +141,12 @@ async def list_json_files():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/json-files/{filename:path}")
-async def get_json_file(filename: str):
-    """
-    指定されたJSONファイルの内容を取得する
-
-    - **filename**: ファイル名（パスセパレータを含む場合はエスケープ）
-    """
+async def handle_get_json_file(filename: str) -> Dict[str, Any]:
+    """指定されたJSONファイルの内容を取得する"""
     try:
         json_dir = Path(Paths.get_outputs_dir()) / "json"
         file_path = json_dir / filename
 
-        # セキュリティチェック: ディレクトリトラバーサル攻撃を防ぐ
         if not file_path.resolve().is_relative_to(json_dir.resolve()):
             raise HTTPException(status_code=400, detail="無効なファイルパスです")
 
@@ -247,3 +169,4 @@ async def get_json_file(filename: str):
     except Exception as e:
         logger.error(f"JSONファイル読み込みエラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+

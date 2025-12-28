@@ -10,9 +10,14 @@ from app.core.processors.video_processor import VideoProcessor
 from app.services.resource_manager import ResourceManager
 from app.services.audio_combiner import AudioCombiner
 from app.services.subtitle_generator import SubtitleGenerator
-from app.services.frame_generator import FrameGenerator
+from app.services.video.frame_generator import FrameGenerator
 from app.services.bgm_mixer import BGMMixer
+from app.services.video.video_generator_utils import (
+    combine_video_with_audio,
+    calculate_section_durations,
+)
 from app.models.scripts.common import VideoSection
+from app.utils_legacy.files import FileManager
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +81,7 @@ class VideoGenerator:
                 return None
 
             if sections:
-                section_durations = self._calculate_section_durations(
+                section_durations = calculate_section_durations(
                     sections, audio_durations, audio_file_list
                 )
                 combined_audio = self.bgm_mixer.mix_bgm_with_voiceover(
@@ -123,7 +128,7 @@ class VideoGenerator:
             if not success:
                 return None
 
-            final_output_path = self._combine_video_with_audio(
+            final_output_path = combine_video_with_audio(
                 temp_video_path, combined_audio, output_path
             )
 
@@ -136,6 +141,9 @@ class VideoGenerator:
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
+            # 音声ファイルのクリーンアップ
+            FileManager.cleanup_audio_files(audio_file_list)
+
             logger.info(f"Conversation video generated: {final_output_path}")
             return final_output_path
 
@@ -147,76 +155,12 @@ class VideoGenerator:
                     self.bgm_mixer.clear_cache()
                 except Exception:
                     pass
+            # エラー時も音声ファイルをクリーンアップ
+            try:
+                FileManager.cleanup_audio_files(audio_file_list)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to cleanup audio files on error: {cleanup_error}")
             return None
-
-    def _combine_video_with_audio(
-        self, temp_video_path: str, combined_audio, output_path: str
-    ) -> str:
-        """動画と音声の結合（精密な同期）"""
-        video_clip = VideoFileClip(temp_video_path)
-
-        video_duration = video_clip.duration
-        audio_duration = combined_audio.duration
-        duration_diff = abs(video_duration - audio_duration)
-
-        if duration_diff > 0.001:
-            video_clip = video_clip.with_duration(audio_duration)
-
-        final_clip = video_clip.with_audio(combined_audio)
-
-        final_clip.write_videofile(
-            output_path,
-            codec="libx264",
-            audio_codec="aac",
-            temp_audiofile="temp-audio.m4a",
-            remove_temp=True,
-            ffmpeg_params=["-crf", "18", "-preset", "medium"],
-            verbose=False,
-            logger=None,
-        )
-
-        video_clip.close()
-        final_clip.close()
-
-        del video_clip
-        del final_clip
-
-        return output_path
-
-    def _calculate_section_durations(
-        self,
-        sections: List[VideoSection],
-        audio_durations: Dict[str, float],
-        audio_file_list: List[str],
-    ) -> List[float]:
-        """各セクションの長さを計算
-
-        Args:
-            sections: ビデオセクションのリスト
-            audio_durations: {audio_path: duration}の辞書
-            audio_file_list: 音声ファイルパスのリスト
-
-        Returns:
-            List[float]: 各セクションの長さ（秒）のリスト
-        """
-        section_durations = []
-        current_segment_index = 0
-
-        for section in sections:
-            segment_count = len(section.segments)
-            # このセクションに属する音声ファイルのパスを取得
-            section_audio_files = audio_file_list[
-                current_segment_index : current_segment_index + segment_count
-            ]
-            # このセクションに属する音声の長さを合計
-            section_duration = sum(
-                audio_durations.get(audio_path, 0.0)
-                for audio_path in section_audio_files
-            )
-            section_durations.append(section_duration)
-            current_segment_index += segment_count
-
-        return section_durations
 
     def cleanup(self):
         """メモリリソースのクリーンアップ"""
@@ -230,7 +174,7 @@ class VideoGenerator:
                 self.video_processor._resize_cache.clear()
 
             try:
-                from app.core.processors.video_processor import (
+                from app.core.processors.video_processor.video_processor_image_loader import (
                     _load_character_images_cached,
                 )
 

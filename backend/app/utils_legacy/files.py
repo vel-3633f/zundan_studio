@@ -3,8 +3,8 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, Tuple
 from app.utils_legacy.constants import Constants
-from app.utils_legacy.paths import PathManager
-from app.utils_legacy.logger import get_logger
+from app.config.app import Paths
+from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ class FileManager:
     @staticmethod
     def cleanup_temp_files(temp_dir: str = None) -> int:
         if temp_dir is None:
-            temp_dir = PathManager.get_temp_dir()
+            temp_dir = Paths.get_temp_dir()
 
         return FileOperations.cleanup_directory(temp_dir, "temp")
 
@@ -86,12 +86,12 @@ class FileManager:
         total_deleted = 0
 
         temp_deleted = FileOperations.cleanup_directory(
-            PathManager.get_temp_dir(), "temp"
+            Paths.get_temp_dir(), "temp"
         )
         total_deleted += temp_deleted
 
         output_deleted = FileOperations.cleanup_directory(
-            PathManager.get_outputs_dir(), "output"
+            Paths.get_outputs_dir(), "output"
         )
         total_deleted += output_deleted
 
@@ -101,11 +101,11 @@ class FileManager:
     @staticmethod
     def get_generated_files_info() -> Dict[str, float]:
         temp_count, temp_size = FileOperations.count_files_in_directory(
-            PathManager.get_temp_dir()
+            Paths.get_temp_dir()
         )
 
         output_count, output_size = FileOperations.count_files_in_directory(
-            PathManager.get_outputs_dir()
+            Paths.get_outputs_dir()
         )
 
         return {
@@ -119,7 +119,7 @@ class FileManager:
 
     @staticmethod
     def ensure_directories():
-        directories = PathManager.get_required_directories()
+        directories = Paths.get_required_directories()
         for directory in directories:
             os.makedirs(directory, exist_ok=True)
 
@@ -131,3 +131,28 @@ class FileManager:
             return None
         except Exception:
             return None
+
+    @staticmethod
+    def cleanup_audio_files(audio_file_list: list[str]) -> int:
+        """
+        音声ファイルリストを安全に削除する
+        
+        Args:
+            audio_file_list: 削除する音声ファイルのパスリスト
+            
+        Returns:
+            削除に成功したファイル数
+        """
+        if not audio_file_list:
+            return 0
+        
+        deleted_count = 0
+        for audio_path in audio_file_list:
+            if audio_path and os.path.exists(audio_path):
+                if FileOperations.delete_file_safe(audio_path, "audio file"):
+                    deleted_count += 1
+        
+        if deleted_count > 0:
+            logger.info(f"Cleaned up {deleted_count} audio file(s)")
+        
+        return deleted_count

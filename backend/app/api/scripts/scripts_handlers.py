@@ -1,104 +1,27 @@
-"""お笑い漫談台本生成API（Comedy専用）"""
+"""台本生成APIのエンドポイントハンドラー"""
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from fastapi import HTTPException
+from typing import Dict, Any
 import logging
 
-from app.models.script_models import (
-    ScriptMode,
-    ComedyTitle,
-    ComedyOutline,
-    ComedyScript,
-    ComedyTitleBatch,
-)
+from app.models.script_models import ScriptMode, ComedyTitleBatch
 from app.core.script_generators.unified_script_generator import UnifiedScriptGenerator
+from .scripts_models import (
+    TitleRequest,
+    TitleResponse,
+    OutlineRequest,
+    OutlineResponse,
+    ScriptRequest,
+    ScriptResponse,
+    FullScriptRequest,
+    FullScriptResponse,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
 
-
-class TitleRequest(BaseModel):
-    """タイトル生成リクエスト"""
-
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
-    input_text: str = Field(..., description="漫談のテーマ")
-    model: Optional[str] = Field(None, description="使用するLLMモデルID")
-    temperature: Optional[float] = Field(None, description="生成温度")
-
-
-class TitleResponse(BaseModel):
-    """タイトル生成レスポンス"""
-
-    title: ComedyTitle
-    reference_info: str = Field(default="", description="参照情報（常に空文字）")
-    search_results: Dict[str, Any] = Field(default_factory=dict, description="検索結果（常に空）")
-    model: str
-    temperature: float
-
-
-class OutlineRequest(BaseModel):
-    """アウトライン生成リクエスト"""
-
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
-    title_data: ComedyTitle = Field(..., description="生成されたタイトル")
-    reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
-    model: Optional[str] = Field(None, description="使用するLLMモデルID")
-    temperature: Optional[float] = Field(None, description="生成温度")
-
-
-class OutlineResponse(BaseModel):
-    """アウトライン生成レスポンス"""
-
-    outline: ComedyOutline
-    model: str
-    temperature: float
-
-
-class ScriptRequest(BaseModel):
-    """台本生成リクエスト"""
-
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
-    outline_data: ComedyOutline = Field(..., description="生成されたアウトライン")
-    reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
-    model: Optional[str] = Field(None, description="使用するLLMモデルID")
-    temperature: Optional[float] = Field(None, description="生成温度")
-
-
-class ScriptResponse(BaseModel):
-    """台本生成レスポンス"""
-
-    script: ComedyScript
-
-
-class FullScriptRequest(BaseModel):
-    """完全台本生成リクエスト（3段階一括）"""
-
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
-    input_text: str = Field(..., description="漫談のテーマ")
-    model: Optional[str] = Field(None, description="使用するLLMモデルID")
-    temperature: Optional[float] = Field(None, description="生成温度")
-
-
-class FullScriptResponse(BaseModel):
-    """完全台本生成レスポンス"""
-
-    script: ComedyScript
-
-
-# === エンドポイント ===
-
-
-@router.post("/title", response_model=TitleResponse)
-async def generate_title(request: TitleRequest):
-    """
-    タイトル生成（Comedy専用）
-
-    - **input_text**: 漫談のテーマ
-    - **model**: 使用するLLMモデル（省略可）
-    - **temperature**: 生成温度（省略可）
-    """
+async def handle_generate_title(request: TitleRequest) -> TitleResponse:
+    """タイトル生成ハンドラー"""
     try:
         logger.info(f"タイトル生成リクエスト: テーマ={request.input_text}")
 
@@ -125,15 +48,8 @@ async def generate_title(request: TitleRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/outline", response_model=OutlineResponse)
-async def generate_outline(request: OutlineRequest):
-    """
-    アウトライン生成（Comedy専用）
-
-    - **title_data**: 生成されたタイトル
-    - **model**: 使用するLLMモデル（省略可）
-    - **temperature**: 生成温度（省略可）
-    """
+async def handle_generate_outline(request: OutlineRequest) -> OutlineResponse:
+    """アウトライン生成ハンドラー"""
     try:
         logger.info(f"アウトライン生成リクエスト: タイトル={request.title_data.title}")
 
@@ -159,15 +75,8 @@ async def generate_outline(request: OutlineRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/script", response_model=ScriptResponse)
-async def generate_script(request: ScriptRequest):
-    """
-    台本生成（Comedy専用）
-
-    - **outline_data**: 生成されたアウトライン
-    - **model**: 使用するLLMモデル（省略可）
-    - **temperature**: 生成温度（省略可）
-    """
+async def handle_generate_script(request: ScriptRequest) -> ScriptResponse:
+    """台本生成ハンドラー"""
     try:
         logger.info(f"台本生成リクエスト: タイトル={request.outline_data.title}")
 
@@ -189,15 +98,8 @@ async def generate_script(request: ScriptRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/full", response_model=FullScriptResponse)
-async def generate_full_script(request: FullScriptRequest):
-    """
-    完全台本生成（3段階一括）（Comedy専用）
-
-    - **input_text**: 漫談のテーマ
-    - **model**: 使用するLLMモデル（省略可）
-    - **temperature**: 生成温度（省略可）
-    """
+async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptResponse:
+    """完全台本生成ハンドラー"""
     try:
         logger.info(f"完全台本生成リクエスト: テーマ={request.input_text}")
 
@@ -235,17 +137,12 @@ async def generate_full_script(request: FullScriptRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/comedy/titles/batch")
-async def generate_comedy_titles_batch():
-    """
-    お笑いモード: ランダムタイトル量産（20-30個）
-
-    テーマ入力不要で、AIが自動的にバカバカしいタイトルを20-30個生成します。
-    """
+async def handle_generate_comedy_titles_batch() -> ComedyTitleBatch:
+    """お笑いタイトル量産ハンドラー"""
     try:
         logger.info("お笑いタイトル量産リクエスト")
 
-        from app.core.script_generators.comedy_script_generator import ComedyScriptGenerator
+        from app.core.script_generators.comedy import ComedyScriptGenerator
         from app.core.script_generators.generate_food_over import create_llm_instance
         from app.config.models import get_default_model_config
 
@@ -270,26 +167,17 @@ async def generate_comedy_titles_batch():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/save")
-async def save_script_to_file(request: dict):
-    """
-    生成された台本をJSONファイルとして保存
-    
-    Args:
-        request: {"script": 台本データ, "filename": ファイル名（オプション）}
-    
-    Returns:
-        保存されたファイルのパス
-    """
+async def handle_save_script_to_file(request: dict) -> Dict[str, Any]:
+    """台本保存ハンドラー"""
     try:
         import json
         from pathlib import Path
         from datetime import datetime
-        
+
         script_data = request.get("script")
         if not script_data:
             raise HTTPException(status_code=400, detail="台本データが必要です")
-        
+
         # ファイル名生成（指定がない場合は自動生成）
         filename = request.get("filename")
         if not filename:
@@ -301,28 +189,28 @@ async def save_script_to_file(request: dict):
                 safe_title = "script"
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{safe_title}_{timestamp}.json"
-        
+
         # 拡張子確認
         if not filename.endswith(".json"):
             filename += ".json"
-        
+
         # 保存先ディレクトリ
         output_dir = Path("outputs/json")
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # ファイル保存
         file_path = output_dir / filename
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(script_data, f, ensure_ascii=False, indent=2)
-        
+
         logger.info(f"台本を保存しました: {file_path}")
-        
+
         return {
             "success": True,
             "file_path": str(file_path),
             "filename": filename
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -330,16 +218,8 @@ async def save_script_to_file(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/models")
-async def get_available_models():
-    """
-    利用可能なAIモデルの一覧を取得
-    
-    Returns:
-        - models: 利用可能なモデルのリスト
-        - default_model_id: デフォルトモデルID
-        - recommended_model_id: 推奨モデルID
-    """
+async def handle_get_available_models() -> Dict[str, Any]:
+    """利用可能なモデル一覧取得ハンドラー"""
     try:
         from app.config.models import get_all_models, get_default_model_config
 
@@ -356,8 +236,3 @@ async def get_available_models():
         logger.error(f"モデル一覧取得エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.get("/health")
-async def health_check():
-    """ヘルスチェック"""
-    return {"status": "healthy", "service": "comedy_script_generator"}
