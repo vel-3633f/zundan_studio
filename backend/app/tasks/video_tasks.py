@@ -127,8 +127,12 @@ def generate_video_task(
             meta={'progress': 1.0, 'message': '動画生成完了！'}
         )
         
-        # クリーンアップ
         video_generator.cleanup()
+        
+        try:
+            FileManager.cleanup_temp_files()
+        except Exception as cleanup_error:
+            logger.warning(f"Failed to cleanup temp files: {cleanup_error}")
         
         logger.info(f"動画生成タスク完了 (task_id={self.request.id}): {output_path}")
         
