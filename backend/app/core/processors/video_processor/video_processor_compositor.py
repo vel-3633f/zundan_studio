@@ -156,16 +156,28 @@ class CompositorMixin:
                 char_imgs = character_images[char_name][expression]
             elif "normal" in character_images[char_name]:
                 char_imgs = character_images[char_name]["normal"]
-                logger.warning(
-                    f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'"
-                )
+                # 初回のみ警告ログを出力（ログの大量出力を防ぐ）
+                if not hasattr(self, "_expression_warnings"):
+                    self._expression_warnings = set()
+                warning_key = (char_name, expression, "normal")
+                if warning_key not in self._expression_warnings:
+                    logger.debug(
+                        f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using 'normal'"
+                    )
+                    self._expression_warnings.add(warning_key)
             else:
                 available_expressions = list(character_images[char_name].keys())
                 if available_expressions:
                     char_imgs = character_images[char_name][available_expressions[0]]
-                    logger.warning(
-                        f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'"
-                    )
+                    # 初回のみ警告ログを出力（ログの大量出力を防ぐ）
+                    if not hasattr(self, "_expression_warnings"):
+                        self._expression_warnings = set()
+                    warning_key = (char_name, expression, available_expressions[0])
+                    if warning_key not in self._expression_warnings:
+                        logger.debug(
+                            f"[COMPOSITE] Expression '{expression}' not found for {char_name}, using '{available_expressions[0]}'"
+                        )
+                        self._expression_warnings.add(warning_key)
                 else:
                     logger.error(f"No expressions available for {char_name}")
                     continue

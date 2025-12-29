@@ -14,8 +14,7 @@ class FileOperations:
     def delete_file_safe(file_path: str, file_type: str = "file") -> bool:
         try:
             os.remove(file_path)
-            filename = os.path.basename(file_path)
-            logger.info(f"Cleaned up {file_type}: {filename}")
+            # 個別ファイルのログは出力しない（ログの大量出力を防ぐ）
             return True
         except PermissionError:
             filename = os.path.basename(file_path)

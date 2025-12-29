@@ -28,6 +28,8 @@ def combine_video_with_audio(
         temp_audiofile="temp-audio.m4a",
         remove_temp=True,
         ffmpeg_params=["-crf", "23", "-preset", "fast", "-threads", "4"],
+        verbose=False,
+        logger=None,
     )
 
     video_clip.close()
@@ -54,11 +56,9 @@ def calculate_section_durations(
             current_segment_index : current_segment_index + segment_count
         ]
         section_duration = sum(
-            audio_durations.get(audio_path, 0.0)
-            for audio_path in section_audio_files
+            audio_durations.get(audio_path, 0.0) for audio_path in section_audio_files
         )
         section_durations.append(section_duration)
         current_segment_index += segment_count
 
     return section_durations
-

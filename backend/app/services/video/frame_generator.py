@@ -138,9 +138,9 @@ class FrameGenerator:
                     })
                     segment_index += segment_count
 
-            # 並列化の設定
-            num_workers = min(multiprocessing.cpu_count(), 8)
-            batch_size = max(30, total_frames // (num_workers * 4))  # 最低30フレーム、最大4バッチ/ワーカー
+            # 並列化の設定（メモリ使用量を考慮して調整）
+            num_workers = min(multiprocessing.cpu_count(), 4)  # 最大4ワーカーに制限
+            batch_size = max(60, total_frames // (num_workers * 2))  # バッチサイズを増やす（メモリ削減）
 
             # フレームをバッチに分割
             frame_batches = []
@@ -148,52 +148,58 @@ class FrameGenerator:
                 batch_end = min(batch_start + batch_size, total_frames)
                 frame_batches.append((batch_start, batch_end))
 
-            # フレーム生成を並列実行
-            frames_dict = {}  # frame_idx -> frame の辞書
+            # バッチごとに処理（メモリ効率化）
             completed_frames = 0
+            frames_buffer = {}  # 現在のバッチのフレームのみ保持
 
             with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                # 全フレームのタスクを送信
-                future_to_frame = {}
-                for frame_idx in range(total_frames):
-                    future = executor.submit(
-                        self._generate_single_frame,
-                        frame_idx,
-                        conversations,
-                        audio_file_list,
-                        segment_audio_intensities,
-                        backgrounds,
-                        character_images,
-                        blink_timings,
-                        subtitle_lines,
-                        conversation_mode,
-                        item_images or {},
-                        sections or [],
-                        section_segment_ranges,
-                    )
-                    future_to_frame[future] = frame_idx
+                for batch_start, batch_end in frame_batches:
+                    # 現在のバッチのフレームを生成
+                    future_to_frame = {}
+                    for frame_idx in range(batch_start, batch_end):
+                        future = executor.submit(
+                            self._generate_single_frame,
+                            frame_idx,
+                            conversations,
+                            audio_file_list,
+                            segment_audio_intensities,
+                            backgrounds,
+                            character_images,
+                            blink_timings,
+                            subtitle_lines,
+                            conversation_mode,
+                            item_images or {},
+                            sections or [],
+                            section_segment_ranges,
+                        )
+                        future_to_frame[future] = frame_idx
 
-                # 完了したフレームを順番に書き込み
-                for future in as_completed(future_to_frame):
-                    try:
-                        frame_idx, frame = future.result()
-                        frames_dict[frame_idx] = frame
-                        completed_frames += 1
+                    # 完了したフレームを順番に書き込み
+                    for future in as_completed(future_to_frame):
+                        try:
+                            frame_idx, frame = future.result()
+                            frames_buffer[frame_idx] = frame
+                            completed_frames += 1
 
-                        # 進捗コールバック
-                        if progress_callback:
-                            progress_callback(completed_frames / total_frames)
-                    except Exception as e:
-                        logger.error(f"Frame generation error at frame {frame_idx}: {e}")
-                        raise
+                            # 進捗コールバック
+                            if progress_callback:
+                                progress_callback(completed_frames / total_frames)
+                        except Exception as e:
+                            logger.error(f"Frame generation error at frame {frame_idx}: {e}")
+                            raise
 
-            # フレームを順番に書き込み
-            for frame_idx in range(total_frames):
-                if frame_idx in frames_dict:
-                    out.write(frames_dict[frame_idx])
-                else:
-                    logger.error(f"Missing frame {frame_idx}")
-                    return False
+                    # バッチ内のフレームを順番に書き込み
+                    for frame_idx in range(batch_start, batch_end):
+                        if frame_idx in frames_buffer:
+                            out.write(frames_buffer[frame_idx])
+                            # メモリ解放
+                            del frames_buffer[frame_idx]
+                        else:
+                            logger.error(f"Missing frame {frame_idx}")
+                            return False
+
+                    # バッファをクリア
+                    frames_buffer.clear()
 
             out.release()
             return True
