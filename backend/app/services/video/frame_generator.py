@@ -1,6 +1,7 @@
 import cv2
 import logging
 import multiprocessing
+import gc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Optional, Tuple
 from app.models.video_models import AudioSegmentInfo, SubtitleData
@@ -36,14 +37,12 @@ class FrameGenerator:
         current_time = frame_idx / self.fps
 
         # 現在のフレーム情報を取得
-        active_speakers, current_background = (
-            self.frame_info_builder.get_frame_info(
-                current_time,
-                conversations,
-                audio_file_list,
-                segment_audio_intensities,
-                backgrounds,
-            )
+        active_speakers, current_background = self.frame_info_builder.get_frame_info(
+            current_time,
+            conversations,
+            audio_file_list,
+            segment_audio_intensities,
+            backgrounds,
         )
 
         # 現在のセグメントを特定してアイテムを決定
@@ -68,7 +67,10 @@ class FrameGenerator:
                         # アイテム画像を取得（セクション情報から）
                         if item_images and sections:
                             for section in sections:
-                                if getattr(section, "section_key", None) == new_section_key:
+                                if (
+                                    getattr(section, "section_key", None)
+                                    == new_section_key
+                                ):
                                     # セクションに対応するアイテム画像を取得
                                     item_name = getattr(section, "item", None)
                                     if item_name and item_name in item_images:
@@ -88,7 +90,9 @@ class FrameGenerator:
         )
 
         # 字幕追加
-        frame = self.frame_info_builder.add_subtitle_to_frame(frame, subtitle_lines, current_time)
+        frame = self.frame_info_builder.add_subtitle_to_frame(
+            frame, subtitle_lines, current_time
+        )
 
         return frame_idx, frame
 
@@ -131,16 +135,33 @@ class FrameGenerator:
                 segment_index = 0
                 for section in sections:
                     segment_count = len(section.segments)
-                    section_segment_ranges.append({
-                        "key": getattr(section, "section_key", None),
-                        "start": segment_index,
-                        "end": segment_index + segment_count
-                    })
+                    section_segment_ranges.append(
+                        {
+                            "key": getattr(section, "section_key", None),
+                            "start": segment_index,
+                            "end": segment_index + segment_count,
+                        }
+                    )
                     segment_index += segment_count
 
             # 並列化の設定（メモリ使用量を考慮して調整）
-            num_workers = min(multiprocessing.cpu_count(), 4)  # 最大4ワーカーに制限
-            batch_size = max(60, total_frames // (num_workers * 2))  # バッチサイズを増やす（メモリ削減）
+            # 長い動画の場合は並列化を無効化または控えめにしてメモリ使用量を削減
+            if total_frames > 10000:
+                # 非常に長い動画（約5分以上）: 並列化を無効化、非常に小さなバッチサイズで安全に処理
+                num_workers = 1
+                batch_size = min(
+                    500, total_frames // 24
+                )  # 最大500フレーム/バッチ、約24バッチに分割（メモリ安全）
+            elif total_frames > 5000:
+                # 長い動画（約2.5分以上）: ワーカー数を減らし、小さなバッチサイズ
+                num_workers = 1
+                batch_size = min(
+                    800, total_frames // 10
+                )  # 最大800フレーム/バッチ、約10バッチに分割
+            else:
+                # 短い動画: 通常の並列化設定
+                num_workers = min(multiprocessing.cpu_count(), 4)
+                batch_size = max(60, total_frames // (num_workers * 2))
 
             # フレームをバッチに分割
             frame_batches = []
@@ -175,31 +196,73 @@ class FrameGenerator:
                         future_to_frame[future] = frame_idx
 
                     # 完了したフレームを順番に書き込み
-                    for future in as_completed(future_to_frame):
-                        try:
-                            frame_idx, frame = future.result()
-                            frames_buffer[frame_idx] = frame
-                            completed_frames += 1
+                    # 長い動画の場合は逐次処理でメモリ使用量を最小化
+                    if num_workers == 1:
+                        # 逐次処理: フレームを生成して即座に書き込み
+                        for frame_idx in range(batch_start, batch_end):
+                            try:
+                                _, frame = self._generate_single_frame(
+                                    frame_idx,
+                                    conversations,
+                                    audio_file_list,
+                                    segment_audio_intensities,
+                                    backgrounds,
+                                    character_images,
+                                    blink_timings,
+                                    subtitle_lines,
+                                    conversation_mode,
+                                    item_images or {},
+                                    sections or [],
+                                    section_segment_ranges,
+                                )
+                                out.write(frame)
+                                # 即座にメモリ解放
+                                del frame
+                                completed_frames += 1
 
-                            # 進捗コールバック
-                            if progress_callback:
-                                progress_callback(completed_frames / total_frames)
-                        except Exception as e:
-                            logger.error(f"Frame generation error at frame {frame_idx}: {e}")
-                            raise
+                                # 進捗コールバック
+                                if progress_callback:
+                                    progress_callback(completed_frames / total_frames)
 
-                    # バッチ内のフレームを順番に書き込み
-                    for frame_idx in range(batch_start, batch_end):
-                        if frame_idx in frames_buffer:
-                            out.write(frames_buffer[frame_idx])
-                            # メモリ解放
-                            del frames_buffer[frame_idx]
-                        else:
-                            logger.error(f"Missing frame {frame_idx}")
-                            return False
+                                # 一定間隔でガベージコレクション
+                                if completed_frames % 100 == 0:
+                                    gc.collect()
+                            except Exception as e:
+                                logger.error(
+                                    f"Frame generation error at frame {frame_idx}: {e}"
+                                )
+                                raise
+                    else:
+                        # 並列処理: 既存のロジック
+                        for future in as_completed(future_to_frame):
+                            try:
+                                frame_idx, frame = future.result()
+                                frames_buffer[frame_idx] = frame
+                                completed_frames += 1
+
+                                # 進捗コールバック
+                                if progress_callback:
+                                    progress_callback(completed_frames / total_frames)
+                            except Exception as e:
+                                logger.error(
+                                    f"Frame generation error at frame {frame_idx}: {e}"
+                                )
+                                raise
+
+                        # バッチ内のフレームを順番に書き込み
+                        for frame_idx in range(batch_start, batch_end):
+                            if frame_idx in frames_buffer:
+                                out.write(frames_buffer[frame_idx])
+                                # メモリ解放
+                                del frames_buffer[frame_idx]
+                            else:
+                                logger.error(f"Missing frame {frame_idx}")
+                                return False
 
                     # バッファをクリア
                     frames_buffer.clear()
+                    # ガベージコレクションを実行してメモリを積極的に解放
+                    gc.collect()
 
             out.release()
             return True

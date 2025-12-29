@@ -97,10 +97,16 @@ class BGMMixer:
 
         bgm_file_path = get_bgm_file_path(section.bgm_id)
         if not bgm_file_path or not os.path.exists(bgm_file_path):
-            logger.warning(
-                f"BGMファイルが見つかりません: {section.bgm_id} "
-                f"(path: {bgm_file_path})"
-            )
+            # 初回のみ警告ログを出力（ログの大量出力を防ぐ）
+            if not hasattr(self, "_bgm_file_warnings"):
+                self._bgm_file_warnings = set()
+            warning_key = section.bgm_id
+            if warning_key not in self._bgm_file_warnings:
+                logger.warning(
+                    f"BGMファイルが見つかりません: {section.bgm_id} "
+                    f"(path: {bgm_file_path})"
+                )
+                self._bgm_file_warnings.add(warning_key)
             return None
 
         try:

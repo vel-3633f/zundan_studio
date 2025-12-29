@@ -53,14 +53,26 @@ async def websocket_progress(websocket: WebSocket, task_id: str):
                     "result": result,
                 }
             elif task.state == "FAILURE":
-                info = task.info or {}
-                response = {
-                    "task_id": task_id,
-                    "status": "failed",
-                    "progress": 0.0,
-                    "message": info.get("message", "タスクが失敗しました"),
-                    "error": str(info.get("error", task.info)),
-                }
+                # task.infoが辞書でない場合（例外オブジェクトなど）に対応
+                if isinstance(task.info, dict):
+                    info = task.info
+                    response = {
+                        "task_id": task_id,
+                        "status": "failed",
+                        "progress": 0.0,
+                        "message": info.get("message", "タスクが失敗しました"),
+                        "error": str(info.get("error", task.info)),
+                    }
+                else:
+                    # 例外オブジェクトなどの場合
+                    error_str = str(task.info) if task.info else "不明なエラー"
+                    response = {
+                        "task_id": task_id,
+                        "status": "failed",
+                        "progress": 0.0,
+                        "message": "タスクが失敗しました",
+                        "error": error_str,
+                    }
             else:
                 response = {
                     "task_id": task_id,

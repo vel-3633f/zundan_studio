@@ -147,10 +147,12 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
     exists_nfd = os.path.exists(full_path_nfd)
 
     if exists_nfd and not exists_nfc:
-        logger.info(f"BGMファイルパス解決（NFD正規化）: {bgm_id} -> {full_path_nfd}")
+        # ログの大量出力を防ぐためDEBUGレベルに変更
+        logger.debug(f"BGMファイルパス解決（NFD正規化）: {bgm_id} -> {full_path_nfd}")
         return full_path_nfd
 
-    logger.info(f"BGMファイルパス解決: {bgm_id} -> {full_path} (exists: {exists_nfc})")
+    # ログの大量出力を防ぐためDEBUGレベルに変更
+    logger.debug(f"BGMファイルパス解決: {bgm_id} -> {full_path} (exists: {exists_nfc})")
     return full_path
 
 
