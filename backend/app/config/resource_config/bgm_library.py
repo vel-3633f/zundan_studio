@@ -5,6 +5,8 @@ import logging
 import os
 import unicodedata
 
+from app.config.app import Paths
+
 logger = logging.getLogger(__name__)
 
 
@@ -134,8 +136,10 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
         logger.warning(f"BGMトラックが見つかりません: {bgm_id}")
         return None
 
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    full_path = os.path.join(project_root, track.file_path)
+    assets_dir = Paths.get_assets_dir()
+    # track.file_path は "assets/bgm/..." なので、"bgm/..." 部分を抽出
+    bgm_relative_path = track.file_path.replace("assets/", "", 1)
+    full_path = os.path.join(assets_dir, bgm_relative_path)
 
     full_path_nfd = unicodedata.normalize("NFD", full_path)
 
