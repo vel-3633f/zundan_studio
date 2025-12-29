@@ -27,7 +27,7 @@ def combine_video_with_audio(
         audio_codec="aac",
         temp_audiofile="temp-audio.m4a",
         remove_temp=True,
-        ffmpeg_params=["-crf", "18", "-preset", "medium"],
+        ffmpeg_params=["-crf", "23", "-preset", "fast", "-threads", "4"],
     )
 
     video_clip.close()

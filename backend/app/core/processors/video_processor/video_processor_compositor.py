@@ -32,7 +32,7 @@ class CompositorMixin:
 
         resized_img = cv2.resize(original_img, (target_width, target_height))
 
-        if len(self._resize_cache) >= 100:
+        if len(self._resize_cache) >= 500:
             first_key = next(iter(self._resize_cache))
             del self._resize_cache[first_key]
 
