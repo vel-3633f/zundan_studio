@@ -6,26 +6,20 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Wand2,
 } from "lucide-react";
 import Card from "@/components/Card";
 import Badge from "@/components/Badge";
-import Button from "@/components/Button";
 import type { BackgroundCheckResponse } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface BackgroundCheckCardProps {
   result: BackgroundCheckResponse | null;
   isLoading?: boolean;
-  isGenerating?: boolean;
-  onGenerateMissing?: () => Promise<void>;
 }
 
 const BackgroundCheckCard = ({
   result,
   isLoading = false,
-  isGenerating = false,
-  onGenerateMissing,
 }: BackgroundCheckCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -91,23 +85,6 @@ const BackgroundCheckCard = ({
             </p>
           </div>
 
-          {result.missing > 0 && onGenerateMissing && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <Button
-                onClick={onGenerateMissing}
-                disabled={isGenerating}
-                isLoading={isGenerating}
-                variant="outline"
-                className="w-full"
-                leftIcon={<Wand2 className="h-5 w-5" />}
-              >
-                不足している背景画像を生成
-              </Button>
-            </div>
-          )}
-
-          {result.files.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           {result.files.length > 0 && (
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <button

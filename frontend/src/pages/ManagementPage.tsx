@@ -27,7 +27,8 @@ const ManagementPage = () => {
         backgroundName.trim()
       );
       if (response.success) {
-        toast.success(response.message || "背景画像を生成しました");
+        const message = response.message || `背景画像「${backgroundName.trim()}」の生成が完了しました`;
+        toast.success(message);
         setBackgroundName("");
       } else {
         toast.error("背景生成に失敗しました");

@@ -40,7 +40,7 @@ class BackgroundImageGenerator:
             region_name=aws_region,
         )
         self.prompt_file = (
-            Path(__file__).parent.parent / "prompts" / "assets" / "background_prompt_creator.md"
+            Path(__file__).parent.parent.parent / "prompts" / "assets" / "background_prompt_creator.md"
         )
         self._ensure_backgrounds_dir()
 

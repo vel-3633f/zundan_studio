@@ -14,8 +14,6 @@ class ConversationLine(BaseModel):
     text_for_voicevox: Optional[str] = Field(None, description="VOICEVOX用テキスト")
     expression: str = Field(default="normal", description="表情")
     background: str = Field(default="default", description="背景")
-    voice_speed: Optional[float] = Field(None, description="個別指定: 話速（オプション、表情ベース設定より優先）")
-    voice_pitch: Optional[float] = Field(None, description="個別指定: 音高（オプション、表情ベース設定より優先）")
 
 
 class VideoGenerationRequest(BaseModel):

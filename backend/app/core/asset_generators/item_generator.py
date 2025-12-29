@@ -22,7 +22,7 @@ class ItemImageGenerator(AssetImageGenerator):
         """
         items_dir = os.path.join(Paths.get_assets_dir(), "items")
         prompt_file = (
-            Path(__file__).parent.parent / "prompts" / "assets" / "item_prompt_creator.md"
+            Path(__file__).parent.parent.parent / "prompts" / "assets" / "item_prompt_creator.md"
         )
         super().__init__(
             output_dir=items_dir, prompt_file=prompt_file, llm_model=llm_model

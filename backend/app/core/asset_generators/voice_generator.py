@@ -165,11 +165,9 @@ class VoiceGenerator:
             # 表情を取得（デフォルトはnormal）
             expression = conv.get("expression", "normal")
 
-            # 音声パラメータを決定（優先順位: 個別指定 > 表情ベース > キャラデフォルト > グローバル）
+            # 音声パラメータを決定（優先順位: 表情ベース > キャラデフォルト > グローバル）
             # Speed
-            if conv.get("voice_speed") is not None:
-                final_speed = conv.get("voice_speed")
-            elif char_config and expression in char_config.expression_voice_map:
+            if char_config and expression in char_config.expression_voice_map:
                 final_speed = char_config.expression_voice_map[expression].speed
             elif char_config:
                 final_speed = char_config.default_speed
@@ -177,9 +175,7 @@ class VoiceGenerator:
                 final_speed = speed if speed is not None else 1.0
 
             # Pitch
-            if conv.get("voice_pitch") is not None:
-                final_pitch = conv.get("voice_pitch")
-            elif char_config and expression in char_config.expression_voice_map:
+            if char_config and expression in char_config.expression_voice_map:
                 final_pitch = char_config.expression_voice_map[expression].pitch
             elif char_config:
                 final_pitch = char_config.default_pitch

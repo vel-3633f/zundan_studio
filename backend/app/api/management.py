@@ -114,7 +114,7 @@ async def generate_background(request: BackgroundGenerateRequest):
 
         return BackgroundGenerateResponse(
             success=True,
-            message=f"背景画像 '{request.name}' を生成しました",
+            message=f"背景画像「{request.name}」の生成が完了しました",
             path=relative_path,
         )
 
@@ -172,10 +172,13 @@ async def generate_backgrounds_from_json(
         generated_count = len(generated)
         total = len(background_names)
 
-        message = f"{generated_count}個の背景画像を生成しました（合計{total}個中）"
-        if generated_count < total:
-            skipped_count = total - generated_count
-            message += f"（{skipped_count}個は既に存在するためスキップ）"
+        if generated_count > 0:
+            message = f"{generated_count}件の背景画像の生成が完了しました"
+            if generated_count < total:
+                skipped_count = total - generated_count
+                message += f"（{skipped_count}件は既に存在するためスキップ）"
+        else:
+            message = "すべての背景画像は既に存在しています"
 
         return BackgroundGenerateFromJsonResponse(
             success=True,

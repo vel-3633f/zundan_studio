@@ -54,7 +54,6 @@ export const useJsonLoader = () => {
   const [backgroundCheckResult, setBackgroundCheckResult] =
     useState<BackgroundCheckResponse | null>(null);
   const [isCheckingBackgrounds, setIsCheckingBackgrounds] = useState(false);
-  const [isGeneratingBackgrounds, setIsGeneratingBackgrounds] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -125,37 +124,6 @@ export const useJsonLoader = () => {
     }
   };
 
-  const generateMissingBackgrounds = async (filename: string) => {
-    if (!filename || isGeneratingBackgrounds) {
-      return;
-    }
-
-    setIsGeneratingBackgrounds(true);
-    try {
-      const result = await managementApi.backgrounds.generateFromJson(filename);
-      if (result.success) {
-        toast.success(result.message);
-        if (backgroundCheckResult) {
-          const backgroundNames = extractBackgroundNames(
-            await videoApi.getJsonFile(filename)
-          );
-          await checkBackgrounds(backgroundNames);
-        }
-      } else {
-        toast.error(result.message || "背景画像の生成に失敗しました");
-      }
-    } catch (error: any) {
-      console.error("背景画像生成エラー:", error);
-      const errorMessage =
-        error?.response?.data?.detail ||
-        error?.message ||
-        "背景画像の生成に失敗しました";
-      toast.error(errorMessage);
-    } finally {
-      setIsGeneratingBackgrounds(false);
-    }
-  };
-
   return {
     jsonFiles,
     selectedJsonFile,
@@ -166,8 +134,6 @@ export const useJsonLoader = () => {
     handleLoadJson,
     backgroundCheckResult,
     isCheckingBackgrounds,
-    isGeneratingBackgrounds,
-    generateMissingBackgrounds,
   };
 };
 

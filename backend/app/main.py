@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 import logging
+from app.config import Paths
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,7 @@ async def root():
     return {"message": "Zundan Studio API", "version": "2.0.0", "docs": "/docs"}
 
 
-outputs_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "outputs"
-)
+outputs_dir = Paths.get_outputs_dir()
 if os.path.exists(outputs_dir):
     app.mount(
         "/outputs", StaticFiles(directory=outputs_dir, html=False), name="outputs"
@@ -42,9 +41,7 @@ if os.path.exists(outputs_dir):
 else:
     logger.warning(f"Outputs directory not found: {outputs_dir}")
 
-assets_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets"
-)
+assets_dir = Paths.get_assets_dir()
 assets_dir = os.path.abspath(assets_dir)
 
 if os.path.exists(assets_dir):

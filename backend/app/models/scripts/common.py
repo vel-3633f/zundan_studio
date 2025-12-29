@@ -51,8 +51,6 @@ class ConversationSegment(BaseModel):
         default_factory=dict,
         description="各キャラクターの表情を個別に指定 {キャラクター名（ローマ字）: 表情名}。例: {\"zundamon\": \"excited\", \"metan\": \"angry\"}",
     )
-    voice_speed: Optional[float] = Field(None, description="個別指定: 話速（オプション、表情ベース設定より優先）")
-    voice_pitch: Optional[float] = Field(None, description="個別指定: 音高（オプション、表情ベース設定より優先）")
 
     @field_validator("speaker", "text", "text_for_voicevox", "expression")
     @classmethod

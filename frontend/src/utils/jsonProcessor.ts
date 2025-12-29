@@ -70,8 +70,6 @@ export const processJsonData = (
         bgm_volume: section.bgm_volume,
         visible_characters: segment.visible_characters,
         character_expressions: segment.character_expressions,
-        voice_speed: segment.voice_speed,
-        voice_pitch: segment.voice_pitch,
       });
     });
   });
