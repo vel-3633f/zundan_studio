@@ -1,7 +1,7 @@
 import toast from "react-hot-toast";
 import { scriptApi } from "@/api/scripts";
 import { extractErrorMessage } from "@/utils/errorHandler";
-import type { ComedyTitle, ComedyOutline } from "@/types";
+import type { ComedyTitle, ComedyOutline, YouTubeMetadata } from "@/types";
 
 export const useScriptGenerationHandlers = (
   setGenerating: (value: boolean) => void,
@@ -12,6 +12,7 @@ export const useScriptGenerationHandlers = (
   setGeneratedScript: (script: any) => void,
   setCurrentStep: (step: "input" | "title" | "outline" | "script") => void,
   setGeneratingAction: (action: "approve" | "regenerate" | null) => void,
+  setYoutubeMetadata: (metadata: YouTubeMetadata | null) => void,
   mode: "comedy",
   generatedTitle: ComedyTitle | null,
   generatedOutline: ComedyOutline | null,
@@ -40,6 +41,7 @@ export const useScriptGenerationHandlers = (
       });
 
       setGeneratedOutline(result.outline);
+      setYoutubeMetadata(result.youtube_metadata || null);
       setCurrentStep("outline");
       toast.success("アウトラインを生成しました！");
     } catch (err: any) {

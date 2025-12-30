@@ -2,6 +2,7 @@ export const useScriptRegenerateHandlers = (
   setGeneratedTitle: (title: any) => void,
   setSingleTitleCandidate: (value: any) => void,
   setGeneratedOutline: (outline: any) => void,
+  setYoutubeMetadata: (metadata: any) => void,
   setCurrentStep: (step: "input" | "title" | "outline" | "script") => void,
   setGeneratingAction: (action: "approve" | "regenerate" | null) => void,
   titleHandlers: any,
@@ -17,6 +18,7 @@ export const useScriptRegenerateHandlers = (
 
   const handleRegenerateOutline = async () => {
     setGeneratedOutline(null);
+    setYoutubeMetadata(null);
     setGeneratingAction("regenerate");
     await generationHandlers.handleGenerateOutline();
   };

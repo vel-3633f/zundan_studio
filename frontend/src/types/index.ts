@@ -212,8 +212,14 @@ export interface UnifiedOutlineRequest {
   temperature?: number;
 }
 
+export interface YouTubeMetadata {
+  tags: string[];
+  description: string;
+}
+
 export interface UnifiedOutlineResponse {
   outline: ComedyOutline;
+  youtube_metadata?: YouTubeMetadata;
   model: string;
   temperature: number;
 }

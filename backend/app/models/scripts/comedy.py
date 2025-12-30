@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import List
+from typing import List, Optional
 from app.models.scripts.base import BaseTitleModel, BaseOutlineModel, BaseScriptModel
 from app.models.scripts.common import SectionDefinition, VideoSection, ConversationSegment
 
@@ -91,6 +91,35 @@ class ComedyOutline(BaseOutlineModel):
         if len(v) < 3:
             raise ValueError("最低3つのセクションが必要です")
         return v
+
+
+class YouTubeMetadata(BaseModel):
+    """YouTubeメタデータ"""
+
+    tags: List[str] = Field(description="YouTubeタグ（最大15個）")
+    description: str = Field(description="YouTube説明文（5000文字以内）")
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: List[str]) -> List[str]:
+        if not v:
+            raise ValueError("タグリストは空にできません")
+        if len(v) > 15:
+            raise ValueError("タグは最大15個までです")
+        cleaned = [tag.strip() for tag in v if tag and tag.strip()]
+        if not cleaned:
+            raise ValueError("有効なタグがありません")
+        return cleaned
+
+    @field_validator("description")
+    @classmethod
+    def validate_description_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("説明文は空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 5000:
+            raise ValueError("説明文は5000文字以内である必要があります")
+        return cleaned
 
 
 class ComedyScript(BaseScriptModel):

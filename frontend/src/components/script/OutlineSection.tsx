@@ -5,17 +5,26 @@ import {
   Smile,
   Meh,
   Frown,
+  Copy,
+  Youtube,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Badge from "@/components/Badge";
+import IconButton from "@/components/IconButton";
 import type {
   ComedyOutline,
   SectionDefinition,
+  YouTubeMetadata,
 } from "@/types";
 
 interface OutlineSectionProps {
   outline: ComedyOutline;
+  youtubeMetadata?: YouTubeMetadata | null;
   isGenerating: boolean;
   isApprovingLoading?: boolean;
   isRegeneratingLoading?: boolean;
@@ -25,12 +34,14 @@ interface OutlineSectionProps {
 
 const OutlineSection = ({
   outline,
+  youtubeMetadata,
   isGenerating,
   isApprovingLoading = false,
   isRegeneratingLoading = false,
   onApprove,
   onRegenerate,
 }: OutlineSectionProps) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // 機嫌レベルのアイコンを取得
   const getMoodIcon = (mood: number) => {
@@ -43,6 +54,22 @@ const OutlineSection = ({
     if (mood >= 70) return "高い";
     if (mood >= 30) return "普通";
     return "低い";
+  };
+
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label}をコピーしました`);
+    } catch (error) {
+      toast.error("コピーに失敗しました");
+      console.error("Copy error:", error);
+    }
+  };
+
+  const handleCopyTags = async () => {
+    if (!youtubeMetadata) return;
+    const tagsText = youtubeMetadata.tags.join(", ");
+    await handleCopy(tagsText, "タグ");
   };
 
   return (
@@ -171,6 +198,97 @@ const OutlineSection = ({
             {outline.sections.reduce((sum, s) => sum + s.max_lines, 0)} セリフ
           </p>
         </div>
+
+        {/* YouTubeメタデータ */}
+        {youtubeMetadata && (
+          <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+            <div className="flex items-center gap-2 mb-4">
+              <Youtube className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+              <h3 className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                YouTubeメタデータ
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {/* タグ */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                    タグ ({youtubeMetadata.tags.length}個)
+                  </label>
+                  <IconButton
+                    onClick={handleCopyTags}
+                    variant="ghost"
+                    size="sm"
+                    aria-label="タグをコピー"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </IconButton>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {youtubeMetadata.tags.map((tag, index) => (
+                    <Badge key={index} variant="default">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* 説明文 */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                    説明文 ({youtubeMetadata.description.length}文字)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <IconButton
+                      onClick={() =>
+                        handleCopy(youtubeMetadata.description, "説明文")
+                      }
+                      variant="ghost"
+                      size="sm"
+                      aria-label="説明文をコピー"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </IconButton>
+                    {youtubeMetadata.description.length > 200 && (
+                      <IconButton
+                        onClick={() =>
+                          setIsDescriptionExpanded(!isDescriptionExpanded)
+                        }
+                        variant="ghost"
+                        size="sm"
+                        aria-label={
+                          isDescriptionExpanded
+                            ? "説明文を折りたたむ"
+                            : "説明文を展開"
+                        }
+                      >
+                        {isDescriptionExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </IconButton>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 p-3 rounded border border-primary-200 dark:border-primary-700">
+                  <p
+                    className={`text-sm text-primary-900 dark:text-primary-100 whitespace-pre-wrap ${
+                      !isDescriptionExpanded &&
+                      youtubeMetadata.description.length > 200
+                        ? "line-clamp-6"
+                        : ""
+                    }`}
+                  >
+                    {youtubeMetadata.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* アクションボタン */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
