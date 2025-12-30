@@ -16,6 +16,7 @@ from app.models.scripts.comedy import (
     ComedyTitle,
     ComedyOutline,
     ComedyScript,
+    YouTubeMetadata,
 )
 
 __all__ = [
@@ -32,5 +33,6 @@ __all__ = [
     "ComedyTitle",
     "ComedyOutline",
     "ComedyScript",
+    "YouTubeMetadata",
 ]
 
