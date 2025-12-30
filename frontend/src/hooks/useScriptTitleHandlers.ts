@@ -117,11 +117,57 @@ export const useScriptTitleHandlers = (
     toast.success("タイトルを選択しました！");
   };
 
+  const handleGenerateThemes = async (): Promise<string[]> => {
+    setGenerating(true);
+    setError(null);
+    setStatusMessage("テーマ候補を生成中...");
+
+    try {
+      const result = await scriptApi.generateThemeBatch();
+      toast.success(`${result.themes.length}個のテーマ候補を生成しました！`);
+      return result.themes;
+    } catch (err: any) {
+      const errorMsg = extractErrorMessage(err);
+      toast.error(errorMsg || "テーマ候補生成に失敗しました");
+      setError(errorMsg);
+      console.error("Theme generation error:", err);
+      return [];
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateTitlesFromTheme = async (theme: string) => {
+    setGenerating(true);
+    setError(null);
+    setStatusMessage(`「${theme}」のタイトルを生成中...`);
+
+    try {
+      const result = await scriptApi.generateTitlesFromTheme(
+        theme,
+        model,
+        temperature
+      );
+
+      setTitleCandidates(result);
+      toast.success(`「${theme}」のタイトルを${result.titles.length}個生成しました！`);
+    } catch (err: any) {
+      const errorMsg = extractErrorMessage(err);
+      toast.error(errorMsg || "タイトル生成に失敗しました");
+      setError(errorMsg);
+      console.error("Title generation error:", err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return {
     handleGenerateRandomTitles,
     handleSelectTitleCandidate,
     handleGenerateTitle,
     handleSelectSingleTitle,
+    handleGenerateThemes,
+    handleGenerateTitlesFromTheme,
   };
 };
 

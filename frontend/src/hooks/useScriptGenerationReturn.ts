@@ -66,5 +66,10 @@ export const createScriptGenerationReturn = (
   handleRegenerateOutline,
   handleResetToInput,
   handleLoadTestData,
+  // テーマ関連（オプショナル）
+  themes: [] as string[],
+  selectedTheme: null as string | null,
+  handleGenerateThemes: async () => {},
+  handleThemeSelect: async (_theme: string) => {},
 });
 

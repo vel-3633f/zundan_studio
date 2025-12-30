@@ -9,6 +9,7 @@ import type {
   FullScriptRequest,
   FullScriptResponse,
   ComedyTitleBatch,
+  ThemeBatch,
   // 旧型定義（後方互換性）
   OutlineRequest,
   OutlineResponse,
@@ -71,6 +72,35 @@ export const scriptApi = {
   generateComedyTitlesBatch: async (): Promise<ComedyTitleBatch> => {
     const response = await apiClient.post<ComedyTitleBatch>(
       "/scripts/comedy/titles/batch"
+    );
+    return response.data;
+  },
+
+  /**
+   * テーマ候補を生成
+   */
+  generateThemeBatch: async (): Promise<ThemeBatch> => {
+    const response = await apiClient.post<ThemeBatch>(
+      "/scripts/comedy/themes/batch"
+    );
+    return response.data;
+  },
+
+  /**
+   * テーマからタイトルを生成
+   */
+  generateTitlesFromTheme: async (
+    theme: string,
+    model?: string,
+    temperature?: number
+  ): Promise<ComedyTitleBatch> => {
+    const response = await apiClient.post<ComedyTitleBatch>(
+      "/scripts/comedy/titles/from-theme",
+      {
+        theme,
+        model,
+        temperature,
+      }
     );
     return response.data;
   },

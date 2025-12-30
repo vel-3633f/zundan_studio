@@ -86,6 +86,10 @@ export interface ComedyTitleBatch {
   titles: ComedyTitleCandidate[];
 }
 
+export interface ThemeBatch {
+  themes: string[];
+}
+
 export interface ComedyOutline {
   title: string;
   mode: ScriptMode;

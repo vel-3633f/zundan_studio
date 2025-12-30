@@ -18,6 +18,8 @@ export const useScriptGeneration = () => {
   const [generatingAction, setGeneratingAction] = useState<
     "approve" | "regenerate" | null
   >(null);
+  const [themes, setThemes] = useState<string[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
 
   const {
     mode,
@@ -102,7 +104,21 @@ export const useScriptGeneration = () => {
   const handleResetToInput = () => {
     setTitleCandidates(null);
     setSingleTitleCandidate(null);
+    setThemes([]);
+    setSelectedTheme(null);
     resetToInput();
+  };
+
+  const handleGenerateThemes = async () => {
+    const generatedThemes = await titleHandlers.handleGenerateThemes();
+    if (generatedThemes.length > 0) {
+      setThemes(generatedThemes);
+    }
+  };
+
+  const handleThemeSelect = async (theme: string) => {
+    setSelectedTheme(theme);
+    await titleHandlers.handleGenerateTitlesFromTheme(theme);
   };
 
   const { handleLoadTestData } = useScriptTestData(
@@ -114,32 +130,38 @@ export const useScriptGeneration = () => {
     setCurrentStep
   );
 
-  return createScriptGenerationReturn(
-    titleCandidates,
-    singleTitleCandidate,
-    generatingAction,
-    mode,
-    currentStep,
-    inputText,
-    model,
-    temperature,
-    generatedTitle,
-    generatedOutline,
-    generatedScript,
-    youtubeMetadata,
-    isGenerating,
-    progress,
-    statusMessage,
-    setInputText,
-    setModel,
-    setTemperature,
-    setTitleCandidates,
-    setSingleTitleCandidate,
-    titleHandlers,
-    generationHandlers,
-    handleRegenerateTitle,
-    handleRegenerateOutline,
-    handleResetToInput,
-    handleLoadTestData
-  );
+  return {
+    ...createScriptGenerationReturn(
+      titleCandidates,
+      singleTitleCandidate,
+      generatingAction,
+      mode,
+      currentStep,
+      inputText,
+      model,
+      temperature,
+      generatedTitle,
+      generatedOutline,
+      generatedScript,
+      youtubeMetadata,
+      isGenerating,
+      progress,
+      statusMessage,
+      setInputText,
+      setModel,
+      setTemperature,
+      setTitleCandidates,
+      setSingleTitleCandidate,
+      titleHandlers,
+      generationHandlers,
+      handleRegenerateTitle,
+      handleRegenerateOutline,
+      handleResetToInput,
+      handleLoadTestData
+    ),
+    themes,
+    selectedTheme,
+    handleGenerateThemes,
+    handleThemeSelect,
+  };
 };

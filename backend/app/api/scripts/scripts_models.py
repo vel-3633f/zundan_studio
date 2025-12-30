@@ -6,9 +6,11 @@ from typing import Optional, Dict, Any
 from app.models.script_models import (
     ScriptMode,
     ComedyTitle,
+    ComedyTitleBatch,
     ComedyOutline,
     ComedyScript,
     YouTubeMetadata,
+    ThemeBatch,
 )
 
 
@@ -81,4 +83,18 @@ class FullScriptResponse(BaseModel):
     """完全台本生成レスポンス"""
 
     script: ComedyScript
+
+
+class ThemeBatchResponse(BaseModel):
+    """テーマ候補バッチレスポンス"""
+
+    themes: list[str] = Field(description="テーマ候補のリスト")
+
+
+class ThemeTitleRequest(BaseModel):
+    """テーマベースタイトル生成リクエスト"""
+
+    theme: str = Field(..., description="テーマ（単語・フレーズ）")
+    model: Optional[str] = Field(None, description="使用するLLMモデル")
+    temperature: Optional[float] = Field(None, description="生成温度")
 

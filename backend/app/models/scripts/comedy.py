@@ -17,6 +17,25 @@ class CharacterMood(BaseModel):
         return v
 
 
+class ThemeBatch(BaseModel):
+    """テーマ候補バッチ"""
+    themes: List[str] = Field(
+        description="テーマ候補のリスト（15-20個）",
+        min_length=15,
+        max_length=20
+    )
+
+    @field_validator("themes")
+    @classmethod
+    def validate_themes_count(cls, v: List[str]) -> List[str]:
+        if len(v) < 15 or len(v) > 20:
+            raise ValueError("テーマは15-20個生成する必要があります")
+        cleaned = [theme.strip() for theme in v if theme and theme.strip()]
+        if len(cleaned) < 15:
+            raise ValueError("有効なテーマが不足しています")
+        return cleaned
+
+
 class ComedyTitleCandidate(BaseModel):
     id: int = Field(description="候補ID")
     title: str = Field(description="タイトル")

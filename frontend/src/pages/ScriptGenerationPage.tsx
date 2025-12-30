@@ -42,6 +42,10 @@ const ScriptGenerationPage = () => {
     handleRegenerateOutline,
     handleResetToInput,
     handleLoadTestData,
+    themes,
+    selectedTheme,
+    handleGenerateThemes,
+    handleThemeSelect,
   } = useScriptGeneration();
 
   return (
@@ -83,6 +87,10 @@ const ScriptGenerationPage = () => {
           onRandomGenerate={
             mode === "comedy" ? handleGenerateRandomTitles : undefined
           }
+          themes={themes}
+          selectedTheme={selectedTheme}
+          onGenerateThemes={handleGenerateThemes}
+          onThemeSelect={handleThemeSelect}
         />
       )}
 
