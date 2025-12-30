@@ -38,11 +38,21 @@ class ThemeBatch(BaseModel):
 
 class ComedyTitleCandidate(BaseModel):
     id: int = Field(description="候補ID")
-    title: str = Field(description="タイトル")
+    title: str = Field(description="タイトル（30文字以内）")
     hook_pattern: str = Field(description="使用したお笑いフックパターン")
     situation: str = Field(description="シチュエーション")
     chaos_element: str = Field(description="カオス要素")
     expected_conflict: str = Field(description="予想される対立構造")
+
+    @field_validator("title")
+    @classmethod
+    def validate_title_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("タイトルは空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 30:
+            raise ValueError(f"タイトルは30文字以内である必要があります（現在: {len(cleaned)}文字）")
+        return cleaned
 
 
 class ComedyTitleBatch(BaseModel):
@@ -63,6 +73,16 @@ class ComedyTitleBatch(BaseModel):
 class ComedyTitle(BaseTitleModel):
     theme: str = Field(description="漫談のテーマ")
     clickbait_elements: List[str] = Field(description="煽り要素リスト（3-5個）")
+
+    @field_validator("title")
+    @classmethod
+    def validate_title_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("タイトルは空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 30:
+            raise ValueError(f"タイトルは30文字以内である必要があります（現在: {len(cleaned)}文字）")
+        return cleaned
 
     @field_validator("theme")
     @classmethod

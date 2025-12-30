@@ -27,9 +27,7 @@ class ComedyTitleGenerator:
         self.title_batch_prompt_file = Path(
             "app/prompts/comedy/title_batch_generation.md"
         )
-        self.theme_prompt_file = Path(
-            "app/prompts/comedy/theme_generation.md"
-        )
+        self.theme_prompt_file = Path("app/prompts/comedy/theme_generation.md")
 
     def load_prompt(self, file_path: Path) -> str:
         """プロンプトファイルを読み込む"""
@@ -150,6 +148,7 @@ class ComedyTitleGenerator:
             system_message = (
                 "あなたは、ずんだもん・めたん・つむぎの3名によるYouTube漫談の企画・タイトルを無限に生み出すプロの放送作家です。"
                 "ユーザーからのテーマ入力なしに、お笑いの構造に基づいた斬新なタイトルを大量に生成します。"
+                "重要: タイトルは必ず30文字以内で生成してください。"
                 '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
             )
 
@@ -232,9 +231,7 @@ class ComedyTitleGenerator:
             )
 
             system_message = (
-                "あなたは、お笑いコントのテーマを考えるプロの放送作家です。"
-                "ずんだもん・めたん・つむぎの3名による漫談に適した、"
-                "バカバカしくて面白いテーマ（単語・フレーズ）を生成します。"
+                "あなたは、テーマを単語で考える人です。"
                 '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
             )
 
@@ -287,6 +284,7 @@ class ComedyTitleGenerator:
             system_message = (
                 "あなたは、ずんだもん・めたん・つむぎの3名によるYouTube漫談の企画・タイトルを無限に生み出すプロの放送作家です。"
                 f"ユーザーが指定したテーマ「{theme}」を基に、お笑いの構造に基づいた斬新なタイトルを大量に生成します。"
+                "重要: タイトルは必ず30文字以内で生成してください。"
                 '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
             )
 
@@ -300,7 +298,9 @@ class ComedyTitleGenerator:
 
             title_batch = self.parse_with_retry(parser, llm_response)
 
-            logger.info(f"テーマベース タイトル生成成功: {len(title_batch.titles)}個生成")
+            logger.info(
+                f"テーマベース タイトル生成成功: {len(title_batch.titles)}個生成"
+            )
             for i, candidate in enumerate(title_batch.titles, 1):
                 logger.info(f"  {i}. [{candidate.hook_pattern}] {candidate.title}")
 

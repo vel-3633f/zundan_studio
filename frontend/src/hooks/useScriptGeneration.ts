@@ -118,6 +118,7 @@ export const useScriptGeneration = () => {
 
   const handleThemeSelect = async (theme: string) => {
     setSelectedTheme(theme);
+    setStatusMessage("タイトルを生成しています。");
     await titleHandlers.handleGenerateTitlesFromTheme(theme);
   };
 
