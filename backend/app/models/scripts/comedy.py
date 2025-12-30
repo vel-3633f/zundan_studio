@@ -1,7 +1,14 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
+import logging
 from app.models.scripts.base import BaseTitleModel, BaseOutlineModel, BaseScriptModel
-from app.models.scripts.common import SectionDefinition, VideoSection, ConversationSegment
+from app.models.scripts.common import (
+    SectionDefinition,
+    VideoSection,
+    ConversationSegment,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class CharacterMood(BaseModel):
@@ -19,10 +26,9 @@ class CharacterMood(BaseModel):
 
 class ThemeBatch(BaseModel):
     """テーマ候補バッチ"""
+
     themes: List[str] = Field(
-        description="テーマ候補のリスト（15-20個）",
-        min_length=15,
-        max_length=20
+        description="テーマ候補のリスト（15-20個）", min_length=15, max_length=20
     )
 
     @field_validator("themes")
@@ -51,7 +57,9 @@ class ComedyTitleCandidate(BaseModel):
             raise ValueError("タイトルは空にできません")
         cleaned = v.strip()
         if len(cleaned) > 30:
-            raise ValueError(f"タイトルは30文字以内である必要があります（現在: {len(cleaned)}文字）")
+            logger.warning(
+                f"タイトルが30文字を超えています（現在: {len(cleaned)}文字）: {cleaned[:50]}..."
+            )
         return cleaned
 
 
@@ -81,7 +89,9 @@ class ComedyTitle(BaseTitleModel):
             raise ValueError("タイトルは空にできません")
         cleaned = v.strip()
         if len(cleaned) > 30:
-            raise ValueError(f"タイトルは30文字以内である必要があります（現在: {len(cleaned)}文字）")
+            logger.warning(
+                f"タイトルが30文字を超えています（現在: {len(cleaned)}文字）: {cleaned[:50]}..."
+            )
         return cleaned
 
     @field_validator("theme")
@@ -192,4 +202,3 @@ class ComedyScript(BaseScriptModel):
         if not v:
             raise ValueError("全セグメントリストは空にできません")
         return v
-
