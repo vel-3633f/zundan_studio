@@ -1,7 +1,7 @@
 """お笑いモード専用の台本生成ロジック"""
 
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any, Optional, Callable, Tuple
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import PydanticOutputParser
@@ -11,6 +11,7 @@ from app.models.script_models import (
     ComedyTitle,
     ComedyOutline,
     ComedyScript,
+    YouTubeMetadata,
 )
 from app.core.script_generators.generic_section_generator import GenericSectionGenerator
 from app.core.script_generators.section_context import SectionContext
@@ -27,6 +28,9 @@ class ComedyScriptGenerator:
     def __init__(self):
         self.mode = ScriptMode.COMEDY
         self.outline_prompt_file = Path("app/prompts/comedy/outline_generation.md")
+        self.youtube_metadata_prompt_file = Path(
+            "app/prompts/comedy/youtube_metadata_generation.md"
+        )
         self.mood_generator = ComedyMoodGenerator()
         self.title_generator = ComedyTitleGenerator()
 
@@ -217,7 +221,7 @@ class ComedyScriptGenerator:
         title: ComedyTitle,
         llm: Any,
         progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> ComedyOutline:
+    ) -> Tuple[ComedyOutline, Optional[YouTubeMetadata]]:
         """タイトルから動的セクション構造のアウトラインを生成
 
         Args:
@@ -311,9 +315,93 @@ class ComedyScriptGenerator:
                     f"({section.min_lines}-{section.max_lines}セリフ)"
                 )
 
-            return outline
+            # YouTubeメタデータ生成
+            youtube_metadata = self.generate_youtube_metadata(
+                title, outline, llm, progress_callback
+            )
+
+            return outline, youtube_metadata
 
         except Exception as e:
             error_msg = f"アウトライン生成エラー: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise
+
+    def generate_youtube_metadata(
+        self,
+        title: ComedyTitle,
+        outline: ComedyOutline,
+        llm: Any,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> Optional[YouTubeMetadata]:
+        """YouTubeメタデータを生成
+
+        Args:
+            title: 生成されたタイトル
+            outline: 生成されたアウトライン
+            llm: LLMインスタンス
+            progress_callback: 進捗通知用コールバック関数
+
+        Returns:
+            Optional[YouTubeMetadata]: 生成されたメタデータ（失敗時はNone）
+        """
+        try:
+            if progress_callback:
+                progress_callback("📝 YouTubeメタデータを生成中...")
+
+            logger.info("YouTubeメタデータ生成開始")
+
+            # プロンプト読み込み
+            prompt_template = self.load_prompt(self.youtube_metadata_prompt_file)
+
+            # セクション情報を文字列化
+            sections_info = "\n".join(
+                [
+                    f"- {i+1}. {section.section_name}: {section.content_summary}"
+                    for i, section in enumerate(outline.sections)
+                ]
+            )
+
+            # プロンプト構築
+            prompt_text = prompt_template.replace("{title}", title.title)
+            prompt_text = prompt_text.replace("{theme}", title.theme)
+            prompt_text = prompt_text.replace("{story_summary}", outline.story_summary)
+            prompt_text = prompt_text.replace("{sections_info}", sections_info)
+
+            # パーサー設定
+            parser = PydanticOutputParser(pydantic_object=YouTubeMetadata)
+            format_instructions = parser.get_format_instructions()
+            prompt_text = prompt_text.replace(
+                "{format_instructions}", format_instructions
+            )
+
+            # システムメッセージ
+            system_message = (
+                "あなたは、YouTube動画のメタデータを最適化する専門家です。"
+                "SEOを意識しつつ、視聴者の興味を引くメタデータを生成してください。"
+            )
+
+            # LLM呼び出し
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=prompt_text),
+            ]
+
+            logger.info("YouTubeメタデータをLLMで生成中...")
+            llm_response = llm.invoke(messages)
+
+            # パース
+            metadata = parser.invoke(llm_response)
+
+            logger.info(
+                f"YouTubeメタデータ生成成功: タイトル={metadata.title}, "
+                f"タグ数={len(metadata.tags)}, 説明文長={len(metadata.description)}文字"
+            )
+
+            return metadata
+
+        except Exception as e:
+            error_msg = f"YouTubeメタデータ生成エラー: {str(e)}"
+            logger.warning(error_msg, exc_info=True)
+            # メタデータ生成が失敗してもアウトライン生成は成功させる
+            return None

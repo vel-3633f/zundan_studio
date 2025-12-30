@@ -1,4 +1,4 @@
-import type { ComedyTitleBatch } from "@/types";
+import type { ComedyTitleBatch, YouTubeMetadata } from "@/types";
 
 export const createScriptGenerationReturn = (
   titleCandidates: ComedyTitleBatch | null,
@@ -16,6 +16,7 @@ export const createScriptGenerationReturn = (
   generatedTitle: any,
   generatedOutline: any,
   generatedScript: any,
+  youtubeMetadata: YouTubeMetadata | null,
   isGenerating: boolean,
   progress: number,
   statusMessage: string,
@@ -46,6 +47,7 @@ export const createScriptGenerationReturn = (
   generatedTitle,
   generatedOutline,
   generatedScript,
+  youtubeMetadata,
   isGenerating,
   progress,
   statusMessage,
