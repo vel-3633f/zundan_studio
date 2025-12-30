@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 import logging
 import os
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -458,6 +459,130 @@ async def get_background_image(filename: str):
     except Exception as e:
         logger.error(f"背景画像取得エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class BackgroundRenameRequest(BaseModel):
+    """背景画像ファイル名変更リクエスト"""
+
+    new_name: str = Field(..., description="新しいファイル名（拡張子なし）", min_length=1, max_length=255)
+
+
+class BackgroundRenameResponse(BaseModel):
+    """背景画像ファイル名変更レスポンス"""
+
+    success: bool
+    message: str
+    old_path: Optional[str] = None
+    new_path: Optional[str] = None
+
+
+@router.put("/backgrounds/{id}/rename", response_model=BackgroundRenameResponse)
+async def rename_background(id: str, request: BackgroundRenameRequest):
+    """背景画像のファイル名を変更する"""
+    try:
+        from app.config import Paths
+        from app.config.content_config.content import Backgrounds
+        from app.utils_legacy.constants import Constants
+
+        backgrounds_dir = Paths.get_backgrounds_dir()
+        supported_extensions = Backgrounds.get_supported_extensions()
+
+        if not os.path.exists(backgrounds_dir):
+            raise HTTPException(
+                status_code=404, detail="背景画像ディレクトリが見つかりません"
+            )
+
+        # 新しいファイル名のバリデーション
+        new_name = request.new_name.strip()
+        if not new_name:
+            raise HTTPException(status_code=400, detail="ファイル名が空です")
+
+        # 無効な文字をチェック
+        invalid_chars = Constants.INVALID_FILENAME_CHARS
+        for char in invalid_chars:
+            if char in new_name:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"ファイル名に無効な文字が含まれています: {char}",
+                )
+
+        # 既存ファイルを検索
+        old_file_path = None
+        old_extension = None
+        found = False
+
+        for ext in supported_extensions:
+            ext_without_dot = ext.lstrip(".")
+            possible_filenames = [
+                f"{id}{ext}",
+                f"{id}.{ext_without_dot}",
+            ]
+
+            for filename in possible_filenames:
+                file_path = os.path.join(backgrounds_dir, filename)
+                if os.path.exists(file_path) and os.path.isfile(file_path):
+                    old_file_path = file_path
+                    old_extension = ext
+                    found = True
+                    break
+
+            if found:
+                break
+
+        if not found:
+            raise HTTPException(
+                status_code=404, detail=f"背景画像が見つかりません: {id}"
+            )
+
+        # 新しいファイル名が既に存在するかチェック
+        ext_without_dot = old_extension.lstrip(".")
+        new_possible_filenames = [
+            f"{new_name}{old_extension}",
+            f"{new_name}.{ext_without_dot}",
+        ]
+
+        for new_filename in new_possible_filenames:
+            new_file_path = os.path.join(backgrounds_dir, new_filename)
+            if os.path.exists(new_file_path) and os.path.isfile(new_file_path):
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"ファイル名「{new_name}」は既に存在します",
+                )
+
+        # ファイル名を変更
+        new_filename = f"{new_name}{old_extension}"
+        new_file_path = os.path.join(backgrounds_dir, new_filename)
+
+        try:
+            shutil.move(old_file_path, new_file_path)
+            logger.info(f"Renamed background image: {old_file_path} -> {new_file_path}")
+
+            # 相対パスを作成
+            old_relative_path = f"assets/backgrounds/{os.path.basename(old_file_path)}"
+            new_relative_path = f"assets/backgrounds/{new_filename}"
+
+            return BackgroundRenameResponse(
+                success=True,
+                message=f"ファイル名を「{new_name}」に変更しました",
+                old_path=old_relative_path,
+                new_path=new_relative_path,
+            )
+        except PermissionError:
+            raise HTTPException(
+                status_code=403, detail="ファイル名の変更に必要な権限がありません"
+            )
+        except OSError as e:
+            raise HTTPException(
+                status_code=500, detail=f"ファイル名の変更に失敗しました: {str(e)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"背景画像ファイル名変更エラー: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"ファイル名の変更に失敗しました: {str(e)}"
+        )
 
 
 @router.get("/health")
