@@ -122,6 +122,12 @@ export const useScriptGeneration = () => {
     await titleHandlers.handleGenerateTitlesFromTheme(theme);
   };
 
+  const handleCustomThemeSubmit = async (theme: string) => {
+    setSelectedTheme(theme);
+    setStatusMessage("タイトルを生成しています。");
+    await titleHandlers.handleGenerateTitlesFromTheme(theme);
+  };
+
   const { handleLoadTestData } = useScriptTestData(
     setGeneratedTitle,
     setGeneratedOutline,
@@ -164,5 +170,6 @@ export const useScriptGeneration = () => {
     selectedTheme,
     handleGenerateThemes,
     handleThemeSelect,
+    handleCustomThemeSubmit,
   };
 };

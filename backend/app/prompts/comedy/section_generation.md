@@ -130,9 +130,21 @@ JSON 出力時は `speaker: "tsumugi"` として指定
 - `visible_characters`: **必ず `["zundamon", "metan"]` または `["zundamon", "tsumugi"]` のいずれかを指定してください**（ずんだもんは必須、もう 1 人はめたんまたはつむぎ）
 - `character_expressions`: `{"zundamon": "excited", "metan": "angry"}` のようにローマ字をキーに使用
 
+## BGM選択
+
+セクションの雰囲気や内容に合わせて、適切なBGMを選択してください。
+
+- セクションのトーン（明るい、暗い、ドラマチック、ミステリアスなど）を考慮する
+- 会話のテンポや展開に合ったBGMを選ぶ
+- セクションの目的や内容に適した雰囲気のBGMを選択する
+
+利用可能なBGMは、コンテキスト情報として提供されます。各BGMの説明を参考に、最適なものを選択してください。
+
+`bgm_volume`は0.0〜1.0の範囲で指定してください。通常は0.15〜0.25程度が適切です。
+
 ## 出力形式
 
-JSON 形式で出力してください。`scene_background`、`bgm_id`、`bgm_volume`は自動設定されます。
+JSON 形式で出力してください。`scene_background`は自動設定されますが、`bgm_id`と`bgm_volume`はセクション内容に合わせて選択してください。
 
 ## 生成のポイント
 

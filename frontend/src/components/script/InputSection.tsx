@@ -30,6 +30,7 @@ interface InputSectionProps {
   selectedTheme?: string | null;
   onGenerateThemes?: () => void;
   onThemeSelect?: (theme: string) => void;
+  onCustomThemeSubmit?: (theme: string) => void;
 }
 
 const InputSection = ({
@@ -47,6 +48,7 @@ const InputSection = ({
   selectedTheme = null,
   onGenerateThemes,
   onThemeSelect,
+  onCustomThemeSubmit,
 }: InputSectionProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { availableModels } = useScriptStore();
@@ -60,6 +62,7 @@ const InputSection = ({
         isGenerating={isGenerating}
         onThemeSelect={onThemeSelect}
         onGenerateThemes={onGenerateThemes}
+        onCustomThemeSubmit={onCustomThemeSubmit}
       />
     );
   }

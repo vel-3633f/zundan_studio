@@ -191,6 +191,28 @@ def get_section_bgm(section_type: str) -> Dict[str, any]:
             return {"bgm_id": "none", "volume": 0.0}
 
 
+def validate_bgm_id(bgm_id: str) -> str:
+    """BGM IDを検証し、無効な場合はnoneを返す
+
+    Args:
+        bgm_id: 検証するBGM ID
+
+    Returns:
+        str: 有効なBGM ID、無効な場合は"none"
+    """
+    if not bgm_id or not bgm_id.strip():
+        return "none"
+
+    bgm_id = bgm_id.strip()
+    if bgm_id in BGM_LIBRARY:
+        return bgm_id
+    else:
+        logger.warning(
+            f"無効なBGM IDが指定されました: {bgm_id} -> noneにフォールバック"
+        )
+        return "none"
+
+
 def format_bgm_choices_for_prompt() -> str:
     """プロンプト用にBGM選択肢を整形
 

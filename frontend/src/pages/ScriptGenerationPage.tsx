@@ -46,6 +46,7 @@ const ScriptGenerationPage = () => {
     selectedTheme,
     handleGenerateThemes,
     handleThemeSelect,
+    handleCustomThemeSubmit,
   } = useScriptGeneration();
 
   return (
@@ -91,6 +92,7 @@ const ScriptGenerationPage = () => {
           selectedTheme={selectedTheme}
           onGenerateThemes={handleGenerateThemes}
           onThemeSelect={handleThemeSelect}
+          onCustomThemeSubmit={handleCustomThemeSubmit}
         />
       )}
 
