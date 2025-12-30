@@ -62,13 +62,50 @@ class ConversationSegment(BaseModel):
     @field_validator("visible_characters")
     @classmethod
     def validate_visible_characters(cls, v: List[str], info) -> List[str]:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        speaker = info.data.get("speaker", "")
+        
         # ナレーターの場合は空配列を許可（声のみ）、または最大2人までキャラクターを表示可能
-        if info.data.get("speaker") == "narrator":
+        # ナレーターの場合もずんだもん必須のルールを適用
+        if speaker == "narrator":
             if not v:
                 return []
             cleaned = [char.strip() for char in v if char and char.strip()]
             if len(cleaned) > 2:
                 raise ValueError(f"ナレーターの場合、表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}")
+            
+            # ナレーターの場合もずんだもん必須のルールを適用（空配列でない場合）
+            if cleaned and "zundamon" not in cleaned:
+                # ずんだもんを追加
+                cleaned.append("zundamon")
+                logger.info(f"ナレーターの場合、ずんだもんが含まれていなかったため追加しました: {cleaned}")
+            
+            # 3人以上の場合、ずんだもん + めたん/つむぎのいずれかに絞る
+            if len(cleaned) > 2:
+                result = ["zundamon"]
+                if "metan" in cleaned:
+                    result.append("metan")
+                elif "tsumugi" in cleaned:
+                    result.append("tsumugi")
+                else:
+                    # めたんもつむぎもない場合、デフォルトでめたんを追加
+                    result.append("metan")
+                logger.info(f"ナレーターの場合、3人以上指定されていたため修正しました: {cleaned} -> {result}")
+                return result
+            
+            # 1人しか指定されていない場合、もう1人を追加
+            if len(cleaned) == 1:
+                if cleaned[0] == "zundamon":
+                    # ずんだもんのみの場合、デフォルトでめたんを追加
+                    cleaned.append("metan")
+                    logger.info(f"ナレーターの場合、1人しか指定されていなかったためめたんを追加しました: {cleaned}")
+                else:
+                    # ずんだもん以外が指定されている場合、ずんだもんを追加
+                    cleaned.insert(0, "zundamon")
+                    logger.info(f"ナレーターの場合、ずんだもんが含まれていなかったため追加しました: {cleaned}")
+            
             return cleaned
         
         # それ以外のキャラクターは空配列を許可しない
@@ -78,9 +115,51 @@ class ConversationSegment(BaseModel):
         if not cleaned:
             raise ValueError("有効な表示キャラクターが必要です")
         
-        # 3人以上は許可しない（必ず2人まで）
+        # 必ず ["zundamon", "metan"] または ["zundamon", "tsumugi"] になるように補完
+        original_cleaned = cleaned.copy()
+        
+        # 1. ずんだもんが含まれていない場合、ずんだもんを追加
+        if "zundamon" not in cleaned:
+            cleaned.insert(0, "zundamon")
+            logger.info(f"ずんだもんが含まれていなかったため追加しました: {original_cleaned} -> {cleaned}")
+        
+        # 2. 3人以上指定されている場合、ずんだもん + 最初に見つかっためたん/つむぎに絞る
         if len(cleaned) > 2:
-            raise ValueError(f"表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}")
+            result = ["zundamon"]
+            if "metan" in cleaned:
+                result.append("metan")
+            elif "tsumugi" in cleaned:
+                result.append("tsumugi")
+            else:
+                # めたんもつむぎもない場合、デフォルトでめたんを追加
+                result.append("metan")
+            logger.info(f"3人以上指定されていたため修正しました: {cleaned} -> {result}")
+            cleaned = result
+        
+        # 3. 1人しか指定されていない場合、もう1人を追加
+        if len(cleaned) == 1:
+            if cleaned[0] == "zundamon":
+                # ずんだもんのみの場合、デフォルトでめたんを追加（優先順位: metan > tsumugi）
+                cleaned.append("metan")
+                logger.info(f"1人しか指定されていなかったためめたんを追加しました: {original_cleaned} -> {cleaned}")
+            else:
+                # ずんだもん以外が指定されている場合、ずんだもんを追加
+                cleaned.insert(0, "zundamon")
+                logger.info(f"ずんだもんが含まれていなかったため追加しました: {original_cleaned} -> {cleaned}")
+        
+        # 4. 最終的なバリデーション: 必ず2人で、ずんだもんが含まれていることを確認
+        if len(cleaned) != 2:
+            raise ValueError(f"表示するキャラクターは必ず2人である必要があります。現在{len(cleaned)}人: {cleaned}")
+        
+        if "zundamon" not in cleaned:
+            raise ValueError(f"ずんだもんは必ず含める必要があります。現在: {cleaned}")
+        
+        # もう1人がめたんまたはつむぎであることを確認
+        other_char = [c for c in cleaned if c != "zundamon"][0]
+        if other_char not in ["metan", "tsumugi"]:
+            # 不正なキャラクターが指定されている場合、デフォルトでめたんに置き換え
+            cleaned = ["zundamon", "metan"]
+            logger.warning(f"不正なキャラクターが指定されていたため、めたんに置き換えました: {original_cleaned} -> {cleaned}")
         
         return cleaned
 

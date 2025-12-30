@@ -31,11 +31,14 @@ export const managementApi = {
       return response.data;
     },
 
-    generate: async (name: string): Promise<{ success: boolean; message: string; path?: string }> => {
-      const response = await apiClient.post<{ success: boolean; message: string; path?: string }>(
-        "/management/backgrounds/generate",
-        { name }
-      );
+    generate: async (
+      name: string
+    ): Promise<{ success: boolean; message: string; path?: string }> => {
+      const response = await apiClient.post<{
+        success: boolean;
+        message: string;
+        path?: string;
+      }>("/management/backgrounds/generate", { name });
       return response.data;
     },
 
@@ -85,6 +88,26 @@ export const managementApi = {
         failed_ids: string[];
       }>("/management/backgrounds", {
         data: { ids },
+      });
+      return response.data;
+    },
+
+    rename: async (
+      id: string,
+      newName: string
+    ): Promise<{
+      success: boolean;
+      message: string;
+      old_path?: string;
+      new_path?: string;
+    }> => {
+      const response = await apiClient.put<{
+        success: boolean;
+        message: string;
+        old_path?: string;
+        new_path?: string;
+      }>(`/management/backgrounds/${id}/rename`, {
+        new_name: newName,
       });
       return response.data;
     },

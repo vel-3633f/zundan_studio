@@ -115,12 +115,19 @@ JSON 出力時は `speaker: "tsumugi"` として指定
 
 **重要**: `visible_characters`は**必ず 2 人だけ**を指定してください。3 人にしてはいけません。
 
+**絶対厳守**:
+
+- **ずんだもん（`zundamon`）は必ず含めてください**
+- もう 1 人は**めたん（`metan`）またはつむぎ（`tsumugi`）のいずれか**を指定してください
+- 正しい例: `["zundamon", "metan"]` または `["zundamon", "tsumugi"]`
+- 間違った例: `["metan", "tsumugi"]`（ずんだもんが含まれていない）、`["zundamon"]`（1 人しか指定されていない）、`["zundamon", "metan", "tsumugi"]`（3 人指定されている）
+
 ## キャラクター名の指定方法（絶対厳守）
 
 **JSON 出力時、キーには必ずローマ字を使用してください。**
 
 - `speaker`: `"zundamon"`, `"metan"`, `"tsumugi"`, `"narrator"` のいずれか
-- `visible_characters`: `["zundamon", "metan"]` のようにローマ字の配列
+- `visible_characters`: **必ず `["zundamon", "metan"]` または `["zundamon", "tsumugi"]` のいずれかを指定してください**（ずんだもんは必須、もう 1 人はめたんまたはつむぎ）
 - `character_expressions`: `{"zundamon": "excited", "metan": "angry"}` のようにローマ字をキーに使用
 
 ## 出力形式
@@ -138,7 +145,9 @@ JSON 形式で出力してください。`scene_background`、`bgm_id`、`bgm_vo
 ## 注意事項
 
 - **登場人物は 3 人（ずんだもん、めたん、つむぎ）のみ**
-- **`visible_characters`は必ず 2 人だけ**
+- **`visible_characters`は必ず 2 人だけを指定してください**
+- **`visible_characters`には必ずずんだもん（`zundamon`）を含めてください**
+- **もう 1 人はめたん（`metan`）またはつむぎ（`tsumugi`）のいずれかを指定してください**
 - **特定の語尾（なのだ、だよ）は廃止し、芸人スタイルに合わせる**
 - **役割の宣言は絶対にしない**
 - **教育的要素は絶対に禁止**
