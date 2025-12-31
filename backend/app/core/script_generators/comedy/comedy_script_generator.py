@@ -394,7 +394,7 @@ class ComedyScriptGenerator:
             metadata = parser.invoke(llm_response)
 
             logger.info(
-                f"YouTubeメタデータ生成成功: タイトル={metadata.title}, "
+                f"YouTubeメタデータ生成成功: "
                 f"タグ数={len(metadata.tags)}, 説明文長={len(metadata.description)}文字"
             )
 
