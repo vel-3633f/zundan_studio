@@ -183,6 +183,7 @@ class ComedyScriptGenerator:
                 sections=sections,
                 all_segments=all_segments,
                 ending_type=outline.ending_type,
+                youtube_metadata=outline.youtube_metadata,
             )
 
             if progress_callback:
@@ -319,6 +320,9 @@ class ComedyScriptGenerator:
             youtube_metadata = self.generate_youtube_metadata(
                 title, outline, llm, progress_callback
             )
+
+            # アウトラインにメタデータを保存
+            outline.youtube_metadata = youtube_metadata
 
             return outline, youtube_metadata
 

@@ -114,34 +114,6 @@ class ComedyTitle(BaseTitleModel):
         return cleaned
 
 
-class ComedyOutline(BaseOutlineModel):
-    theme: str = Field(description="漫談のテーマ")
-    story_summary: str = Field(description="漫談全体の流れ（2-3文）")
-    character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
-    ending_type: str = Field(description="オチのタイプ")
-    sections: List[SectionDefinition] = Field(
-        description="動的に生成されたセクション定義リスト"
-    )
-
-    @field_validator("theme", "story_summary", "ending_type")
-    @classmethod
-    def validate_string_not_empty(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("文字列は空にできません")
-        return v.strip()
-
-    @field_validator("sections")
-    @classmethod
-    def validate_sections_not_empty(
-        cls, v: List[SectionDefinition]
-    ) -> List[SectionDefinition]:
-        if not v:
-            raise ValueError("セクションリストは空にできません")
-        if len(v) < 3:
-            raise ValueError("最低3つのセクションが必要です")
-        return v
-
-
 class YouTubeMetadata(BaseModel):
     """YouTubeメタデータ"""
 
@@ -171,6 +143,37 @@ class YouTubeMetadata(BaseModel):
         return cleaned
 
 
+class ComedyOutline(BaseOutlineModel):
+    theme: str = Field(description="漫談のテーマ")
+    story_summary: str = Field(description="漫談全体の流れ（2-3文）")
+    character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
+    ending_type: str = Field(description="オチのタイプ")
+    sections: List[SectionDefinition] = Field(
+        description="動的に生成されたセクション定義リスト"
+    )
+    youtube_metadata: Optional[YouTubeMetadata] = Field(
+        default=None, description="YouTubeメタデータ（ディスクリプションとタグ）"
+    )
+
+    @field_validator("theme", "story_summary", "ending_type")
+    @classmethod
+    def validate_string_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("文字列は空にできません")
+        return v.strip()
+
+    @field_validator("sections")
+    @classmethod
+    def validate_sections_not_empty(
+        cls, v: List[SectionDefinition]
+    ) -> List[SectionDefinition]:
+        if not v:
+            raise ValueError("セクションリストは空にできません")
+        if len(v) < 3:
+            raise ValueError("最低3つのセクションが必要です")
+        return v
+
+
 class ComedyScript(BaseScriptModel):
     theme: str = Field(description="漫談のテーマ")
     character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
@@ -179,6 +182,9 @@ class ComedyScript(BaseScriptModel):
         description="全会話セグメントの統合リスト"
     )
     ending_type: str = Field(description="強制終了のタイプ")
+    youtube_metadata: Optional[YouTubeMetadata] = Field(
+        default=None, description="YouTubeメタデータ（ディスクリプションとタグ）"
+    )
 
     @field_validator("theme", "ending_type")
     @classmethod
