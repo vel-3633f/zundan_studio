@@ -1,9 +1,3 @@
-"""YouTube動画の締めくくりセクション設定
-
-動画の最後に固定で追加される締めくくりのセリフとBGM設定を管理します。
-AIは使わずに固定の内容を追加します。
-"""
-
 from app.models.scripts.common import VideoSection, ConversationSegment
 
 
