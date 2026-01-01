@@ -9,6 +9,15 @@ from app.models.video_models import AudioSegmentInfo, SubtitleData
 
 logger = logging.getLogger(__name__)
 
+CHARACTER_NAME_MAP = {
+    "ずんだもん": "zundamon",
+    "めたん": "metan",
+    "四国めたん": "metan",
+    "つむぎ": "tsumugi",
+    "春日部つむぎ": "tsumugi",
+    "ナレーター": "narrator",
+}
+
 
 class FrameInfoBuilder:
     """フレーム情報構築クラス"""
@@ -82,11 +91,19 @@ class FrameInfoBuilder:
         # 表示するキャラクターを決定
         if current_conversation:
             speaker = current_conversation.get("speaker", "zundamon")
+            speaker = CHARACTER_NAME_MAP.get(speaker, speaker)
             expression = current_conversation.get("expression", "normal")
             character_expressions = current_conversation.get("character_expressions", {})
-            visible_chars = current_conversation.get(
+            visible_chars_raw = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
+            visible_chars = [
+                CHARACTER_NAME_MAP.get(char, char) for char in visible_chars_raw
+            ]
+            character_expressions = {
+                CHARACTER_NAME_MAP.get(k, k): v
+                for k, v in character_expressions.items()
+            }
 
             # ナレーターの場合、話者自体は表示しない
             if speaker == "narrator":
@@ -103,8 +120,8 @@ class FrameInfoBuilder:
                             "expression": char_expression,
                         }
             else:
-                # 通常のキャラクター会話の場合
-                visible_chars = list(set(visible_chars + [speaker]))
+                if speaker not in visible_chars:
+                    visible_chars = visible_chars + [speaker]
                 for char_name in visible_chars:
                     if (
                         char_name in self.video_processor.characters

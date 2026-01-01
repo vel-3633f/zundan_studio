@@ -14,6 +14,8 @@ class ConversationLine(BaseModel):
     text_for_voicevox: Optional[str] = Field(None, description="VOICEVOX用テキスト")
     expression: str = Field(default="normal", description="表情")
     background: str = Field(default="default", description="背景")
+    visible_characters: Optional[List[str]] = Field(None, description="表示するキャラクターリスト")
+    character_expressions: Optional[Dict[str, str]] = Field(None, description="キャラクターごとの表情")
 
 
 class VideoGenerationRequest(BaseModel):
