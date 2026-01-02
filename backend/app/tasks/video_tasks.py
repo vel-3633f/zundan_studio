@@ -8,6 +8,7 @@ from app.tasks.celery_app import celery_app
 from app.services.video.video_generator import VideoGenerator
 from app.core.asset_generators.voice_generator import VoiceGenerator
 from app.models.scripts.common import VideoSection
+from app.config.content_config.closing_section import create_closing_section
 from app.utils_legacy.files import FileManager
 
 logger = logging.getLogger(__name__)
@@ -56,18 +57,94 @@ def generate_video_task(
     try:
         logger.info(f"動画生成タスク開始 (task_id={self.request.id})")
         
+        # 締めくくりセクションを自動追加
+        closing_section = create_closing_section()
+        
+        # 締めくくりセクションのセグメントをconversationsに追加
+        closing_conversations = []
+        for segment in closing_section.segments:
+            closing_conversations.append({
+                "speaker": segment.speaker,
+                "text": segment.text,
+                "text_for_voicevox": segment.text_for_voicevox,
+                "expression": segment.expression,
+                "background": closing_section.scene_background,
+                "visible_characters": segment.visible_characters,
+                "character_expressions": segment.character_expressions,
+            })
+        
+        # conversationsリストに締めくくりセクションを追加
+        conversations_with_closing = conversations + closing_conversations
+        logger.info(
+            f"締めくくりセクションを追加: "
+            f"元の会話数={len(conversations)}, "
+            f"締めくくりセリフ数={len(closing_conversations)}, "
+            f"合計={len(conversations_with_closing)}"
+        )
+        
+        # sectionsが指定されている場合は、締めくくりセクションをsectionsの最後に追加
+        if sections:
+            sections_dict = [section for section in sections]
+            # VideoSectionオブジェクトを辞書に変換
+            closing_section_dict = closing_section.model_dump()
+            sections_dict.append(closing_section_dict)
+            sections = sections_dict
+            logger.info("締めくくりセクションをsectionsに追加しました")
+        else:
+            # sectionsが指定されていない場合、元の会話を1つのセクションとして扱い、
+            # その後に締めくくりセクションを追加
+            from app.models.scripts.common import ConversationSegment
+            
+            # 元の会話を1つのセクションとして作成
+            main_section_segments = []
+            # デフォルトの背景を取得（最初の会話の背景を使用、なければ"default"）
+            default_background = "default"
+            if conversations:
+                default_background = conversations[0].get("background", "default")
+            
+            for conv in conversations:
+                segment = ConversationSegment(
+                    speaker=conv.get("speaker", "zundamon"),
+                    text=conv.get("text", ""),
+                    text_for_voicevox=conv.get("text_for_voicevox", conv.get("text", "")),
+                    expression=conv.get("expression", "normal"),
+                    visible_characters=conv.get("visible_characters", ["zundamon"]),
+                    character_expressions=conv.get("character_expressions", {}),
+                )
+                main_section_segments.append(segment)
+            
+            main_section = VideoSection(
+                section_name="メイン",
+                section_key="main",
+                scene_background=default_background if conversations else "default",
+                bgm_id="none",
+                bgm_volume=0.0,
+                segments=main_section_segments,
+            )
+            
+            # メインセクションと締めくくりセクションを結合
+            closing_section_dict = closing_section.model_dump()
+            sections = [main_section.model_dump(), closing_section_dict]
+            logger.info(
+                f"sectionsが指定されていないため、"
+                f"元の会話をメインセクションとして作成し、"
+                f"締めくくりセクションを追加しました "
+                f"(メインセクション: {len(main_section_segments)}セグメント, "
+                f"締めくくりセクション: {len(closing_section.segments)}セグメント)"
+            )
+        
         # 進捗更新: 音声生成開始
         self.update_state(
             state='PROGRESS',
             meta={'progress': 0.1, 'message': '音声を生成中...'}
         )
         
-        # 音声生成
+        # 音声生成（締めくくりセクションを含む）
         voice_generator = VoiceGenerator()
         audio_file_list = None
         try:
             audio_file_list = voice_generator.generate_conversation_voices(
-                conversations=conversations,
+                conversations=conversations_with_closing,
                 speed=speed,
                 pitch=pitch,
                 intonation=intonation
@@ -75,6 +152,12 @@ def generate_video_task(
             
             if not audio_file_list:
                 raise ValueError("音声生成に失敗しました")
+            
+            logger.info(
+                f"音声生成完了: "
+                f"会話数={len(conversations_with_closing)}, "
+                f"音声ファイル数={len(audio_file_list)}"
+            )
         except Exception as e:
             # 音声生成失敗時は既に生成されたファイルがあれば削除
             if audio_file_list:
@@ -95,6 +178,13 @@ def generate_video_task(
         if sections:
             from app.models.scripts.common import VideoSection
             video_sections = [VideoSection(**section) for section in sections]
+            total_segments = sum(len(section.segments) for section in video_sections)
+            logger.info(
+                f"セクション情報変換完了: "
+                f"セクション数={len(video_sections)}, "
+                f"総セグメント数={total_segments}, "
+                f"音声ファイル数={len(audio_file_list)}"
+            )
         
         # 動画生成
         video_generator = VideoGenerator()
@@ -110,7 +200,7 @@ def generate_video_task(
             )
         
         output_path = video_generator.generate_conversation_video(
-            conversations=conversations,
+            conversations=conversations_with_closing,
             audio_file_list=audio_file_list,
             enable_subtitles=enable_subtitles,
             conversation_mode=conversation_mode,

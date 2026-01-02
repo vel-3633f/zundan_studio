@@ -36,7 +36,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="nandesho",
         name="なんでしょう？",
         file_path="assets/bgm/なんでしょう？.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="curious",
         description="好奇心を刺激する、探求的な雰囲気のBGM",
     ),
@@ -44,7 +44,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="honwaka",
         name="ほんわかぷっぷー",
         file_path="assets/bgm/ほんわかぷっぷー.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="cheerful",
         description="明るく楽しいシーン、ポジティブな雰囲気に適したBGM",
     ),
@@ -52,7 +52,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="hirusagari",
         name="昼下がり気分",
         file_path="assets/bgm/昼下がり気分.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="calm",
         description="落ち着いた説明シーン、穏やかな雰囲気に適したBGM",
     ),
@@ -60,7 +60,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="noraneko",
         name="野良猫は宇宙を目指した",
         file_path="assets/bgm/野良猫は宇宙を目指した_2.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="dramatic",
         description="ドラマチックなシーン、重要な転機に適したBGM",
     ),
@@ -68,7 +68,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="mayonaka_omocha",
         name="真夜中のおもちゃ箱",
         file_path="assets/bgm/真夜中のおもちゃ箱.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="mysterious",
         description="ミステリアスで少し不思議な雰囲気のBGM",
     ),
@@ -76,7 +76,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="maou_piano25",
         name="日常ピアノ25",
         file_path="assets/bgm/maou_日常_piano25.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="peaceful",
         description="穏やかな日常シーン、落ち着いた雰囲気のピアノBGM",
     ),
@@ -84,7 +84,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="2_23_am",
         name="2:23 AM",
         file_path="assets/bgm/2_23_AM_2.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="ambient",
         description="深夜の静かな雰囲気、アンビエントな背景音楽",
     ),
@@ -92,7 +92,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="summer_triangle",
         name="SUMMER TRIANGLE",
         file_path="assets/bgm/SUMMER_TRIANGLE.mp3",
-        default_volume=0.20,
+        default_volume=0.03,
         mood="uplifting",
         description="爽やかで前向きな雰囲気、夏の明るいイメージのBGM",
     ),
@@ -100,7 +100,7 @@ BGM_LIBRARY: Dict[str, BGMTrack] = {
         id="oikakekko_kyahha",
         name="おいかけっこきゃっは",
         file_path="assets/bgm/追いかけっこキャッハー.mp3",
-        default_volume=0.05,
+        default_volume=0.03,
         mood="playful",
         description="遊び心のある楽しい雰囲気のBGM",
     ),
@@ -189,6 +189,28 @@ def get_section_bgm(section_type: str) -> Dict[str, any]:
             return {"bgm_id": bgm_id, "volume": track.default_volume}
         else:
             return {"bgm_id": "none", "volume": 0.0}
+
+
+def validate_bgm_id(bgm_id: str) -> str:
+    """BGM IDを検証し、無効な場合はnoneを返す
+
+    Args:
+        bgm_id: 検証するBGM ID
+
+    Returns:
+        str: 有効なBGM ID、無効な場合は"none"
+    """
+    if not bgm_id or not bgm_id.strip():
+        return "none"
+
+    bgm_id = bgm_id.strip()
+    if bgm_id in BGM_LIBRARY:
+        return bgm_id
+    else:
+        logger.warning(
+            f"無効なBGM IDが指定されました: {bgm_id} -> noneにフォールバック"
+        )
+        return "none"
 
 
 def format_bgm_choices_for_prompt() -> str:

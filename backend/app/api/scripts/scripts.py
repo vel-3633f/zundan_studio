@@ -11,6 +11,8 @@ from .scripts_models import (
     ScriptResponse,
     FullScriptRequest,
     FullScriptResponse,
+    ThemeBatchResponse,
+    ThemeTitleRequest,
 )
 from .scripts_handlers import (
     handle_generate_title,
@@ -18,6 +20,8 @@ from .scripts_handlers import (
     handle_generate_script,
     handle_generate_full_script,
     handle_generate_comedy_titles_batch,
+    handle_generate_theme_batch,
+    handle_generate_theme_titles,
     handle_save_script_to_file,
     handle_get_available_models,
 )
@@ -83,6 +87,30 @@ async def generate_comedy_titles_batch():
     return await handle_generate_comedy_titles_batch()
 
 
+@router.post("/comedy/themes/batch", response_model=ThemeBatchResponse)
+async def generate_theme_batch():
+    """
+    お笑いモード: テーマ候補生成（15-20個）
+
+    テーマ候補（単語・フレーズ）を15-20個生成します。
+    """
+    return await handle_generate_theme_batch()
+
+
+@router.post("/comedy/titles/from-theme", response_model=ComedyTitleBatch)
+async def generate_titles_from_theme(request: ThemeTitleRequest):
+    """
+    お笑いモード: テーマベースタイトル生成
+
+    指定されたテーマからタイトルを20個生成します。
+
+    - **theme**: テーマ（単語・フレーズ）
+    - **model**: 使用するLLMモデル（省略可）
+    - **temperature**: 生成温度（省略可）
+    """
+    return await handle_generate_theme_titles(request)
+
+
 @router.post("/save")
 async def save_script_to_file(request: dict):
     """
@@ -108,12 +136,6 @@ async def get_available_models():
         - recommended_model_id: 推奨モデルID
     """
     return await handle_get_available_models()
-
-
-@router.get("/health")
-async def health_check():
-    """ヘルスチェック"""
-    return {"status": "healthy", "service": "comedy_script_generator"}
 
 
 @router.get("/health")

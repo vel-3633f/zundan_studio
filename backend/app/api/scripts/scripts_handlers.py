@@ -15,6 +15,8 @@ from .scripts_models import (
     ScriptResponse,
     FullScriptRequest,
     FullScriptResponse,
+    ThemeBatchResponse,
+    ThemeTitleRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -235,5 +237,63 @@ async def handle_get_available_models() -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"モデル一覧取得エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_generate_theme_batch() -> ThemeBatchResponse:
+    """テーマ候補生成ハンドラー"""
+    try:
+        logger.info("テーマ候補生成リクエスト")
+
+        from app.core.script_generators.comedy import ComedyScriptGenerator
+        from app.core.script_generators.generate_food_over import create_llm_instance
+        from app.config.models import get_default_model_config
+
+        generator = ComedyScriptGenerator()
+
+        model_config = get_default_model_config()
+        model = model_config["id"]
+        temperature = 0.9
+
+        llm = create_llm_instance(model, temperature, model_config)
+
+        theme_batch = generator.title_generator.generate_theme_batch(llm)
+
+        return ThemeBatchResponse(themes=theme_batch.themes)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"テーマ候補生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_generate_theme_titles(request: ThemeTitleRequest) -> ComedyTitleBatch:
+    """テーマベースタイトル生成ハンドラー"""
+    try:
+        logger.info(f"テーマベースタイトル生成リクエスト: {request.theme}")
+
+        from app.core.script_generators.comedy import ComedyScriptGenerator
+        from app.core.script_generators.generate_food_over import create_llm_instance
+        from app.config.models import get_default_model_config
+
+        generator = ComedyScriptGenerator()
+
+        model_config = get_default_model_config()
+        model = request.model or model_config["id"]
+        temperature = request.temperature or 0.9
+
+        llm = create_llm_instance(model, temperature, model_config)
+
+        title_batch = generator.title_generator.generate_title_from_theme(
+            request.theme, llm
+        )
+
+        return title_batch
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"テーマベースタイトル生成エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 

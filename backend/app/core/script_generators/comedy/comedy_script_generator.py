@@ -183,6 +183,7 @@ class ComedyScriptGenerator:
                 sections=sections,
                 all_segments=all_segments,
                 ending_type=outline.ending_type,
+                youtube_metadata=outline.youtube_metadata,
             )
 
             if progress_callback:
@@ -320,6 +321,9 @@ class ComedyScriptGenerator:
                 title, outline, llm, progress_callback
             )
 
+            # アウトラインにメタデータを保存
+            outline.youtube_metadata = youtube_metadata
+
             return outline, youtube_metadata
 
         except Exception as e:
@@ -394,7 +398,7 @@ class ComedyScriptGenerator:
             metadata = parser.invoke(llm_response)
 
             logger.info(
-                f"YouTubeメタデータ生成成功: タイトル={metadata.title}, "
+                f"YouTubeメタデータ生成成功: "
                 f"タグ数={len(metadata.tags)}, 説明文長={len(metadata.description)}文字"
             )
 

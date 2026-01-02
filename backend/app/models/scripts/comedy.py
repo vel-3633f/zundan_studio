@@ -1,7 +1,14 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
+import logging
 from app.models.scripts.base import BaseTitleModel, BaseOutlineModel, BaseScriptModel
-from app.models.scripts.common import SectionDefinition, VideoSection, ConversationSegment
+from app.models.scripts.common import (
+    SectionDefinition,
+    VideoSection,
+    ConversationSegment,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class CharacterMood(BaseModel):
@@ -17,13 +24,43 @@ class CharacterMood(BaseModel):
         return v
 
 
+class ThemeBatch(BaseModel):
+    """テーマ候補バッチ"""
+
+    themes: List[str] = Field(
+        description="テーマ候補のリスト（15-20個）", min_length=15, max_length=20
+    )
+
+    @field_validator("themes")
+    @classmethod
+    def validate_themes_count(cls, v: List[str]) -> List[str]:
+        if len(v) < 15 or len(v) > 20:
+            raise ValueError("テーマは15-20個生成する必要があります")
+        cleaned = [theme.strip() for theme in v if theme and theme.strip()]
+        if len(cleaned) < 15:
+            raise ValueError("有効なテーマが不足しています")
+        return cleaned
+
+
 class ComedyTitleCandidate(BaseModel):
     id: int = Field(description="候補ID")
-    title: str = Field(description="タイトル")
+    title: str = Field(description="タイトル（30文字以内）")
     hook_pattern: str = Field(description="使用したお笑いフックパターン")
     situation: str = Field(description="シチュエーション")
     chaos_element: str = Field(description="カオス要素")
     expected_conflict: str = Field(description="予想される対立構造")
+
+    @field_validator("title")
+    @classmethod
+    def validate_title_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("タイトルは空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 30:
+            logger.warning(
+                f"タイトルが30文字を超えています（現在: {len(cleaned)}文字）: {cleaned[:50]}..."
+            )
+        return cleaned
 
 
 class ComedyTitleBatch(BaseModel):
@@ -45,6 +82,18 @@ class ComedyTitle(BaseTitleModel):
     theme: str = Field(description="漫談のテーマ")
     clickbait_elements: List[str] = Field(description="煽り要素リスト（3-5個）")
 
+    @field_validator("title")
+    @classmethod
+    def validate_title_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("タイトルは空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 30:
+            logger.warning(
+                f"タイトルが30文字を超えています（現在: {len(cleaned)}文字）: {cleaned[:50]}..."
+            )
+        return cleaned
+
     @field_validator("theme")
     @classmethod
     def validate_string_not_empty(cls, v: str) -> str:
@@ -63,34 +112,6 @@ class ComedyTitle(BaseTitleModel):
         if len(cleaned) < 3:
             raise ValueError("有効な煽り要素が不足しています")
         return cleaned
-
-
-class ComedyOutline(BaseOutlineModel):
-    theme: str = Field(description="漫談のテーマ")
-    story_summary: str = Field(description="漫談全体の流れ（2-3文）")
-    character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
-    ending_type: str = Field(description="オチのタイプ")
-    sections: List[SectionDefinition] = Field(
-        description="動的に生成されたセクション定義リスト"
-    )
-
-    @field_validator("theme", "story_summary", "ending_type")
-    @classmethod
-    def validate_string_not_empty(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("文字列は空にできません")
-        return v.strip()
-
-    @field_validator("sections")
-    @classmethod
-    def validate_sections_not_empty(
-        cls, v: List[SectionDefinition]
-    ) -> List[SectionDefinition]:
-        if not v:
-            raise ValueError("セクションリストは空にできません")
-        if len(v) < 3:
-            raise ValueError("最低3つのセクションが必要です")
-        return v
 
 
 class YouTubeMetadata(BaseModel):
@@ -122,6 +143,37 @@ class YouTubeMetadata(BaseModel):
         return cleaned
 
 
+class ComedyOutline(BaseOutlineModel):
+    theme: str = Field(description="漫談のテーマ")
+    story_summary: str = Field(description="漫談全体の流れ（2-3文）")
+    character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
+    ending_type: str = Field(description="オチのタイプ")
+    sections: List[SectionDefinition] = Field(
+        description="動的に生成されたセクション定義リスト"
+    )
+    youtube_metadata: Optional[YouTubeMetadata] = Field(
+        default=None, description="YouTubeメタデータ（ディスクリプションとタグ）"
+    )
+
+    @field_validator("theme", "story_summary", "ending_type")
+    @classmethod
+    def validate_string_not_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("文字列は空にできません")
+        return v.strip()
+
+    @field_validator("sections")
+    @classmethod
+    def validate_sections_not_empty(
+        cls, v: List[SectionDefinition]
+    ) -> List[SectionDefinition]:
+        if not v:
+            raise ValueError("セクションリストは空にできません")
+        if len(v) < 3:
+            raise ValueError("最低3つのセクションが必要です")
+        return v
+
+
 class ComedyScript(BaseScriptModel):
     theme: str = Field(description="漫談のテーマ")
     character_moods: CharacterMood = Field(description="各キャラの機嫌レベル")
@@ -130,6 +182,9 @@ class ComedyScript(BaseScriptModel):
         description="全会話セグメントの統合リスト"
     )
     ending_type: str = Field(description="強制終了のタイプ")
+    youtube_metadata: Optional[YouTubeMetadata] = Field(
+        default=None, description="YouTubeメタデータ（ディスクリプションとタグ）"
+    )
 
     @field_validator("theme", "ending_type")
     @classmethod
@@ -153,4 +208,3 @@ class ComedyScript(BaseScriptModel):
         if not v:
             raise ValueError("全セグメントリストは空にできません")
         return v
-

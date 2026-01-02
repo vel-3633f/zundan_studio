@@ -38,7 +38,7 @@ https://voicevox.hiroshiba.jp/
 
 ■立ち絵
 坂本アヒル
-https://seiga.nicovideo.jp/seiga/im11...
+https://seiga.nicovideo.jp/seiga/im11206626
 
 {タグ（ハッシュタグ形式、スペース区切り）}
 ```
@@ -61,7 +61,7 @@ https://seiga.nicovideo.jp/seiga/im11...
 ```json
 {{
   "tags": ["#ずんだもん", "#タグ2", "#タグ3", ...],
-  "description": "面白い説明文（2-4行）\n\n■音声ソフト\nVOICEVOX：ずんだもん\nVOICEVOX：四国めたん\nVOICEVOX：春日部つむぎ\nVOICEVOX：青山龍星\nhttps://voicevox.hiroshiba.jp/\n\n■立ち絵\n坂本アヒル\nhttps://seiga.nicovideo.jp/seiga/im11...\n\n#ずんだもん #タグ2 #タグ3 ..."
+  "description": "面白い説明文（2-4行）\n\n■音声ソフト\nVOICEVOX：ずんだもん\nVOICEVOX：四国めたん\nVOICEVOX：春日部つむぎ\nVOICEVOX：青山龍星\nhttps://voicevox.hiroshiba.jp/\n\n■立ち絵\n坂本アヒル\nhttps://seiga.nicovideo.jp/seiga/im11206626\n\n#ずんだもん #タグ2 #タグ3 ..."
 }}
 ```
 

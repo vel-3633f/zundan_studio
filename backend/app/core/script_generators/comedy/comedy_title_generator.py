@@ -13,6 +13,7 @@ from app.models.script_models import (
     ScriptMode,
     ComedyTitle,
     ComedyTitleBatch,
+    ThemeBatch,
 )
 from app.utils.logger import get_logger
 
@@ -26,6 +27,7 @@ class ComedyTitleGenerator:
         self.title_batch_prompt_file = Path(
             "app/prompts/comedy/title_batch_generation.md"
         )
+        self.theme_prompt_file = Path("app/prompts/comedy/theme_generation.md")
 
     def load_prompt(self, file_path: Path) -> str:
         """プロンプトファイルを読み込む"""
@@ -86,8 +88,8 @@ class ComedyTitleGenerator:
 
     def parse_with_retry(
         self, parser: PydanticOutputParser, llm_response: Any, max_retries: int = 2
-    ) -> ComedyTitleBatch:
-        """パースをリトライ付きで実行する"""
+    ) -> Any:
+        """パースをリトライ付きで実行する（汎用版）"""
         last_error = None
 
         for attempt in range(max_retries + 1):
@@ -146,6 +148,7 @@ class ComedyTitleGenerator:
             system_message = (
                 "あなたは、ずんだもん・めたん・つむぎの3名によるYouTube漫談の企画・タイトルを無限に生み出すプロの放送作家です。"
                 "ユーザーからのテーマ入力なしに、お笑いの構造に基づいた斬新なタイトルを大量に生成します。"
+                "重要: タイトルは必ず30文字以内で生成してください。"
                 '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
             )
 
@@ -204,5 +207,106 @@ class ComedyTitleGenerator:
 
         except Exception as e:
             error_msg = f"タイトル生成エラー: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise
+
+    def generate_theme_batch(
+        self,
+        llm: Any,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> ThemeBatch:
+        """テーマ候補を15-20個生成する"""
+        logger.info("テーマ候補生成開始")
+
+        try:
+            if progress_callback:
+                progress_callback("🎯 テーマ候補を生成中...")
+
+            prompt_template = self.load_prompt(self.theme_prompt_file)
+
+            parser = PydanticOutputParser(pydantic_object=ThemeBatch)
+            format_instructions = parser.get_format_instructions()
+            prompt_text = prompt_template.replace(
+                "{format_instructions}", format_instructions
+            )
+
+            system_message = (
+                "あなたは、テーマを単語で考える人です。"
+                '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
+            )
+
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=prompt_text),
+            ]
+
+            logger.info("テーマ候補をLLMで生成中...")
+            llm_response = llm.invoke(messages)
+
+            theme_batch = self.parse_with_retry(parser, llm_response)
+
+            logger.info(f"テーマ候補生成成功: {len(theme_batch.themes)}個生成")
+            for i, theme in enumerate(theme_batch.themes, 1):
+                logger.info(f"  {i}. {theme}")
+
+            return theme_batch
+
+        except Exception as e:
+            error_msg = f"テーマ候補生成エラー: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise
+
+    def generate_title_from_theme(
+        self,
+        theme: str,
+        llm: Any,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> ComedyTitleBatch:
+        """テーマからタイトルを20個生成する"""
+        logger.info(f"テーマベース タイトル生成開始: {theme}")
+
+        try:
+            if progress_callback:
+                progress_callback(f"📝 「{theme}」のタイトルを生成中...")
+
+            prompt_template = self.load_prompt(self.title_batch_prompt_file)
+
+            parser = PydanticOutputParser(pydantic_object=ComedyTitleBatch)
+            format_instructions = parser.get_format_instructions()
+            prompt_text = prompt_template.replace(
+                "{format_instructions}", format_instructions
+            )
+
+            # テーマをプロンプトに追加
+            theme_instruction = f"\n\n## 重要: 生成するタイトルは必ず「{theme}」をテーマとして含めてください。"
+            prompt_text = prompt_text + theme_instruction
+
+            system_message = (
+                "あなたは、ずんだもん・めたん・つむぎの3名によるYouTube漫談の企画・タイトルを無限に生み出すプロの放送作家です。"
+                f"ユーザーが指定したテーマ「{theme}」を基に、お笑いの構造に基づいた斬新なタイトルを大量に生成します。"
+                "重要: タイトルは必ず30文字以内で生成してください。"
+                '重要: JSON出力時、文字列値内で二重引用符（"）を使用する場合は必ずバックスラッシュでエスケープしてください（\\"）。'
+            )
+
+            messages = [
+                SystemMessage(content=system_message),
+                HumanMessage(content=prompt_text),
+            ]
+
+            logger.info(f"テーマ「{theme}」でタイトル量産をLLMで生成中...")
+            llm_response = llm.invoke(messages)
+
+            title_batch = self.parse_with_retry(parser, llm_response)
+
+            logger.info(
+                f"テーマベース タイトル生成成功: {len(title_batch.titles)}個生成"
+            )
+            for i, candidate in enumerate(title_batch.titles, 1):
+                logger.info(f"  {i}. [{candidate.hook_pattern}] {candidate.title}")
+
+            return title_batch
+
+        except Exception as e:
+            error_msg = f"テーマベース タイトル生成エラー: {str(e)}"
             logger.error(error_msg, exc_info=True)
             raise

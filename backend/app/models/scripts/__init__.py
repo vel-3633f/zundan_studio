@@ -11,6 +11,7 @@ from app.models.scripts.common import (
 )
 from app.models.scripts.comedy import (
     CharacterMood,
+    ThemeBatch,
     ComedyTitleCandidate,
     ComedyTitleBatch,
     ComedyTitle,
@@ -28,6 +29,7 @@ __all__ = [
     "ConversationSegment",
     "VideoSection",
     "CharacterMood",
+    "ThemeBatch",
     "ComedyTitleCandidate",
     "ComedyTitleBatch",
     "ComedyTitle",

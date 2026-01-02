@@ -86,6 +86,7 @@ export const processJsonData = (
     theme: jsonData.theme,
     character_moods: jsonData.character_moods,
     sections: videoSections,
+    youtube_metadata: jsonData.youtube_metadata,
   };
 
   setConversations(conversationLines);

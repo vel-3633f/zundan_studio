@@ -8,7 +8,12 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import PydanticOutputParser
 
 from app.models.script_models import VideoSection, SectionDefinition, ScriptMode
-from app.config.resource_config.bgm_library import get_section_bgm
+from app.config.resource_config.bgm_library import (
+    get_section_bgm,
+    format_bgm_choices_for_prompt,
+    validate_bgm_id,
+    get_bgm_track,
+)
 from app.core.script_generators.section_context import SectionContext
 from app.core.script_generators.context.section_context_builder import build_context_text
 from app.utils.logger import get_logger
@@ -70,10 +75,16 @@ class GenericSectionGenerator:
             parser = PydanticOutputParser(pydantic_object=VideoSection)
             format_instructions = parser.get_format_instructions()
 
+            # Comedyモードの場合、BGM選択肢情報を追加
+            bgm_info = ""
+            if self.mode == ScriptMode.COMEDY:
+                bgm_choices = format_bgm_choices_for_prompt()
+                bgm_info = f"\n\n## {bgm_choices}\n"
+
             # プロンプト構築
             full_prompt = f"""
 {section_prompt_template}
-
+{bgm_info}
 ---
 
 {context_text}
@@ -114,12 +125,34 @@ class GenericSectionGenerator:
             section.section_key = context.section_definition.section_key
 
             # BGM設定
-            bgm_config = get_section_bgm(context.section_definition.section_key)
-            section.bgm_id = bgm_config["bgm_id"]
-            section.bgm_volume = bgm_config["volume"]
-            logger.info(
-                f"BGM設定: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
-            )
+            if self.mode == ScriptMode.COMEDY:
+                # Comedyモード: LLMが出力したBGMを使用（動的選択）
+                validated_bgm_id = validate_bgm_id(section.bgm_id)
+                section.bgm_id = validated_bgm_id
+
+                # 音量のバリデーション
+                if not (0.0 <= section.bgm_volume <= 1.0):
+                    track = get_bgm_track(validated_bgm_id)
+                    if track:
+                        section.bgm_volume = track.default_volume
+                        logger.warning(
+                            f"無効なBGM音量が指定されました: {section.bgm_volume} -> "
+                            f"デフォルト音量({track.default_volume})に設定"
+                        )
+                    else:
+                        section.bgm_volume = 0.0
+
+                logger.info(
+                    f"BGM設定（LLM選択）: {section.bgm_id} (volume: {section.bgm_volume})"
+                )
+            else:
+                # その他のモード: 従来通り固定BGMを使用
+                bgm_config = get_section_bgm(context.section_definition.section_key)
+                section.bgm_id = bgm_config["bgm_id"]
+                section.bgm_volume = bgm_config["volume"]
+                logger.info(
+                    f"BGM設定（固定）: {bgm_config['bgm_id']} (volume: {bgm_config['volume']})"
+                )
 
             # 背景が指定されている場合は上書き
             if context.section_definition.background:

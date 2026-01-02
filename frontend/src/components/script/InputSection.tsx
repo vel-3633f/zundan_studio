@@ -10,6 +10,7 @@ import Card from "@/components/Card";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
+import ThemeSelectionSection from "./ThemeSelectionSection";
 import type { ScriptMode } from "@/types";
 import { useScriptStore } from "@/stores/scriptStore";
 
@@ -24,6 +25,12 @@ interface InputSectionProps {
   onTemperatureChange: (temp: number) => void;
   onSubmit: () => void;
   onRandomGenerate?: () => void; // お笑いモード専用
+  // テーマ選択関連（お笑いモード専用）
+  themes?: string[];
+  selectedTheme?: string | null;
+  onGenerateThemes?: () => void;
+  onThemeSelect?: (theme: string) => void;
+  onCustomThemeSubmit?: (theme: string) => void;
 }
 
 const InputSection = ({
@@ -37,9 +44,28 @@ const InputSection = ({
   onTemperatureChange,
   onSubmit,
   onRandomGenerate,
+  themes = [],
+  selectedTheme = null,
+  onGenerateThemes,
+  onThemeSelect,
+  onCustomThemeSubmit,
 }: InputSectionProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { availableModels } = useScriptStore();
+
+  // お笑いモードでテーマ選択機能が有効な場合
+  if (mode === "comedy" && onGenerateThemes && onThemeSelect) {
+    return (
+      <ThemeSelectionSection
+        themes={themes}
+        selectedTheme={selectedTheme}
+        isGenerating={isGenerating}
+        onThemeSelect={onThemeSelect}
+        onGenerateThemes={onGenerateThemes}
+        onCustomThemeSubmit={onCustomThemeSubmit}
+      />
+    );
+  }
 
   return (
     <Card

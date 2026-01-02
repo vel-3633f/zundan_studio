@@ -86,6 +86,10 @@ export interface ComedyTitleBatch {
   titles: ComedyTitleCandidate[];
 }
 
+export interface ThemeBatch {
+  themes: string[];
+}
+
 export interface ComedyOutline {
   title: string;
   mode: ScriptMode;
@@ -94,6 +98,7 @@ export interface ComedyOutline {
   character_moods: CharacterMood;
   ending_type: string;
   sections: SectionDefinition[];
+  youtube_metadata?: YouTubeMetadata;
 }
 
 export interface ComedyScript {
@@ -105,6 +110,7 @@ export interface ComedyScript {
   sections: VideoSection[];
   all_segments: ConversationSegment[];
   ending_type: string;
+  youtube_metadata?: YouTubeMetadata;
 }
 
 // === 旧型定義（後方互換性のため保持） ===
@@ -255,4 +261,5 @@ export interface JsonScriptData {
   theme?: string;
   character_moods?: CharacterMood;
   sections: VideoSection[];
+  youtube_metadata?: YouTubeMetadata;
 }
