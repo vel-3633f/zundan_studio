@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Image, Wand2 } from "lucide-react";
+import { Image, Wand2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { managementApi } from "@/api/management";
 import { BackgroundManagementTab } from "@/components/management/BackgroundManagementTab";
 import { BackgroundGenerationTab } from "@/components/management/BackgroundGenerationTab";
+import { ScriptManagementTab } from "@/components/management/ScriptManagementTab";
 
 const ManagementPage = () => {
-  const [activeTab, setActiveTab] = useState<"backgrounds" | "generation">(
+  const [activeTab, setActiveTab] = useState<"backgrounds" | "generation" | "scripts">(
     "backgrounds"
   );
   const [backgroundName, setBackgroundName] = useState("");
@@ -16,6 +17,7 @@ const ManagementPage = () => {
   const tabs = [
     { id: "backgrounds", label: "背景画像管理", icon: Image },
     { id: "generation", label: "背景生成", icon: Wand2 },
+    { id: "scripts", label: "台本管理", icon: FileText },
   ] as const;
 
   const handleGenerate = async () => {
@@ -52,7 +54,7 @@ const ManagementPage = () => {
           管理
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          背景画像の管理と生成を行います
+          背景画像の管理と生成、台本JSONファイルの管理を行います
         </p>
       </div>
 
@@ -88,6 +90,8 @@ const ManagementPage = () => {
           onGenerate={handleGenerate}
         />
       )}
+
+      {activeTab === "scripts" && <ScriptManagementTab />}
     </div>
   );
 };
