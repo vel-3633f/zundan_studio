@@ -47,6 +47,6 @@ def create_closing_section() -> VideoSection:
         section_key="closing",
         scene_background="blue_sky",
         bgm_id="summer_triangle",
-        bgm_volume=0.02,
+        bgm_volume=0.04,
         segments=segments,
     )

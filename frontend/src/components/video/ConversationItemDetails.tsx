@@ -63,6 +63,16 @@ export const ConversationItemDetails = ({
           </span>
         </div>
       )}
+      {conv.text_for_voicevox && (
+        <div>
+          <span className="font-medium text-gray-600 dark:text-gray-400">
+            VOICEVOX用テキスト:{" "}
+          </span>
+          <span className="text-gray-700 dark:text-gray-300 break-words">
+            {conv.text_for_voicevox}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
