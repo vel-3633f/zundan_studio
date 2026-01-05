@@ -1,10 +1,13 @@
 """お笑いモード専用の台本生成ロジック"""
 
+import json
+import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable, Tuple
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_core.exceptions import OutputParserException
 
 from app.models.script_models import (
     ScriptMode,
@@ -56,6 +59,85 @@ class ComedyScriptGenerator:
     def get_mood_description(self, character: str, mood: int) -> str:
         """機嫌レベルから説明文を生成（後方互換性のため）"""
         return self.mood_generator.get_mood_description(character, mood)
+
+    def fix_json_quotes(self, text: str) -> str:
+        """JSON文字列内の未エスケープされた二重引用符を修正する"""
+        text = re.sub(r"```json\s*", "", text)
+        text = re.sub(r"```\s*$", "", text, flags=re.MULTILINE)
+        text = text.strip()
+
+        result = []
+        i = 0
+        in_string = False
+        escaped = False
+
+        while i < len(text):
+            char = text[i]
+
+            if escaped:
+                result.append(char)
+                escaped = False
+            elif char == "\\":
+                result.append(char)
+                escaped = True
+            elif char == '"':
+                if not in_string:
+                    in_string = True
+                    result.append(char)
+                else:
+                    if i + 1 < len(text):
+                        next_char = text[i + 1]
+                        if next_char in [",", "}", "]", ":", " ", "\t", "\n", "\r"]:
+                            in_string = False
+                            result.append(char)
+                        else:
+                            result.append('\\"')
+                    else:
+                        in_string = False
+                        result.append(char)
+            else:
+                result.append(char)
+
+            i += 1
+
+        return "".join(result)
+
+    def parse_with_retry(
+        self, parser: PydanticOutputParser, llm_response: Any, max_retries: int = 2
+    ) -> Any:
+        """パースをリトライ付きで実行する（汎用版）"""
+        last_error = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                if attempt == 0:
+                    return parser.invoke(llm_response)
+                else:
+                    if hasattr(llm_response, "content"):
+                        content = llm_response.content
+                    else:
+                        content = str(llm_response)
+
+                    logger.warning(
+                        f"JSONパースエラー、修正を試みます (試行 {attempt + 1}/{max_retries + 1})"
+                    )
+                    fixed_content = self.fix_json_quotes(content)
+
+                    fixed_response = AIMessage(content=fixed_content)
+                    return parser.invoke(fixed_response)
+
+            except (OutputParserException, json.JSONDecodeError, ValueError) as e:
+                last_error = e
+                if attempt < max_retries:
+                    logger.warning(f"パースエラー (試行 {attempt + 1}): {str(e)}")
+                    continue
+                else:
+                    logger.error(f"パースエラー: 最大試行回数に達しました")
+                    raise
+
+        if last_error:
+            raise last_error
+        raise ValueError("パースに失敗しました")
 
     def generate_script(
         self,
@@ -298,8 +380,8 @@ class ComedyScriptGenerator:
             logger.info(f"フック要素: {title.clickbait_elements}")
             llm_response = llm.invoke(messages)
 
-            # パース
-            outline = parser.invoke(llm_response)
+            # パース（リトライ付き）
+            outline = self.parse_with_retry(parser, llm_response)
             outline.mode = ScriptMode.COMEDY
             outline.title = title.title
             outline.character_moods = character_moods
@@ -394,8 +476,8 @@ class ComedyScriptGenerator:
             logger.info("YouTubeメタデータをLLMで生成中...")
             llm_response = llm.invoke(messages)
 
-            # パース
-            metadata = parser.invoke(llm_response)
+            # パース（リトライ付き）
+            metadata = self.parse_with_retry(parser, llm_response)
 
             logger.info(
                 f"YouTubeメタデータ生成成功: "

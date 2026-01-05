@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { scriptApi } from "@/api/scripts";
 import { extractErrorMessage } from "@/utils/errorHandler";
+import { playNotificationSound } from "@/utils/notificationSound";
 import type { ComedyTitle, ComedyOutline, YouTubeMetadata } from "@/types";
 
 export const useScriptGenerationHandlers = (
@@ -44,6 +45,7 @@ export const useScriptGenerationHandlers = (
       setYoutubeMetadata(result.youtube_metadata || null);
       setCurrentStep("outline");
       toast.success("アウトラインを生成しました！");
+      playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
       toast.error(errorMsg || "アウトライン生成に失敗しました");
@@ -81,6 +83,7 @@ export const useScriptGenerationHandlers = (
       setProgress(1);
       setStatusMessage("完了！");
       toast.success("台本を生成しました！");
+      playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
       toast.error(errorMsg || "台本生成に失敗しました");

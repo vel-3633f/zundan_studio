@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { scriptApi } from "@/api/scripts";
 import { extractErrorMessage } from "@/utils/errorHandler";
+import { playNotificationSound } from "@/utils/notificationSound";
 import type { ComedyTitleBatch, ComedyTitle } from "@/types";
 
 export const useScriptTitleHandlers = (
@@ -37,6 +38,7 @@ export const useScriptTitleHandlers = (
       const result = await scriptApi.generateComedyTitlesBatch();
       setTitleCandidates(result);
       toast.success(`${result.titles.length}個のタイトルを生成しました！`);
+      playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
       toast.error(errorMsg || "タイトル量産に失敗しました");
@@ -96,6 +98,7 @@ export const useScriptTitleHandlers = (
       });
 
       toast.success("タイトルを生成しました！選択して次へ進んでください");
+      playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
       toast.error(errorMsg || "タイトル生成に失敗しました");
@@ -125,6 +128,7 @@ export const useScriptTitleHandlers = (
     try {
       const result = await scriptApi.generateThemeBatch();
       toast.success(`${result.themes.length}個のテーマ候補を生成しました！`);
+      playNotificationSound();
       return result.themes;
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
@@ -151,6 +155,7 @@ export const useScriptTitleHandlers = (
 
       setTitleCandidates(result);
       toast.success(`「${theme}」のタイトルを${result.titles.length}個生成しました！`);
+      playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);
       toast.error(errorMsg || "タイトル生成に失敗しました");

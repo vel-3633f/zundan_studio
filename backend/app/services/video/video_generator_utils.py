@@ -76,18 +76,30 @@ def calculate_section_durations(
                 current_segment_index : current_segment_index + segment_count
             ]
         
-        section_duration = sum(
-            audio_durations.get(audio_path, 0.0)
-            for audio_path in section_audio_files
-        )
+        # 各音声ファイルの長さを詳細に記録
+        file_durations = []
+        for audio_path in section_audio_files:
+            duration = audio_durations.get(audio_path, 0.0)
+            file_durations.append(duration)
+        
+        section_duration = sum(file_durations)
         section_durations.append(section_duration)
         logger.info(
             f"セクション{i} ({section.section_name}): "
             f"セグメント数={segment_count}, "
             f"音声ファイル数={len(section_audio_files)}, "
-            f"長さ={section_duration:.2f}秒"
+            f"長さ={section_duration:.3f}秒 "
+            f"(開始インデックス={current_segment_index}, "
+            f"終了インデックス={current_segment_index + segment_count - 1})"
         )
         current_segment_index += segment_count
+
+    total_calculated_duration = sum(section_durations)
+    logger.info(
+        f"セクションduration計算完了: "
+        f"合計={total_calculated_duration:.3f}秒, "
+        f"セクション数={len(section_durations)}"
+    )
 
     return section_durations
 

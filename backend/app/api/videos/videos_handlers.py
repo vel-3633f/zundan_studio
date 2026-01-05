@@ -14,6 +14,7 @@ from .videos_models import (
     VideoGenerationResponse,
     VideoStatusResponse,
     JsonFileInfo,
+    JsonFileStatusUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,16 +123,29 @@ async def handle_list_json_files() -> List[JsonFileInfo]:
                 logger.error(f"JSONディレクトリの作成に失敗しました: {e}")
             return []
 
+        import json
+
         json_files = []
         for file_path in json_dir.glob("*.json"):
+            is_generated = False
+            try:
+                # JSONファイルを読み込んでis_generatedフラグを取得
+                with open(file_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    is_generated = data.get("is_generated", False)
+            except Exception as e:
+                logger.warning(f"JSONファイル読み込みエラー ({file_path.name}): {e}")
+                # 読み込みエラーが発生した場合はFalseとして扱う
+
             json_files.append(
-                {
-                    "filename": file_path.name,
-                    "path": str(file_path.relative_to(Paths.get_outputs_dir())),
-                }
+                JsonFileInfo(
+                    filename=file_path.name,
+                    path=str(file_path.relative_to(Paths.get_outputs_dir())),
+                    is_generated=is_generated,
+                )
             )
 
-        json_files.sort(key=lambda x: x["filename"], reverse=True)
+        json_files.sort(key=lambda x: x.filename, reverse=True)
 
         logger.info(f"JSONファイル一覧取得: {len(json_files)}件")
         return json_files
@@ -168,5 +182,81 @@ async def handle_get_json_file(filename: str) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.error(f"JSONファイル読み込みエラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_update_json_file_status(
+    filename: str, status_update: JsonFileStatusUpdate
+) -> JsonFileInfo:
+    """JSONファイルのis_generatedステータスを更新する"""
+    try:
+        json_dir = Path(Paths.get_outputs_dir()) / "json"
+        file_path = json_dir / filename
+
+        if not file_path.resolve().is_relative_to(json_dir.resolve()):
+            raise HTTPException(status_code=400, detail="無効なファイルパスです")
+
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="ファイルが見つかりません")
+
+        if not file_path.suffix == ".json":
+            raise HTTPException(status_code=400, detail="JSONファイルではありません")
+
+        import json
+
+        # JSONファイルを読み込む
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # is_generatedフラグを更新
+        data["is_generated"] = status_update.is_generated
+
+        # JSONファイルに書き戻す
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
+        logger.info(
+            f"JSONファイルステータス更新: {filename}, is_generated={status_update.is_generated}"
+        )
+
+        return JsonFileInfo(
+            filename=file_path.name,
+            path=str(file_path.relative_to(Paths.get_outputs_dir())),
+            is_generated=status_update.is_generated,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"JSONファイルステータス更新エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_delete_json_file(filename: str) -> Dict[str, Any]:
+    """JSONファイルを削除する"""
+    try:
+        json_dir = Path(Paths.get_outputs_dir()) / "json"
+        file_path = json_dir / filename
+
+        if not file_path.resolve().is_relative_to(json_dir.resolve()):
+            raise HTTPException(status_code=400, detail="無効なファイルパスです")
+
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="ファイルが見つかりません")
+
+        if not file_path.suffix == ".json":
+            raise HTTPException(status_code=400, detail="JSONファイルではありません")
+
+        # ファイルを削除
+        file_path.unlink()
+
+        logger.info(f"JSONファイル削除: {filename}")
+
+        return {"success": True, "message": f"ファイル「{filename}」を削除しました"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"JSONファイル削除エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -41,6 +41,16 @@ const HomePage = () => {
     toast.success("セリフを削除しました");
   };
 
+  const hasNoBackgrounds = () => {
+    if (!backgroundCheckResult) {
+      return true;
+    }
+    return (
+      backgroundCheckResult.total === 0 ||
+      (backgroundCheckResult.available === 0 && backgroundCheckResult.total > 0)
+    );
+  };
+
   const speakerColors = {
     zundamon:
       "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700",
@@ -105,13 +115,23 @@ const HomePage = () => {
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <Button
               onClick={handleGenerate}
-              disabled={conversations.length === 0 || isGenerating}
+              disabled={
+                conversations.length === 0 ||
+                isGenerating ||
+                isCheckingBackgrounds ||
+                hasNoBackgrounds()
+              }
               isLoading={isGenerating}
               className="w-full"
               leftIcon={<Play className="h-5 w-5" />}
             >
               会話動画を生成
             </Button>
+            {hasNoBackgrounds() && conversations.length > 0 && (
+              <p className="mt-2 text-sm text-warning-600 dark:text-warning-400 text-center">
+                背景画像が不足しているため、動画生成できません
+              </p>
+            )}
           </div>
         </Card>
       )}

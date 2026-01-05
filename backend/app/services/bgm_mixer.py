@@ -179,6 +179,30 @@ class BGMMixer:
             )
             return voiceover_audio
 
+        # 実際の音声の長さを取得
+        actual_audio_duration = voiceover_audio.duration
+        calculated_total_duration = sum(section_durations)
+        
+        # 計算された合計と実際の音声の長さを比較
+        duration_diff = abs(actual_audio_duration - calculated_total_duration)
+        if duration_diff > 0.01:  # 10ms以上の差がある場合
+            logger.warning(
+                f"セクションdurationの合計と実際の音声長が一致しません: "
+                f"計算値={calculated_total_duration:.3f}s, "
+                f"実際={actual_audio_duration:.3f}s, "
+                f"差={duration_diff:.3f}s"
+            )
+            # 実際の音声の長さに合わせて各セクションの長さを比例的に調整
+            if calculated_total_duration > 0:
+                scale_factor = actual_audio_duration / calculated_total_duration
+                section_durations = [d * scale_factor for d in section_durations]
+                logger.info(
+                    f"セクションdurationを調整しました (スケール係数: {scale_factor:.6f})"
+                )
+            else:
+                logger.error("計算された合計durationが0です。BGMを追加しません。")
+                return voiceover_audio
+
         # 事前にすべての必要なBGMファイルを読み込む（デッドロック回避）
         unique_bgm_ids = set()
         for section in sections:
@@ -200,7 +224,21 @@ class BGMMixer:
         bgm_clips = []
         current_time = 0.0
 
-        for section, duration in zip(sections, section_durations):
+        for i, (section, duration) in enumerate(zip(sections, section_durations)):
+            # 最後のセクションの場合、実際の音声の終わりまで正確に合わせる
+            if i == len(sections) - 1:
+                # 最後のセクションの終了時刻が実際の音声の長さを超えないようにする
+                remaining_duration = actual_audio_duration - current_time
+                if remaining_duration > 0:
+                    duration = min(duration, remaining_duration)
+                else:
+                    logger.warning(
+                        f"最後のセクションの開始時刻が音声の長さを超えています: "
+                        f"current_time={current_time:.3f}s, "
+                        f"actual_duration={actual_audio_duration:.3f}s"
+                    )
+                    break
+
             bgm_clip = self.create_section_bgm_track(
                 section,
                 start_time=current_time,
@@ -211,12 +249,24 @@ class BGMMixer:
                 bgm_clips.append(bgm_clip)
 
             current_time += duration
+            logger.debug(
+                f"セクション{i} ({section.section_name}): "
+                f"BGM開始={current_time - duration:.3f}s, "
+                f"長さ={duration:.3f}s, "
+                f"次の開始={current_time:.3f}s"
+            )
 
         if not bgm_clips:
             return voiceover_audio
 
         # ボイスオーバーとBGMを合成
         composite_audio = CompositeAudioClip([voiceover_audio] + bgm_clips)
+        
+        logger.info(
+            f"BGM合成完了: セクション数={len(sections)}, "
+            f"BGMクリップ数={len(bgm_clips)}, "
+            f"最終音声長={composite_audio.duration:.3f}s"
+        )
 
         return composite_audio
 

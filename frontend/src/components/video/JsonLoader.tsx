@@ -3,8 +3,10 @@ import { Upload } from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 
+import type { JsonFileInfo } from "@/types";
+
 interface JsonLoaderProps {
-  jsonFiles: Array<{ filename: string; path: string }>;
+  jsonFiles: JsonFileInfo[];
   selectedJsonFile: string;
   isLoadingJsonFiles: boolean;
   onSelectedFileChange: (filename: string) => void;

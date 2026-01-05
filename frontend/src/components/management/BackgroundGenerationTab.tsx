@@ -7,6 +7,8 @@ import Select from "@/components/Select";
 import toast from "react-hot-toast";
 import { videoApi } from "@/api/videos";
 import { managementApi } from "@/api/management";
+import { playNotificationSound } from "@/utils/notificationSound";
+import type { JsonFileInfo } from "@/types";
 
 interface BackgroundGenerationTabProps {
   backgroundName: string;
@@ -21,9 +23,7 @@ export const BackgroundGenerationTab = ({
   onBackgroundNameChange,
   onGenerate,
 }: BackgroundGenerationTabProps) => {
-  const [jsonFiles, setJsonFiles] = useState<
-    Array<{ filename: string; path: string }>
-  >([]);
+  const [jsonFiles, setJsonFiles] = useState<JsonFileInfo[]>([]);
   const [selectedJsonFile, setSelectedJsonFile] = useState<string>("");
   const [isLoadingJsonFiles, setIsLoadingJsonFiles] = useState(false);
   const [isGeneratingFromJson, setIsGeneratingFromJson] = useState(false);
@@ -33,9 +33,11 @@ export const BackgroundGenerationTab = ({
       try {
         setIsLoadingJsonFiles(true);
         const files = await videoApi.listJsonFiles();
-        setJsonFiles(files);
-        if (files.length > 0 && !selectedJsonFile) {
-          setSelectedJsonFile(files[0].filename);
+        // 生成済みのファイルを除外
+        const ungeneratedFiles = files.filter((file) => !file.is_generated);
+        setJsonFiles(ungeneratedFiles);
+        if (ungeneratedFiles.length > 0 && !selectedJsonFile) {
+          setSelectedJsonFile(ungeneratedFiles[0].filename);
         }
       } catch (error) {
         console.error("JSONファイル一覧取得エラー:", error);
@@ -61,8 +63,10 @@ export const BackgroundGenerationTab = ({
       if (result.success) {
         if (result.generated_count > 0) {
           toast.success(`${result.message} 完了です。`);
+          playNotificationSound();
         } else {
           toast.success(result.message);
+          playNotificationSound();
         }
       } else {
         toast.error(result.message || "背景画像の生成に失敗しました");

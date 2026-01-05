@@ -54,4 +54,11 @@ class JsonFileInfo(BaseModel):
 
     filename: str = Field(..., description="ファイル名")
     path: str = Field(..., description="ファイルパス")
+    is_generated: bool = Field(default=False, description="動画生成済みかどうか")
+
+
+class JsonFileStatusUpdate(BaseModel):
+    """JSONファイルステータス更新リクエスト"""
+
+    is_generated: bool = Field(..., description="動画生成済みかどうか")
 
