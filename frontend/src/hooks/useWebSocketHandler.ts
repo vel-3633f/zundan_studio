@@ -1,5 +1,6 @@
 import toast from "react-hot-toast";
 import { createWebSocketClient, type WebSocketClient } from "@/api/websocket";
+import { playNotificationSound } from "@/utils/notificationSound";
 
 export const createWebSocketHandler = (
   taskId: string,
@@ -21,6 +22,7 @@ export const createWebSocketHandler = (
         if (data.result?.video_path) {
           setGeneratedVideoPath(data.result.video_path);
           toast.success("動画生成が完了しました！");
+          playNotificationSound();
         } else {
           toast.error("動画パスが取得できませんでした");
         }

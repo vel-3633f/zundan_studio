@@ -3,6 +3,7 @@ import { Image, Wand2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { managementApi } from "@/api/management";
+import { playNotificationSound } from "@/utils/notificationSound";
 import { BackgroundManagementTab } from "@/components/management/BackgroundManagementTab";
 import { BackgroundGenerationTab } from "@/components/management/BackgroundGenerationTab";
 import { ScriptManagementTab } from "@/components/management/ScriptManagementTab";
@@ -31,6 +32,7 @@ const ManagementPage = () => {
       if (response.success) {
         const message = response.message || `背景画像「${backgroundName.trim()}」の生成が完了しました`;
         toast.success(message);
+        playNotificationSound();
         setBackgroundName("");
       } else {
         toast.error("背景生成に失敗しました");

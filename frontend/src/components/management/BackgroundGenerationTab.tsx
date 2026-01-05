@@ -7,6 +7,7 @@ import Select from "@/components/Select";
 import toast from "react-hot-toast";
 import { videoApi } from "@/api/videos";
 import { managementApi } from "@/api/management";
+import { playNotificationSound } from "@/utils/notificationSound";
 import type { JsonFileInfo } from "@/types";
 
 interface BackgroundGenerationTabProps {
@@ -62,8 +63,10 @@ export const BackgroundGenerationTab = ({
       if (result.success) {
         if (result.generated_count > 0) {
           toast.success(`${result.message} 完了です。`);
+          playNotificationSound();
         } else {
           toast.success(result.message);
+          playNotificationSound();
         }
       } else {
         toast.error(result.message || "背景画像の生成に失敗しました");
