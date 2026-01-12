@@ -26,7 +26,6 @@ const ShortScriptGenerationPage = () => {
     handleGenerateTitles,
     handleSelectTitleCandidate,
     handleRegenerateTitles,
-    handleGenerateShortScript,
     handleResetToInput,
   } = useShortScriptGeneration();
 
@@ -49,7 +48,14 @@ const ShortScriptGenerationPage = () => {
       </div>
 
       <StepIndicator 
-        currentStep={currentStep === "script" ? "script" : currentStep === "title" ? "title" : "input"} 
+        currentStep={
+          currentStep === "script" 
+            ? "script" 
+            : titleCandidates 
+            ? "title" 
+            : "input"
+        }
+        mode="short"
       />
 
       {currentStep === "input" && !titleCandidates && (
@@ -66,27 +72,13 @@ const ShortScriptGenerationPage = () => {
         />
       )}
 
-      {currentStep === "input" && titleCandidates && (
+      {currentStep === "input" && titleCandidates && !isGenerating && (
         <TitleCandidatesSection
           titleBatch={titleCandidates}
           isGenerating={isGenerating}
           onSelectTitle={handleSelectTitleCandidate}
           onRegenerate={handleRegenerateTitles}
           onBack={() => setTitleCandidates(null)}
-        />
-      )}
-
-      {currentStep === "title" && generatedTitle && (
-        <TitleSection
-          title={generatedTitle}
-          isGenerating={isGenerating}
-          isApprovingLoading={isGenerating}
-          isRegeneratingLoading={false}
-          onApprove={handleGenerateShortScript}
-          onRegenerate={() => {
-            setTitleCandidates(null);
-            handleResetToInput();
-          }}
         />
       )}
 

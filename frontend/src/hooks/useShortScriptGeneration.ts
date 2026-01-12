@@ -57,8 +57,8 @@ export const useShortScriptGeneration = () => {
     }
   };
 
-  // タイトル候補から選択
-  const handleSelectTitleCandidate = (candidate: any) => {
+  // タイトル候補から選択して即座に台本生成
+  const handleSelectTitleCandidate = async (candidate: any) => {
     const title: ComedyTitle = {
       title: candidate.title,
       mode: "comedy",
@@ -71,22 +71,8 @@ export const useShortScriptGeneration = () => {
     };
 
     setGeneratedTitle(title);
-    setCurrentStep("title");
-  };
-
-  // タイトルを再生成
-  const handleRegenerateTitles = async () => {
-    setTitleCandidates(null);
-    await handleGenerateTitles();
-  };
-
-  // ショート台本を生成（タイトルから直接）
-  const handleGenerateShortScript = async () => {
-    if (!generatedTitle) {
-      setError("タイトルが選択されていません");
-      return;
-    }
-
+    
+    // タイトル選択後、即座に台本生成を開始
     setGenerating(true);
     setError(null);
     setCurrentStep("script");
@@ -97,7 +83,7 @@ export const useShortScriptGeneration = () => {
       setProgress(0.3);
       const response = await scriptApi.generateShortScript({
         mode: "comedy",
-        title_data: generatedTitle,
+        title_data: title,
         model,
         temperature,
       });
@@ -109,11 +95,19 @@ export const useShortScriptGeneration = () => {
     } catch (error: any) {
       console.error("ショート台本生成エラー:", error);
       setError(error.message || "ショート台本生成に失敗しました");
-      setCurrentStep("title");
+      setCurrentStep("input");
+      setTitleCandidates(null);
     } finally {
       setGenerating(false);
     }
   };
+
+  // タイトルを再生成
+  const handleRegenerateTitles = async () => {
+    setTitleCandidates(null);
+    await handleGenerateTitles();
+  };
+
 
   // 最初からやり直す
   const handleResetToInput = () => {
@@ -142,7 +136,6 @@ export const useShortScriptGeneration = () => {
     handleGenerateTitles,
     handleSelectTitleCandidate,
     handleRegenerateTitles,
-    handleGenerateShortScript,
     handleResetToInput,
   };
 };

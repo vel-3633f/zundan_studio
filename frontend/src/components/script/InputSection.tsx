@@ -68,19 +68,34 @@ const InputSection = ({
   }
 
   return (
-    <Card
-      icon={<Sparkles className="h-6 w-6" />}
-      title="漫談タイトル生成"
-    >
+    <Card icon={<Sparkles className="h-6 w-6" />} title="漫談タイトル生成">
       <div className="space-y-6">
-        {/* 説明文 */}
-        <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-          <p className="text-sm text-primary-900 dark:text-primary-100">
-            🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
-            <br />
-            5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
-          </p>
-        </div>
+        {/* テーマ入力（ランダム生成がない場合のみ表示） */}
+        {!onRandomGenerate && (
+          <div>
+            <Input
+              label="テーマ"
+              value={inputText}
+              onChange={(e) => onInputTextChange(e.target.value)}
+              placeholder="例: コンビニの店員、面接官、上司"
+              disabled={isGenerating}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              テーマを入力すると、そのテーマに関連したタイトル候補を20個生成します
+            </p>
+          </div>
+        )}
+
+        {/* 説明文（ランダム生成がある場合のみ表示） */}
+        {onRandomGenerate && (
+          <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+            <p className="text-sm text-primary-900 dark:text-primary-100">
+              🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
+              <br />
+              5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
+            </p>
+          </div>
+        )}
 
         {/* 詳細設定 */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">

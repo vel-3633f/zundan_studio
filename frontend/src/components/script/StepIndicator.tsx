@@ -3,16 +3,24 @@ import type { ScriptStep } from "@/stores/scriptStore";
 
 interface StepIndicatorProps {
   currentStep: ScriptStep;
+  mode?: "long" | "short"; // 長尺動画(4ステップ)かショート動画(2ステップ)か
 }
 
-const steps = [
+const longSteps = [
   { key: "input" as ScriptStep, label: "入力", number: 1 },
   { key: "title" as ScriptStep, label: "タイトル", number: 2 },
   { key: "outline" as ScriptStep, label: "アウトライン", number: 3 },
   { key: "script" as ScriptStep, label: "台本", number: 4 },
 ];
 
-const StepIndicator = ({ currentStep }: StepIndicatorProps) => {
+const shortSteps = [
+  { key: "input" as ScriptStep, label: "入力", number: 1 },
+  { key: "title" as ScriptStep, label: "タイトル", number: 2 },
+  { key: "script" as ScriptStep, label: "台本", number: 3 },
+];
+
+const StepIndicator = ({ currentStep, mode = "long" }: StepIndicatorProps) => {
+  const steps = mode === "short" ? shortSteps : longSteps;
   const currentIndex = steps.findIndex((s) => s.key === currentStep);
 
   return (
