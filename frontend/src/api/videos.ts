@@ -3,6 +3,8 @@ import type {
   VideoGenerationRequest,
   VideoGenerationResponse,
   VideoStatusResponse,
+  JsonFileInfo,
+  JsonFileStatusUpdate,
 } from "@/types";
 
 export const videoApi = {
@@ -40,8 +42,8 @@ export const videoApi = {
   /**
    * JSONファイル一覧を取得
    */
-  listJsonFiles: async (): Promise<Array<{ filename: string; path: string }>> => {
-    const response = await apiClient.get<Array<{ filename: string; path: string }>>(
+  listJsonFiles: async (): Promise<JsonFileInfo[]> => {
+    const response = await apiClient.get<JsonFileInfo[]>(
       "/videos/json-files"
     );
     return response.data;
@@ -52,6 +54,30 @@ export const videoApi = {
    */
   getJsonFile: async (filename: string): Promise<any> => {
     const response = await apiClient.get(`/videos/json-files/${encodeURIComponent(filename)}`);
+    return response.data;
+  },
+
+  /**
+   * JSONファイルのis_generatedステータスを更新
+   */
+  updateJsonFileStatus: async (
+    filename: string,
+    statusUpdate: JsonFileStatusUpdate
+  ): Promise<JsonFileInfo> => {
+    const response = await apiClient.patch<JsonFileInfo>(
+      `/videos/json-files/${encodeURIComponent(filename)}/status`,
+      statusUpdate
+    );
+    return response.data;
+  },
+
+  /**
+   * JSONファイルを削除
+   */
+  deleteJsonFile: async (filename: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      `/videos/json-files/${encodeURIComponent(filename)}`
+    );
     return response.data;
   },
 };

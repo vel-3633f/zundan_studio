@@ -262,4 +262,16 @@ export interface JsonScriptData {
   character_moods?: CharacterMood;
   sections: VideoSection[];
   youtube_metadata?: YouTubeMetadata;
+  is_generated?: boolean;
+}
+
+// === JSONファイル情報 ===
+export interface JsonFileInfo {
+  filename: string;
+  path: string;
+  is_generated: boolean;
+}
+
+export interface JsonFileStatusUpdate {
+  is_generated: boolean;
 }

@@ -7,7 +7,7 @@ import {
   extractBackgroundNames,
 } from "@/utils/jsonProcessor";
 import { managementApi } from "@/api/management";
-import type { BackgroundCheckResponse } from "@/types";
+import type { BackgroundCheckResponse, JsonFileInfo } from "@/types";
 
 export const useJsonLoader = () => {
   const { setConversations, setSections, setJsonScriptData } = useVideoStore();
@@ -46,9 +46,7 @@ export const useJsonLoader = () => {
     }
   };
 
-  const [jsonFiles, setJsonFiles] = useState<
-    Array<{ filename: string; path: string }>
-  >([]);
+  const [jsonFiles, setJsonFiles] = useState<JsonFileInfo[]>([]);
   const [selectedJsonFile, setSelectedJsonFile] = useState<string>("");
   const [isLoadingJsonFiles, setIsLoadingJsonFiles] = useState(false);
   const [backgroundCheckResult, setBackgroundCheckResult] =
@@ -61,9 +59,11 @@ export const useJsonLoader = () => {
       try {
         setIsLoadingJsonFiles(true);
         const files = await videoApi.listJsonFiles();
-        setJsonFiles(files);
-        if (files.length > 0 && !selectedJsonFile) {
-          setSelectedJsonFile(files[0].filename);
+        // 生成済みのファイルを除外
+        const ungeneratedFiles = files.filter((file) => !file.is_generated);
+        setJsonFiles(ungeneratedFiles);
+        if (ungeneratedFiles.length > 0 && !selectedJsonFile) {
+          setSelectedJsonFile(ungeneratedFiles[0].filename);
         }
       } catch (error) {
         console.error("JSONファイル一覧取得エラー:", error);
