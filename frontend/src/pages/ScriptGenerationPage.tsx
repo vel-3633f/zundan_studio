@@ -55,7 +55,7 @@ const ScriptGenerationPage = () => {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              動画台本生成
+              長尺動画台本生成
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します
@@ -69,8 +69,6 @@ const ScriptGenerationPage = () => {
           />
         </div>
       </div>
-
-      <ModeSelector />
 
       <StepIndicator currentStep={currentStep} />
 

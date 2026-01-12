@@ -10,6 +10,8 @@ import type {
   FullScriptResponse,
   ComedyTitleBatch,
   ThemeBatch,
+  ShortScriptRequest,
+  ShortScriptResponse,
   // 旧型定義（後方互換性）
   OutlineRequest,
   OutlineResponse,
@@ -145,6 +147,38 @@ export const scriptApi = {
     filename: string;
   }> => {
     const response = await apiClient.post("/scripts/save", data);
+    return response.data;
+  },
+
+  /**
+   * ショート動画タイトルを生成（20個）
+   */
+  generateShortTitles: async (
+    theme: string,
+    model?: string,
+    temperature?: number
+  ): Promise<ComedyTitleBatch> => {
+    const response = await apiClient.post<ComedyTitleBatch>(
+      "/scripts/comedy/short/titles",
+      {
+        theme,
+        model,
+        temperature,
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * ショート動画台本を生成（60秒）
+   */
+  generateShortScript: async (
+    data: ShortScriptRequest
+  ): Promise<ShortScriptResponse> => {
+    const response = await apiClient.post<ShortScriptResponse>(
+      "/scripts/comedy/short/script",
+      data
+    );
     return response.data;
   },
 

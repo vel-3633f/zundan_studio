@@ -98,3 +98,20 @@ class ThemeTitleRequest(BaseModel):
     model: Optional[str] = Field(None, description="使用するLLMモデル")
     temperature: Optional[float] = Field(None, description="生成温度")
 
+
+class ShortScriptRequest(BaseModel):
+    """ショート動画台本生成リクエスト（60秒）"""
+
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    title_data: ComedyTitle = Field(..., description="生成されたタイトル")
+    model: Optional[str] = Field(None, description="使用するLLMモデルID")
+    temperature: Optional[float] = Field(None, description="生成温度")
+
+
+class ShortTitleRequest(BaseModel):
+    """ショート動画タイトル生成リクエスト"""
+
+    theme: str = Field(..., description="テーマ（単語・フレーズ）")
+    model: Optional[str] = Field(None, description="使用するLLMモデル")
+    temperature: Optional[float] = Field(None, description="生成温度")
+

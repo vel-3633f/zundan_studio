@@ -25,9 +25,9 @@ class ComedyTitleGenerator:
 
     def __init__(self):
         self.title_batch_prompt_file = Path(
-            "app/prompts/comedy/title_batch_generation.md"
+            "app/prompts/comedy/long/title_batch_generation.md"
         )
-        self.theme_prompt_file = Path("app/prompts/comedy/theme_generation.md")
+        self.theme_prompt_file = Path("app/prompts/comedy/long/theme_generation.md")
 
     def load_prompt(self, file_path: Path) -> str:
         """プロンプトファイルを読み込む"""

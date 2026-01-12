@@ -1,7 +1,10 @@
 // 共通型定義
 
 // === 生成モード ===
-export type ScriptMode = "comedy";
+export type ScriptMode = "comedy" | "short_comedy";
+
+// === 台本の長さ ===
+export type ScriptDuration = "short" | "long";
 
 export interface ConversationLine {
   speaker: string;
@@ -239,6 +242,17 @@ export interface ScriptRequest {
 }
 
 export interface ScriptResponse {
+  script: ComedyScript;
+}
+
+export interface ShortScriptRequest {
+  mode: ScriptMode;
+  title_data: ComedyTitle;
+  model?: string;
+  temperature?: number;
+}
+
+export interface ShortScriptResponse {
   script: ComedyScript;
 }
 

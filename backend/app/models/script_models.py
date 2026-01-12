@@ -2,6 +2,7 @@ from app.models.scripts import *
 
 __all__ = [
     "ScriptMode",
+    "ScriptDuration",
     "BaseTitleModel",
     "BaseOutlineModel",
     "BaseScriptModel",
@@ -15,4 +16,5 @@ __all__ = [
     "ComedyOutline",
     "ComedyScript",
     "YouTubeMetadata",
+    "ThemeBatch",
 ]

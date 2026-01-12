@@ -31,7 +31,7 @@ class GenericSectionGenerator:
         """
         self.mode = mode
         self.section_prompt_file = Path(
-            f"app/prompts/{mode.value}/section_generation.md"
+            f"app/prompts/{mode.value}/long/section_generation.md"
         )
 
     def load_section_prompt(self) -> str:

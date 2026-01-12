@@ -297,3 +297,80 @@ async def handle_generate_theme_titles(request: ThemeTitleRequest) -> ComedyTitl
         logger.error(f"テーマベースタイトル生成エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
+async def handle_generate_short_titles(request) -> ComedyTitleBatch:
+    """ショート動画タイトル生成ハンドラー"""
+    try:
+        logger.info(f"ショート動画タイトル生成リクエスト: テーマ={request.theme}")
+
+        from app.core.script_generators.comedy.comedy_short_generator import ComedyShortGenerator
+        from app.core.script_generators.generate_food_over import create_llm_instance
+        from app.config.models import get_default_model_config
+
+        generator = ComedyShortGenerator()
+
+        # モデル設定
+        model_config = get_default_model_config()
+        model = request.model or model_config["id"]
+        temperature = request.temperature if request.temperature is not None else 0.9
+
+        llm = create_llm_instance(model, temperature, model_config)
+
+        # ショートタイトル生成
+        title_batch = generator.generate_short_titles(
+            theme=request.theme,
+            llm=llm,
+        )
+
+        return title_batch
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"ショート動画タイトル生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_generate_short_script(request) -> ScriptResponse:
+    """ショート動画台本生成ハンドラー（60秒）"""
+    try:
+        logger.info(f"ショート動画台本生成リクエスト: タイトル={request.title_data.title}")
+
+        from app.core.script_generators.comedy.comedy_short_generator import ComedyShortGenerator
+        from app.core.script_generators.generate_food_over import create_llm_instance
+        from app.config.models import get_default_model_config
+
+        generator = ComedyShortGenerator()
+
+        # モデル設定
+        model_config = get_default_model_config()
+        model = request.model or model_config["id"]
+        temperature = request.temperature if request.temperature is not None else 0.9
+
+        llm = create_llm_instance(model, temperature, model_config)
+
+        # ショート台本生成
+        script = generator.generate_short_script(
+            title=request.title_data,
+            llm=llm,
+        )
+
+        # 60秒チェック
+        total_segments = len(script.all_segments)
+        estimated_seconds = total_segments * 4
+        
+        if estimated_seconds < 45:
+            logger.warning(f"推定時間が短すぎます: {estimated_seconds}秒")
+        elif estimated_seconds > 75:
+            logger.warning(f"推定時間が長すぎます: {estimated_seconds}秒")
+        else:
+            logger.info(f"推定時間が適正範囲: {estimated_seconds}秒")
+
+        return ScriptResponse(script=script)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"ショート動画台本生成エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+

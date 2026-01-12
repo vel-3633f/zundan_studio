@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type {
   ScriptMode,
+  ScriptDuration,
   ComedyTitle,
   ComedyOutline,
   ComedyScript,
@@ -25,6 +26,7 @@ interface ScriptState {
   // === モードとステップ ===
   mode: ScriptMode;
   currentStep: ScriptStep;
+  durationType: ScriptDuration;
 
   // === モデル設定 ===
   availableModels: ModelConfig[];
@@ -55,6 +57,7 @@ interface ScriptState {
   // === アクション ===
   setMode: (mode: ScriptMode) => void;
   setCurrentStep: (step: ScriptStep) => void;
+  setDurationType: (type: ScriptDuration) => void;
   setInputText: (text: string) => void;
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
@@ -85,6 +88,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
   // === 初期状態 ===
   mode: "comedy",
   currentStep: "input",
+  durationType: "long",
 
   availableModels: [],
   defaultModelId: "",
@@ -111,6 +115,8 @@ export const useScriptStore = create<ScriptState>((set) => ({
   setMode: (mode) => set({ mode, currentStep: "input" }),
 
   setCurrentStep: (step) => set({ currentStep: step }),
+
+  setDurationType: (type) => set({ durationType: type }),
 
   setInputText: (text) => set({ inputText: text }),
 
