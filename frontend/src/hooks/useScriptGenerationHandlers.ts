@@ -29,8 +29,6 @@ export const useScriptGenerationHandlers = (
       return;
     }
 
-    console.log("[handleGenerateOutline] 自動モード:", isAutoMode);
-
     setGenerating(true);
     setGeneratingAction("approve");
     setError(null);
@@ -51,8 +49,6 @@ export const useScriptGenerationHandlers = (
       setGeneratedOutline(result.outline);
       setYoutubeMetadata(result.youtube_metadata || null);
       setProgress(0.5);
-
-      console.log("[handleGenerateOutline] アウトライン生成完了、自動モード:", isAutoMode);
 
       if (isAutoMode) {
         // 自動モード：台本→保存を自動実行
@@ -123,8 +119,6 @@ export const useScriptGenerationHandlers = (
       return;
     }
 
-    console.log("[handleGenerateScript] 自動モード:", isAutoMode);
-
     setGenerating(true);
     setGeneratingAction("approve");
     setError(null);
@@ -142,8 +136,6 @@ export const useScriptGenerationHandlers = (
 
       setGeneratedScript(result.script);
       setProgress(0.8);
-
-      console.log("[handleGenerateScript] 台本生成完了、自動モード:", isAutoMode);
 
       if (isAutoMode) {
         // 自動モード：保存まで自動実行
