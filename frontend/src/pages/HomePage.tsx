@@ -1,5 +1,6 @@
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { Video, Play, Download, MessageSquare } from "lucide-react";
+import { Video, Play, Download, MessageSquare, Layers } from "lucide-react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
 import ProgressBar from "@/components/ProgressBar";
@@ -8,11 +9,16 @@ import { useVideoStore } from "@/stores/videoStore";
 import { ConversationList } from "@/components/video/ConversationList";
 import { JsonLoader } from "@/components/video/JsonLoader";
 import { JsonMetadata } from "@/components/video/JsonMetadata";
+import { BatchVideoGenerator } from "@/components/video/BatchVideoGenerator";
 import { useJsonLoader } from "@/hooks/useJsonLoader";
 import { useVideoGeneration } from "@/hooks/useVideoGeneration";
+import { useBatchVideoGeneration } from "@/hooks/useBatchVideoGeneration";
+import { useBatchJsonLoader } from "@/hooks/useBatchJsonLoader";
 import BackgroundCheckCard from "@/components/resources/BackgroundCheckCard";
 
 const HomePage = () => {
+  const [mode, setMode] = useState<"single" | "batch">("single");
+
   const {
     conversations,
     removeConversation,
@@ -35,6 +41,15 @@ const HomePage = () => {
   } = useJsonLoader();
 
   const { handleGenerate } = useVideoGeneration();
+  const { batchGeneration, handleStartBatchGeneration } =
+    useBatchVideoGeneration();
+  const {
+    previewData,
+    backgroundCheckResult: batchBackgroundCheckResult,
+    isCheckingBackgrounds: isBatchCheckingBackgrounds,
+    isLoadingPreview,
+    loadPreviewForFiles,
+  } = useBatchJsonLoader();
 
   const handleRemove = (index: number) => {
     removeConversation(index);
@@ -80,109 +95,155 @@ const HomePage = () => {
         </p>
       </div>
 
-      <Card icon={<Video className="h-6 w-6" />} title="会話設定">
-        <JsonLoader
-          jsonFiles={jsonFiles}
-          selectedJsonFile={selectedJsonFile}
-          isLoadingJsonFiles={isLoadingJsonFiles}
-          onSelectedFileChange={setSelectedJsonFile}
-          onLoadSelected={handleLoadSelectedJson}
-          onLoadFromFile={handleLoadJson}
-        />
+      {/* モード切り替え */}
+      <Card>
+        <div className="flex gap-2">
+          <Button
+            variant={mode === "single" ? "primary" : "outline"}
+            onClick={() => setMode("single")}
+            disabled={isGenerating || batchGeneration.isGenerating}
+            leftIcon={<Video className="h-5 w-5" />}
+          >
+            単一動画生成
+          </Button>
+          <Button
+            variant={mode === "batch" ? "primary" : "outline"}
+            onClick={() => setMode("batch")}
+            disabled={isGenerating || batchGeneration.isGenerating}
+            leftIcon={<Layers className="h-5 w-5" />}
+          >
+            バッチ動画生成
+          </Button>
+        </div>
       </Card>
 
-      <BackgroundCheckCard
-        result={backgroundCheckResult}
-        isLoading={isCheckingBackgrounds}
-      />
+      {/* 単一動画生成モード */}
+      {mode === "single" && (
+        <>
+          <Card icon={<Video className="h-6 w-6" />} title="会話設定">
+            <JsonLoader
+              jsonFiles={jsonFiles}
+              selectedJsonFile={selectedJsonFile}
+              isLoadingJsonFiles={isLoadingJsonFiles}
+              onSelectedFileChange={setSelectedJsonFile}
+              onLoadSelected={handleLoadSelectedJson}
+              onLoadFromFile={handleLoadJson}
+            />
+          </Card>
 
-      {jsonScriptData && <JsonMetadata jsonScriptData={jsonScriptData} />}
-
-      {conversations.length > 0 && (
-        <Card
-          icon={<MessageSquare className="h-6 w-6" />}
-          title="会話リスト"
-          headerAction={<Badge variant="info">{conversations.length}件</Badge>}
-          className="animate-fade-in"
-        >
-          <ConversationList
-            conversations={conversations}
-            speakerColors={speakerColors}
-            speakerTextColors={speakerTextColors}
-            onRemove={handleRemove}
+          <BackgroundCheckCard
+            result={backgroundCheckResult}
+            isLoading={isCheckingBackgrounds}
           />
 
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              onClick={handleGenerate}
-              disabled={
-                conversations.length === 0 ||
-                isGenerating ||
-                isCheckingBackgrounds ||
-                hasNoBackgrounds()
+          {jsonScriptData && <JsonMetadata jsonScriptData={jsonScriptData} />}
+
+          {conversations.length > 0 && (
+            <Card
+              icon={<MessageSquare className="h-6 w-6" />}
+              title="会話リスト"
+              headerAction={
+                <Badge variant="info">{conversations.length}件</Badge>
               }
-              isLoading={isGenerating}
-              className="w-full"
-              leftIcon={<Play className="h-5 w-5" />}
+              className="animate-fade-in"
             >
-              会話動画を生成
-            </Button>
-            {hasNoBackgrounds() && conversations.length > 0 && (
-              <p className="mt-2 text-sm text-warning-600 dark:text-warning-400 text-center">
-                背景画像が不足しているため、動画生成できません
+              <ConversationList
+                conversations={conversations}
+                speakerColors={speakerColors}
+                speakerTextColors={speakerTextColors}
+                onRemove={handleRemove}
+              />
+
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={
+                    conversations.length === 0 ||
+                    isGenerating ||
+                    isCheckingBackgrounds ||
+                    hasNoBackgrounds()
+                  }
+                  isLoading={isGenerating}
+                  className="w-full"
+                  leftIcon={<Play className="h-5 w-5" />}
+                >
+                  会話動画を生成
+                </Button>
+                {hasNoBackgrounds() && conversations.length > 0 && (
+                  <p className="mt-2 text-sm text-warning-600 dark:text-warning-400 text-center">
+                    背景画像が不足しているため、動画生成できません
+                  </p>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {conversations.length === 0 && (
+            <Card className="text-center py-12">
+              <MessageSquare className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2">
+                まだ会話データが読み込まれていません
               </p>
-            )}
-          </div>
-        </Card>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                上のフォームからJSONファイルを読み込んでください
+              </p>
+            </Card>
+          )}
+
+          {isGenerating && (
+            <Card className="animate-fade-in">
+              <ProgressBar
+                progress={progress * 100}
+                message={statusMessage}
+                variant="default"
+              />
+            </Card>
+          )}
+
+          {generatedVideoPath && (
+            <Card
+              icon={<Video className="h-6 w-6" />}
+              title="動画生成完了！"
+              headerAction={<Badge variant="success">完了</Badge>}
+              className="animate-fade-in"
+            >
+              <div className="space-y-4">
+                <div className="p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
+                  <p className="text-sm font-medium text-success-700 dark:text-success-400 mb-1">
+                    動画パス
+                  </p>
+                  <p className="text-sm font-mono text-success-900 dark:text-success-300 break-all">
+                    {generatedVideoPath}
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  leftIcon={<Download className="h-5 w-5" />}
+                >
+                  動画をダウンロード
+                </Button>
+              </div>
+            </Card>
+          )}
+        </>
       )}
 
-      {conversations.length === 0 && (
-        <Card className="text-center py-12">
-          <MessageSquare className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 mb-2">
-            まだ会話データが読み込まれていません
-          </p>
-          <p className="text-sm text-gray-400 dark:text-gray-500">
-            上のフォームからJSONファイルを読み込んでください
-          </p>
-        </Card>
-      )}
-
-      {isGenerating && (
-        <Card className="animate-fade-in">
-          <ProgressBar
-            progress={progress * 100}
-            message={statusMessage}
-            variant="default"
+      {/* バッチ動画生成モード */}
+      {mode === "batch" && (
+        <Card icon={<Layers className="h-6 w-6" />} title="バッチ動画生成">
+          <BatchVideoGenerator
+            jsonFiles={jsonFiles}
+            isLoadingJsonFiles={isLoadingJsonFiles}
+            onStartBatchGeneration={handleStartBatchGeneration}
+            batchState={batchGeneration}
+            previewData={previewData}
+            backgroundCheckResult={batchBackgroundCheckResult}
+            isCheckingBackgrounds={isBatchCheckingBackgrounds}
+            isLoadingPreview={isLoadingPreview}
+            onFilesSelected={loadPreviewForFiles}
           />
-        </Card>
-      )}
-
-      {generatedVideoPath && (
-        <Card
-          icon={<Video className="h-6 w-6" />}
-          title="動画生成完了！"
-          headerAction={<Badge variant="success">完了</Badge>}
-          className="animate-fade-in"
-        >
-          <div className="space-y-4">
-            <div className="p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
-              <p className="text-sm font-medium text-success-700 dark:text-success-400 mb-1">
-                動画パス
-              </p>
-              <p className="text-sm font-mono text-success-900 dark:text-success-300 break-all">
-                {generatedVideoPath}
-              </p>
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              leftIcon={<Download className="h-5 w-5" />}
-            >
-              動画をダウンロード
-            </Button>
-          </div>
         </Card>
       )}
     </div>

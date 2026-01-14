@@ -24,6 +24,7 @@ export interface ConversationLine {
 
 export interface VideoGenerationRequest {
   conversations: ConversationLine[];
+  title?: string;
   enable_subtitles?: boolean;
   conversation_mode?: string;
   sections?: VideoSection[];

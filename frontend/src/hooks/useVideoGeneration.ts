@@ -9,6 +9,7 @@ export const useVideoGeneration = () => {
   const wsClientRef = useRef<WebSocketClient | null>(null);
   const {
     conversations,
+    jsonScriptData,
     enableSubtitles,
     conversationMode,
     sections,
@@ -52,6 +53,7 @@ export const useVideoGeneration = () => {
 
       const response = await videoApi.generate({
         conversations,
+        title: jsonScriptData?.title || undefined,
         enable_subtitles: enableSubtitles,
         conversation_mode: conversationMode,
         sections: sections || undefined,

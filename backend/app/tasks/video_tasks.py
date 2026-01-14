@@ -32,6 +32,7 @@ class VideoGenerationTask(Task):
 def generate_video_task(
     self,
     conversations: List[Dict[str, Any]],
+    title: Optional[str] = None,
     enable_subtitles: bool = True,
     conversation_mode: str = "duo",
     sections: Optional[List[Dict[str, Any]]] = None,
@@ -44,6 +45,7 @@ def generate_video_task(
     
     Args:
         conversations: 会話リスト
+        title: 動画のタイトル（フォルダ名として使用）
         enable_subtitles: 字幕を有効にするか
         conversation_mode: 会話モード
         sections: セクション情報
@@ -186,6 +188,10 @@ def generate_video_task(
                 f"音声ファイル数={len(audio_file_list)}"
             )
         
+        # 出力パスを生成
+        output_path = FileManager.create_video_output_path(title)
+        logger.info(f"動画出力パス: {output_path}")
+        
         # 動画生成
         video_generator = VideoGenerator()
         
@@ -202,6 +208,7 @@ def generate_video_task(
         output_path = video_generator.generate_conversation_video(
             conversations=conversations_with_closing,
             audio_file_list=audio_file_list,
+            output_path=output_path,
             enable_subtitles=enable_subtitles,
             conversation_mode=conversation_mode,
             sections=video_sections,
@@ -226,9 +233,14 @@ def generate_video_task(
         
         logger.info(f"動画生成タスク完了 (task_id={self.request.id}): {output_path}")
         
+        # 相対パスを計算
+        from app.config.app import Paths
+        relative_path = os.path.relpath(output_path, Paths.get_outputs_dir())
+        
         return {
             'status': 'completed',
             'video_path': output_path,
+            'relative_path': relative_path,
             'message': '動画生成が完了しました'
         }
         

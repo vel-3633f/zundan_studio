@@ -33,6 +33,7 @@ async def handle_generate_video(request: VideoGenerationRequest) -> VideoGenerat
 
         task = generate_video_task.delay(
             conversations=conversations_dict,
+            title=request.title,
             enable_subtitles=request.enable_subtitles,
             conversation_mode=request.conversation_mode,
             sections=sections_dict,

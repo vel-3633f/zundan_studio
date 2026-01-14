@@ -1,5 +1,16 @@
 import { create } from "zustand";
-import type { ConversationLine, VideoSection, JsonScriptData } from "@/types";
+import type { ConversationLine, VideoSection, JsonScriptData, JsonFileInfo } from "@/types";
+
+interface BatchGenerationState {
+  isGenerating: boolean;
+  selectedFiles: JsonFileInfo[];
+  currentFileIndex: number;
+  totalFiles: number;
+  completedFiles: string[];
+  failedFiles: { filename: string; error: string }[];
+  currentProgress: number;
+  currentMessage: string;
+}
 
 interface VideoState {
   // 会話データ
@@ -22,6 +33,9 @@ interface VideoState {
   // 生成結果
   generatedVideoPath: string | null;
 
+  // バッチ生成状態
+  batchGeneration: BatchGenerationState;
+
   // アクション
   addConversation: (conversation: ConversationLine) => void;
   updateConversation: (index: number, conversation: ConversationLine) => void;
@@ -40,6 +54,16 @@ interface VideoState {
   setStatusMessage: (message: string) => void;
   setGeneratedVideoPath: (path: string | null) => void;
 
+  // バッチ生成アクション
+  setBatchGenerating: (generating: boolean) => void;
+  setBatchSelectedFiles: (files: JsonFileInfo[]) => void;
+  setBatchCurrentFileIndex: (index: number) => void;
+  setBatchCurrentProgress: (progress: number) => void;
+  setBatchCurrentMessage: (message: string) => void;
+  addBatchCompletedFile: (filename: string) => void;
+  addBatchFailedFile: (filename: string, error: string) => void;
+  resetBatchGeneration: () => void;
+
   reset: () => void;
 }
 
@@ -55,6 +79,16 @@ export const useVideoStore = create<VideoState>((set) => ({
   progress: 0,
   statusMessage: "",
   generatedVideoPath: null,
+  batchGeneration: {
+    isGenerating: false,
+    selectedFiles: [],
+    currentFileIndex: 0,
+    totalFiles: 0,
+    completedFiles: [],
+    failedFiles: [],
+    currentProgress: 0,
+    currentMessage: "",
+  },
 
   // アクション
   addConversation: (conversation) =>
@@ -94,6 +128,69 @@ export const useVideoStore = create<VideoState>((set) => ({
   setStatusMessage: (message) => set({ statusMessage: message }),
 
   setGeneratedVideoPath: (path) => set({ generatedVideoPath: path }),
+
+  // バッチ生成アクション
+  setBatchGenerating: (generating) =>
+    set((state) => ({
+      batchGeneration: { ...state.batchGeneration, isGenerating: generating },
+    })),
+
+  setBatchSelectedFiles: (files) =>
+    set((state) => ({
+      batchGeneration: {
+        ...state.batchGeneration,
+        selectedFiles: files,
+        totalFiles: files.length,
+      },
+    })),
+
+  setBatchCurrentFileIndex: (index) =>
+    set((state) => ({
+      batchGeneration: { ...state.batchGeneration, currentFileIndex: index },
+    })),
+
+  setBatchCurrentProgress: (progress) =>
+    set((state) => ({
+      batchGeneration: { ...state.batchGeneration, currentProgress: progress },
+    })),
+
+  setBatchCurrentMessage: (message) =>
+    set((state) => ({
+      batchGeneration: { ...state.batchGeneration, currentMessage: message },
+    })),
+
+  addBatchCompletedFile: (filename) =>
+    set((state) => ({
+      batchGeneration: {
+        ...state.batchGeneration,
+        completedFiles: [...state.batchGeneration.completedFiles, filename],
+      },
+    })),
+
+  addBatchFailedFile: (filename, error) =>
+    set((state) => ({
+      batchGeneration: {
+        ...state.batchGeneration,
+        failedFiles: [
+          ...state.batchGeneration.failedFiles,
+          { filename, error },
+        ],
+      },
+    })),
+
+  resetBatchGeneration: () =>
+    set({
+      batchGeneration: {
+        isGenerating: false,
+        selectedFiles: [],
+        currentFileIndex: 0,
+        totalFiles: 0,
+        completedFiles: [],
+        failedFiles: [],
+        currentProgress: 0,
+        currentMessage: "",
+      },
+    }),
 
   reset: () =>
     set({

@@ -6,6 +6,7 @@ interface ConversationListProps {
   speakerColors: Record<string, string>;
   speakerTextColors: Record<string, string>;
   onRemove: (index: number) => void;
+  readOnly?: boolean;
 }
 
 export const ConversationList = ({
@@ -13,6 +14,7 @@ export const ConversationList = ({
   speakerColors,
   speakerTextColors,
   onRemove,
+  readOnly = false,
 }: ConversationListProps) => {
   return (
     <div className="space-y-3 max-h-[500px] overflow-y-auto scrollbar-thin pr-2">
@@ -36,7 +38,7 @@ export const ConversationList = ({
               index={index}
               speakerColors={speakerColors}
               speakerTextColors={speakerTextColors}
-              onRemove={onRemove}
+              onRemove={readOnly ? undefined : onRemove}
             />
           </div>
         );
