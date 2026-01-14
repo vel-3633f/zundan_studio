@@ -40,7 +40,6 @@ export const useBatchJsonLoader = () => {
     try {
       // 全ファイルのプレビューデータを読み込む
       const allPreviews: FilePreviewData[] = [];
-      let allConversations: ConversationLine[] = [];
       
       for (const file of files) {
         try {
@@ -68,20 +67,12 @@ export const useBatchJsonLoader = () => {
             tempSetJsonScriptData
           );
 
-          // ファイル名をセクション名として追加
-          const conversationsWithFile = conversations.map(conv => ({
-            ...conv,
-            section_name: `📄 ${file.filename}`,
-          }));
-
           allPreviews.push({
             filename: file.filename,
-            conversations: conversationsWithFile,
+            conversations,
             sections,
             jsonScriptData,
           });
-
-          allConversations = [...allConversations, ...conversationsWithFile];
         } catch (error) {
           console.error(`ファイル読み込みエラー (${file.filename}):`, error);
         }
@@ -89,13 +80,15 @@ export const useBatchJsonLoader = () => {
 
       setAllFilesPreview(allPreviews);
       
-      // 統合されたプレビューデータを設定（最初のファイルのメタ情報を使用）
+      // 最初のファイルのプレビューデータを設定
       const firstPreview = allPreviews[0];
-      setPreviewData({
-        conversations: allConversations,
-        sections: firstPreview?.sections || null,
-        jsonScriptData: firstPreview?.jsonScriptData || null,
-      });
+      if (firstPreview) {
+        setPreviewData({
+          conversations: firstPreview.conversations,
+          sections: firstPreview.sections,
+          jsonScriptData: firstPreview.jsonScriptData,
+        });
+      }
 
       // 背景画像チェック（全ファイルの背景を集約）
       const allBackgroundNames = new Set<string>();
@@ -145,6 +138,10 @@ export const useBatchJsonLoader = () => {
     setSelectedFiles([]);
   };
 
+  const getPreviewForFile = (filename: string) => {
+    return allFilesPreview.find((p) => p.filename === filename) || null;
+  };
+
   return {
     selectedFiles,
     setSelectedFiles,
@@ -154,6 +151,7 @@ export const useBatchJsonLoader = () => {
     isCheckingBackgrounds,
     isLoadingPreview,
     loadPreviewForFiles,
+    getPreviewForFile,
     clearPreview,
   };
 };

@@ -118,12 +118,7 @@ export const useBatchVideoGeneration = () => {
           }, 10 * 60 * 1000);
         });
 
-        // 5. is_generatedフラグを更新
-        await videoApi.updateJsonFileStatus(file.filename, {
-          is_generated: true,
-        });
-
-        // 6. 成功として記録
+        // 5. 成功として記録（is_generatedフラグは手動更新）
         addBatchCompletedFile(file.filename);
         toast.success(`${file.filename} の動画生成が完了しました`);
         playNotificationSound();

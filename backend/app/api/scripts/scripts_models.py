@@ -83,6 +83,11 @@ class FullScriptResponse(BaseModel):
     """完全台本生成レスポンス"""
 
     script: ComedyScript
+    title: ComedyTitle = Field(..., description="生成されたタイトル")
+    outline: ComedyOutline = Field(..., description="生成されたアウトライン")
+    youtube_metadata: Optional[YouTubeMetadata] = Field(
+        default=None, description="YouTubeメタデータ（生成失敗時はNone）"
+    )
 
 
 class ThemeBatchResponse(BaseModel):

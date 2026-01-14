@@ -193,10 +193,17 @@ class ComedyTitleGenerator:
 
             candidate = title_batch.titles[0]
 
+            # clickbait_elementsを候補から生成
+            clickbait_elements = [
+                candidate.hook_pattern,
+                candidate.situation,
+                candidate.chaos_element,
+            ]
+
             title = ComedyTitle(
                 title=candidate.title,
                 theme=theme,
-                clickbait_elements=[],
+                clickbait_elements=clickbait_elements,
                 mode=ScriptMode.COMEDY,
             )
 

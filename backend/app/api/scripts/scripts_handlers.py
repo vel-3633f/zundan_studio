@@ -116,7 +116,7 @@ async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptR
         )
 
         # 2. アウトライン生成
-        outline, _ = generator.generate_outline(
+        outline, youtube_metadata = generator.generate_outline(
             title_data=title,
             reference_info=reference_info,
             model=request.model,
@@ -131,7 +131,12 @@ async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptR
             temperature=request.temperature,
         )
 
-        return FullScriptResponse(script=script)
+        return FullScriptResponse(
+            script=script,
+            title=title,
+            outline=outline,
+            youtube_metadata=youtube_metadata
+        )
 
     except HTTPException:
         raise

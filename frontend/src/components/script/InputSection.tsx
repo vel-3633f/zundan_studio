@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   Shuffle,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import Card from "@/components/Card";
@@ -11,6 +12,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Select from "@/components/Select";
 import ThemeSelectionSection from "./ThemeSelectionSection";
+import AutoModeToggle from "./AutoModeToggle";
 import type { ScriptMode } from "@/types";
 import { useScriptStore } from "@/stores/scriptStore";
 
@@ -20,10 +22,13 @@ interface InputSectionProps {
   model: string;
   temperature: number;
   isGenerating: boolean;
+  isAutoMode?: boolean;
   onInputTextChange: (text: string) => void;
   onModelChange: (model: string) => void;
   onTemperatureChange: (temp: number) => void;
   onSubmit: () => void;
+  onAutoSubmit?: () => void; // 自動生成用
+  onAutoModeToggle?: (isAuto: boolean) => void;
   onRandomGenerate?: () => void; // お笑いモード専用
   // テーマ選択関連（お笑いモード専用）
   themes?: string[];
@@ -39,10 +44,13 @@ const InputSection = ({
   model,
   temperature,
   isGenerating,
+  isAutoMode = false,
   onInputTextChange,
   onModelChange,
   onTemperatureChange,
   onSubmit,
+  onAutoSubmit,
+  onAutoModeToggle,
   onRandomGenerate,
   themes = [],
   selectedTheme = null,
@@ -60,9 +68,11 @@ const InputSection = ({
         themes={themes}
         selectedTheme={selectedTheme}
         isGenerating={isGenerating}
+        isAutoMode={isAutoMode}
         onThemeSelect={onThemeSelect}
         onGenerateThemes={onGenerateThemes}
         onCustomThemeSubmit={onCustomThemeSubmit}
+        onAutoThemeSubmit={onAutoSubmit}
       />
     );
   }
@@ -81,7 +91,9 @@ const InputSection = ({
               disabled={isGenerating}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              テーマを入力すると、そのテーマに関連したタイトル候補を20個生成します
+              {isAutoMode
+                ? "テーマを入力すると、タイトル→アウトライン→台本を一括生成し、自動保存します"
+                : "テーマを入力すると、そのテーマに関連したタイトル候補を20個生成します"}
             </p>
           </div>
         )}
@@ -172,6 +184,16 @@ const InputSection = ({
             leftIcon={<Shuffle className="h-5 w-5" />}
           >
             🎲 ランダムタイトルを生成
+          </Button>
+        ) : isAutoMode && onAutoSubmit ? (
+          <Button
+            onClick={onAutoSubmit}
+            disabled={!inputText.trim() || isGenerating}
+            isLoading={isGenerating}
+            className="w-full"
+            leftIcon={<Zap className="h-5 w-5" />}
+          >
+            一括生成 + 自動保存
           </Button>
         ) : (
           <Button

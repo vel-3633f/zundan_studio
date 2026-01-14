@@ -10,6 +10,13 @@ import { ConversationList } from "./ConversationList";
 import BackgroundCheckCard from "@/components/resources/BackgroundCheckCard";
 import type { JsonFileInfo, ConversationLine, VideoSection, JsonScriptData, BackgroundCheckResponse } from "@/types";
 
+interface FilePreviewData {
+  filename: string;
+  conversations: ConversationLine[];
+  sections: VideoSection[] | null;
+  jsonScriptData: JsonScriptData | null;
+}
+
 interface BatchVideoGeneratorProps {
   jsonFiles: JsonFileInfo[];
   isLoadingJsonFiles: boolean;
@@ -17,21 +24,19 @@ interface BatchVideoGeneratorProps {
   batchState: {
     isGenerating: boolean;
     currentFileIndex: number;
+    currentFileName: string;
     totalFiles: number;
     completedFiles: string[];
     failedFiles: { filename: string; error: string }[];
     currentProgress: number;
     currentMessage: string;
   };
-  previewData: {
-    conversations: ConversationLine[];
-    sections: VideoSection[] | null;
-    jsonScriptData: JsonScriptData | null;
-  } | null;
+  allFilesPreview: FilePreviewData[];
   backgroundCheckResult: BackgroundCheckResponse | null;
   isCheckingBackgrounds: boolean;
   isLoadingPreview: boolean;
   onFilesSelected: (files: JsonFileInfo[]) => void;
+  getPreviewForFile: (filename: string) => FilePreviewData | null;
 }
 
 export const BatchVideoGenerator = ({
@@ -39,11 +44,11 @@ export const BatchVideoGenerator = ({
   isLoadingJsonFiles,
   onStartBatchGeneration,
   batchState,
-  previewData,
   backgroundCheckResult,
   isCheckingBackgrounds,
   isLoadingPreview,
   onFilesSelected,
+  getPreviewForFile,
 }: BatchVideoGeneratorProps) => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [confirmed, setConfirmed] = useState(false);
@@ -112,6 +117,13 @@ export const BatchVideoGenerator = ({
     setSelectedFiles(newSelected);
     setConfirmed(false);
     
+    // 全選択時は最初のファイルをアクティブに
+    if (newSelected.size > 0 && activePreviewFile === null) {
+      setActivePreviewFile(Array.from(newSelected)[0]);
+    } else if (newSelected.size === 0) {
+      setActivePreviewFile(null);
+    }
+    
     // 選択されたファイルのプレビューを読み込む
     const selected = jsonFiles.filter((f) => newSelected.has(f.filename));
     onFilesSelected(selected);
@@ -133,7 +145,8 @@ export const BatchVideoGenerator = ({
     );
     onStartBatchGeneration(filesToGenerate);
     setConfirmed(false);
-    setSelectedFiles(new Set());
+    // 生成開始後も選択状態を保持（進捗確認のため）
+    // setSelectedFiles(new Set());
   };
 
   const getFileStatus = (filename: string) => {
@@ -143,16 +156,8 @@ export const BatchVideoGenerator = ({
     if (batchState.failedFiles.some((f) => f.filename === filename)) {
       return "failed";
     }
-    if (
-      batchState.isGenerating &&
-      batchState.currentFileIndex < batchState.totalFiles
-    ) {
-      const currentFile =
-        jsonFiles.find((_, idx) => idx === batchState.currentFileIndex)
-          ?.filename || "";
-      if (currentFile === filename) {
-        return "processing";
-      }
+    if (batchState.isGenerating && batchState.currentFileName === filename) {
+      return "processing";
     }
     return "pending";
   };
@@ -229,7 +234,11 @@ export const BatchVideoGenerator = ({
         </Card>
       ) : (
         <div className="space-y-2">
-          {jsonFiles.map((file) => {
+          {/* 生成中は選択したファイルのみ表示 */}
+          {(batchState.isGenerating 
+            ? jsonFiles.filter((f) => selectedFiles.has(f.filename))
+            : jsonFiles
+          ).map((file) => {
             const status = getFileStatus(file.filename);
             const isSelected = selectedFiles.has(file.filename);
             const isExpanded = expandedFiles.has(file.filename);
@@ -303,34 +312,55 @@ export const BatchVideoGenerator = ({
       {/* 選択ファイルのプレビュー */}
       {selectedFiles.size > 0 && !batchState.isGenerating && (
         <>
-          {/* ファイル詳細の表示/非表示切り替え */}
+          {/* ファイルタブ */}
           <Card className="animate-fade-in">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                選択中: {selectedFiles.size}件
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFileDetails(!showFileDetails)}
-                leftIcon={showFileDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              >
-                {showFileDetails ? "ファイル詳細を閉じる" : "ファイル詳細を表示"}
-              </Button>
-            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  選択中: {selectedFiles.size}件
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFileDetails(!showFileDetails)}
+                  leftIcon={showFileDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                >
+                  {showFileDetails ? "ファイル詳細を閉じる" : "ファイル詳細を表示"}
+                </Button>
+              </div>
 
-            {showFileDetails && (
-              <div className="mt-4 space-y-2 animate-fade-in">
+              {/* ファイルタブ */}
+              <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                 {jsonFiles
                   .filter((f) => selectedFiles.has(f.filename))
                   .map((file) => (
-                    <JsonFilePreview key={file.filename} file={file} />
+                    <button
+                      key={file.filename}
+                      onClick={() => setActivePreviewFile(file.filename)}
+                      className={`px-3 py-1.5 text-sm rounded-t-lg transition-colors ${
+                        activePreviewFile === file.filename
+                          ? "bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium border-b-2 border-primary-500"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      {file.filename.length > 30
+                        ? `${file.filename.substring(0, 27)}...`
+                        : file.filename}
+                    </button>
                   ))}
               </div>
-            )}
+
+              {showFileDetails && activePreviewFile && (
+                <div className="animate-fade-in">
+                  <JsonFilePreview
+                    file={jsonFiles.find((f) => f.filename === activePreviewFile)!}
+                  />
+                </div>
+              )}
+            </div>
           </Card>
 
-          {/* 背景画像チェック */}
+          {/* アクティブファイルのプレビュー */}
           {isLoadingPreview ? (
             <Card className="animate-fade-in">
               <div className="flex items-center justify-center py-4">
@@ -340,60 +370,56 @@ export const BatchVideoGenerator = ({
                 </span>
               </div>
             </Card>
-          ) : (
+          ) : activePreviewFile && getPreviewForFile(activePreviewFile) ? (
             <>
+              {/* 背景画像チェック（全ファイル統合） */}
               <BackgroundCheckCard
                 result={backgroundCheckResult}
                 isLoading={isCheckingBackgrounds}
               />
 
-              {/* JSONメタ情報 */}
-              {previewData?.jsonScriptData && (
-                <JsonMetadata jsonScriptData={previewData.jsonScriptData} />
+              {/* アクティブファイルのJSONメタ情報 */}
+              {getPreviewForFile(activePreviewFile)?.jsonScriptData && (
+                <JsonMetadata
+                  jsonScriptData={getPreviewForFile(activePreviewFile)!.jsonScriptData!}
+                />
               )}
 
-              {/* 会話リスト */}
-              {previewData?.conversations && previewData.conversations.length > 0 && (
-                <Card
-                  icon={<MessageSquare className="h-6 w-6" />}
-                  title="会話プレビュー（全ファイル統合）"
-                  headerAction={
-                    <div className="flex items-center gap-2">
-                      <Badge variant="info">
-                        {selectedFiles.size}ファイル
-                      </Badge>
-                      <Badge variant="default">
-                        {previewData.conversations.length}セリフ
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowConversations(!showConversations)}
-                      >
-                        {showConversations ? "折りたたむ" : "展開"}
-                      </Button>
-                    </div>
-                  }
-                  className="animate-fade-in"
-                >
-                  {showConversations && (
-                    <>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        ※ 選択した全ファイルの会話を統合して表示しています（ファイル名がセクション区切りとして表示されます）
-                      </p>
+              {/* アクティブファイルの会話リスト */}
+              {getPreviewForFile(activePreviewFile)?.conversations &&
+                getPreviewForFile(activePreviewFile)!.conversations.length > 0 && (
+                  <Card
+                    icon={<MessageSquare className="h-6 w-6" />}
+                    title={`会話プレビュー - ${activePreviewFile}`}
+                    headerAction={
+                      <div className="flex items-center gap-2">
+                        <Badge variant="info">
+                          {getPreviewForFile(activePreviewFile)!.conversations.length}セリフ
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowConversations(!showConversations)}
+                        >
+                          {showConversations ? "折りたたむ" : "展開"}
+                        </Button>
+                      </div>
+                    }
+                    className="animate-fade-in"
+                  >
+                    {showConversations && (
                       <ConversationList
-                        conversations={previewData.conversations}
+                        conversations={getPreviewForFile(activePreviewFile)!.conversations}
                         speakerColors={speakerColors}
                         speakerTextColors={speakerTextColors}
                         onRemove={() => {}} // バッチモードでは削除不可
                         readOnly={true}
                       />
-                    </>
-                  )}
-                </Card>
-              )}
+                    )}
+                  </Card>
+                )}
             </>
-          )}
+          ) : null}
 
           {/* 確認と開始ボタン */}
           <Card className="animate-fade-in">

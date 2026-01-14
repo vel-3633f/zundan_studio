@@ -1,4 +1,4 @@
-import { Sparkles, Shuffle, Edit3 } from "lucide-react";
+import { Sparkles, Shuffle, Edit3, Zap } from "lucide-react";
 import { useState } from "react";
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -8,25 +8,34 @@ interface ThemeSelectionSectionProps {
   themes: string[];
   selectedTheme: string | null;
   isGenerating: boolean;
+  isAutoMode?: boolean;
   onThemeSelect: (theme: string) => void;
   onGenerateThemes: () => void;
   onCustomThemeSubmit?: (theme: string) => void;
+  onAutoThemeSubmit?: (theme: string) => void;
 }
 
 const ThemeSelectionSection = ({
   themes,
   selectedTheme,
   isGenerating,
+  isAutoMode = false,
   onThemeSelect,
   onGenerateThemes,
   onCustomThemeSubmit,
+  onAutoThemeSubmit,
 }: ThemeSelectionSectionProps) => {
   const [activeTab, setActiveTab] = useState<"auto" | "custom">("auto");
   const [customTheme, setCustomTheme] = useState("");
 
   const handleCustomSubmit = () => {
-    if (customTheme.trim() && onCustomThemeSubmit) {
-      onCustomThemeSubmit(customTheme.trim());
+    if (customTheme.trim()) {
+      // 自動モードの場合は一括生成、手動モードの場合はタイトルのみ生成
+      if (isAutoMode && onAutoThemeSubmit) {
+        onAutoThemeSubmit(customTheme.trim());
+      } else if (onCustomThemeSubmit) {
+        onCustomThemeSubmit(customTheme.trim());
+      }
     }
   };
 
@@ -83,9 +92,19 @@ const ThemeSelectionSection = ({
           <div className="space-y-4 pt-2">
             <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
               <p className="text-sm text-primary-900 dark:text-primary-100">
-                🎯 テーマを選択すると、そのテーマに基づいたタイトルが生成されます。
-                <br />
-                気に入ったテーマをクリックしてください！
+                {isAutoMode ? (
+                  <>
+                    ⚡ テーマを選択すると、タイトル→アウトライン→台本を一括生成し、自動保存します。
+                    <br />
+                    気に入ったテーマをクリックしてください！
+                  </>
+                ) : (
+                  <>
+                    🎯 テーマを選択すると、そのテーマに基づいたタイトルが生成されます。
+                    <br />
+                    気に入ったテーマをクリックしてください！
+                  </>
+                )}
               </p>
             </div>
 
@@ -134,9 +153,19 @@ const ThemeSelectionSection = ({
           <div className="space-y-4 pt-2">
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
               <p className="text-sm text-blue-900 dark:text-blue-100">
-                ✍️ お好みのテーマを自由に入力してください。
-                <br />
-                例：「調味料の取り違え」「電車でのマナー」「早起きのコツ」など
+                {isAutoMode ? (
+                  <>
+                    ⚡ お好みのテーマを入力すると、タイトル→アウトライン→台本を一括生成し、自動保存します。
+                    <br />
+                    例：「調味料の取り違え」「電車でのマナー」「早起きのコツ」など
+                  </>
+                ) : (
+                  <>
+                    ✍️ お好みのテーマを自由に入力してください。
+                    <br />
+                    例：「調味料の取り違え」「電車でのマナー」「早起きのコツ」など
+                  </>
+                )}
               </p>
             </div>
 
@@ -161,9 +190,9 @@ const ThemeSelectionSection = ({
               disabled={isGenerating || !customTheme.trim()}
               isLoading={isGenerating}
               className="w-full"
-              leftIcon={<Edit3 className="h-5 w-5" />}
+              leftIcon={isAutoMode ? <Zap className="h-5 w-5" /> : <Edit3 className="h-5 w-5" />}
             >
-              このテーマでタイトルを生成
+              {isAutoMode ? "一括生成 + 自動保存" : "このテーマでタイトルを生成"}
             </Button>
           </div>
         )}

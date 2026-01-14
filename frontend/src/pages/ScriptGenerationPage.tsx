@@ -7,6 +7,8 @@ import TitleCandidatesSection from "@/components/script/TitleCandidatesSection";
 import SingleTitleCandidateSection from "@/components/script/SingleTitleCandidateSection";
 import OutlineSection from "@/components/script/OutlineSection";
 import ScriptSection from "@/components/script/ScriptSection";
+import ProcessHistorySection from "@/components/script/ProcessHistorySection";
+import AutoModeToggle from "@/components/script/AutoModeToggle";
 import TestModeButton from "@/components/script/TestModeButton";
 import { useScriptGeneration } from "@/hooks/useScriptGeneration";
 
@@ -47,6 +49,10 @@ const ScriptGenerationPage = () => {
     handleGenerateThemes,
     handleThemeSelect,
     handleCustomThemeSubmit,
+    isAutoMode,
+    savedFilePath,
+    setAutoMode,
+    handleAutoGenerateScript,
   } = useScriptGeneration();
 
   return (
@@ -72,6 +78,15 @@ const ScriptGenerationPage = () => {
 
       <StepIndicator currentStep={currentStep} />
 
+      {/* 自動モード切り替え - 常に表示 */}
+      {currentStep === "input" && (
+        <AutoModeToggle
+          isAutoMode={isAutoMode}
+          onToggle={setAutoMode}
+          disabled={isGenerating}
+        />
+      )}
+
       {currentStep === "input" && !titleCandidates && !singleTitleCandidate && (
         <InputSection
           mode={mode}
@@ -79,10 +94,13 @@ const ScriptGenerationPage = () => {
           model={model}
           temperature={temperature}
           isGenerating={isGenerating}
+          isAutoMode={isAutoMode}
           onInputTextChange={setInputText}
           onModelChange={setModel}
           onTemperatureChange={setTemperature}
           onSubmit={handleGenerateTitle}
+          onAutoSubmit={handleAutoGenerateScript}
+          onAutoModeToggle={setAutoMode}
           onRandomGenerate={
             mode === "comedy" ? handleGenerateRandomTitles : undefined
           }
@@ -152,7 +170,23 @@ const ScriptGenerationPage = () => {
       )}
 
       {currentStep === "script" && generatedScript && !isGenerating && (
-        <ScriptSection mode={mode} script={generatedScript} />
+        <>
+          {/* 自動モード時は過程を表示 */}
+          {isAutoMode && (
+            <ProcessHistorySection
+              title={generatedTitle}
+              outline={generatedOutline}
+              youtubeMetadata={youtubeMetadata}
+            />
+          )}
+          
+          <ScriptSection
+            mode={mode}
+            script={generatedScript}
+            savedFilePath={savedFilePath}
+            isAutoMode={isAutoMode}
+          />
+        </>
       )}
 
       {currentStep !== "input" && !isGenerating && (

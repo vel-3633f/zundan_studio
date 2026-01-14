@@ -48,6 +48,10 @@ interface ScriptState {
   referenceInfo: string;
   searchResults: Record<string, any>;
 
+  // === 自動生成モード ===
+  isAutoMode: boolean;
+  savedFilePath: string | null;
+
   // === 生成状態 ===
   isGenerating: boolean;
   progress: number;
@@ -73,6 +77,9 @@ interface ScriptState {
 
   setReferenceInfo: (info: string) => void;
   setSearchResults: (results: Record<string, any>) => void;
+
+  setAutoMode: (isAuto: boolean) => void;
+  setSavedFilePath: (path: string | null) => void;
 
   setGenerating: (generating: boolean) => void;
   setProgress: (progress: number) => void;
@@ -105,6 +112,9 @@ export const useScriptStore = create<ScriptState>((set) => ({
 
   referenceInfo: "",
   searchResults: {},
+
+  isAutoMode: true,
+  savedFilePath: null,
 
   isGenerating: false,
   progress: 0,
@@ -142,6 +152,10 @@ export const useScriptStore = create<ScriptState>((set) => ({
 
   setSearchResults: (results) => set({ searchResults: results }),
 
+  setAutoMode: (isAuto) => set({ isAutoMode: isAuto }),
+
+  setSavedFilePath: (path) => set({ savedFilePath: path }),
+
   setGenerating: (generating) => set({ isGenerating: generating }),
 
   setProgress: (progress) => set({ progress }),
@@ -160,6 +174,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
       youtubeMetadata: null,
       referenceInfo: "",
       searchResults: {},
+      savedFilePath: null,
       isGenerating: false,
       progress: 0,
       statusMessage: "",
@@ -173,6 +188,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
       generatedOutline: null,
       generatedScript: null,
       youtubeMetadata: null,
+      savedFilePath: null,
       isGenerating: false,
       progress: 0,
       statusMessage: "",

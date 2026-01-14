@@ -4,6 +4,7 @@ import { useScriptTitleHandlers } from "./useScriptTitleHandlers";
 import { useScriptGenerationHandlers } from "./useScriptGenerationHandlers";
 import { useScriptRegenerateHandlers } from "./useScriptRegenerateHandlers";
 import { useScriptTestData } from "./useScriptTestData";
+import { useAutoScriptGeneration } from "./useAutoScriptGeneration";
 import { createScriptGenerationReturn } from "./useScriptGenerationReturn";
 import type { ComedyTitleBatch } from "@/types";
 
@@ -32,6 +33,8 @@ export const useScriptGeneration = () => {
     generatedScript,
     youtubeMetadata,
     referenceInfo,
+    isAutoMode,
+    savedFilePath,
     isGenerating,
     progress,
     statusMessage,
@@ -45,6 +48,8 @@ export const useScriptGeneration = () => {
     setYoutubeMetadata,
     setReferenceInfo,
     setSearchResults,
+    setAutoMode,
+    setSavedFilePath,
     setGenerating,
     setProgress,
     setStatusMessage,
@@ -101,11 +106,29 @@ export const useScriptGeneration = () => {
       generationHandlers
     );
 
+  const { handleAutoGenerateScript } = useAutoScriptGeneration(
+    setGenerating,
+    setError,
+    setStatusMessage,
+    setProgress,
+    setGeneratedTitle,
+    setGeneratedOutline,
+    setGeneratedScript,
+    setYoutubeMetadata,
+    setSavedFilePath,
+    setCurrentStep,
+    mode,
+    inputText,
+    model,
+    temperature
+  );
+
   const handleResetToInput = () => {
     setTitleCandidates(null);
     setSingleTitleCandidate(null);
     setThemes([]);
     setSelectedTheme(null);
+    setSavedFilePath(null);
     resetToInput();
   };
 
@@ -118,14 +141,28 @@ export const useScriptGeneration = () => {
 
   const handleThemeSelect = async (theme: string) => {
     setSelectedTheme(theme);
-    setStatusMessage("タイトルを生成しています。");
-    await titleHandlers.handleGenerateTitlesFromTheme(theme);
+    setInputText(theme);
+    if (isAutoMode) {
+      // 自動モード：テーマから直接台本まで生成
+      await handleAutoGenerateScript(theme);
+    } else {
+      // 手動モード：タイトルのみ生成
+      setStatusMessage("タイトルを生成しています。");
+      await titleHandlers.handleGenerateTitlesFromTheme(theme);
+    }
   };
 
   const handleCustomThemeSubmit = async (theme: string) => {
     setSelectedTheme(theme);
-    setStatusMessage("タイトルを生成しています。");
-    await titleHandlers.handleGenerateTitlesFromTheme(theme);
+    setInputText(theme);
+    if (isAutoMode) {
+      // 自動モード：テーマから直接台本まで生成
+      await handleAutoGenerateScript(theme);
+    } else {
+      // 手動モード：タイトルのみ生成
+      setStatusMessage("タイトルを生成しています。");
+      await titleHandlers.handleGenerateTitlesFromTheme(theme);
+    }
   };
 
   const { handleLoadTestData } = useScriptTestData(
@@ -171,5 +208,9 @@ export const useScriptGeneration = () => {
     handleGenerateThemes,
     handleThemeSelect,
     handleCustomThemeSubmit,
+    isAutoMode,
+    savedFilePath,
+    setAutoMode,
+    handleAutoGenerateScript,
   };
 };

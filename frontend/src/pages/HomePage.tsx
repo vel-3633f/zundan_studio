@@ -44,11 +44,12 @@ const HomePage = () => {
   const { batchGeneration, handleStartBatchGeneration } =
     useBatchVideoGeneration();
   const {
-    previewData,
+    allFilesPreview,
     backgroundCheckResult: batchBackgroundCheckResult,
     isCheckingBackgrounds: isBatchCheckingBackgrounds,
     isLoadingPreview,
     loadPreviewForFiles,
+    getPreviewForFile,
   } = useBatchJsonLoader();
 
   const handleRemove = (index: number) => {
@@ -238,11 +239,12 @@ const HomePage = () => {
             isLoadingJsonFiles={isLoadingJsonFiles}
             onStartBatchGeneration={handleStartBatchGeneration}
             batchState={batchGeneration}
-            previewData={previewData}
+            allFilesPreview={allFilesPreview}
             backgroundCheckResult={batchBackgroundCheckResult}
             isCheckingBackgrounds={isBatchCheckingBackgrounds}
             isLoadingPreview={isLoadingPreview}
             onFilesSelected={loadPreviewForFiles}
+            getPreviewForFile={getPreviewForFile}
           />
         </Card>
       )}

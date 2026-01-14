@@ -5,6 +5,7 @@ interface BatchGenerationState {
   isGenerating: boolean;
   selectedFiles: JsonFileInfo[];
   currentFileIndex: number;
+  currentFileName: string;
   totalFiles: number;
   completedFiles: string[];
   failedFiles: { filename: string; error: string }[];
@@ -83,6 +84,7 @@ export const useVideoStore = create<VideoState>((set) => ({
     isGenerating: false,
     selectedFiles: [],
     currentFileIndex: 0,
+    currentFileName: "",
     totalFiles: 0,
     completedFiles: [],
     failedFiles: [],
@@ -146,7 +148,11 @@ export const useVideoStore = create<VideoState>((set) => ({
 
   setBatchCurrentFileIndex: (index) =>
     set((state) => ({
-      batchGeneration: { ...state.batchGeneration, currentFileIndex: index },
+      batchGeneration: { 
+        ...state.batchGeneration, 
+        currentFileIndex: index,
+        currentFileName: state.batchGeneration.selectedFiles[index]?.filename || "",
+      },
     })),
 
   setBatchCurrentProgress: (progress) =>
@@ -184,6 +190,7 @@ export const useVideoStore = create<VideoState>((set) => ({
         isGenerating: false,
         selectedFiles: [],
         currentFileIndex: 0,
+        currentFileName: "",
         totalFiles: 0,
         completedFiles: [],
         failedFiles: [],

@@ -266,6 +266,9 @@ export interface FullScriptRequest {
 
 export interface FullScriptResponse {
   script: ComedyScript;
+  title: ComedyTitle;
+  outline: ComedyOutline;
+  youtube_metadata?: YouTubeMetadata;
 }
 
 // === JSONファイル全体のデータ構造 ===
