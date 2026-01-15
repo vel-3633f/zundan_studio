@@ -30,6 +30,7 @@ services:
       - VOICEVOX_API_URL=http://voicevox:50021
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - UVICORN_WORKERS=${UVICORN_WORKERS:-} # Set to 4 for production, empty for dev (uses --reload)
     depends_on:
       - redis
       - voicevox

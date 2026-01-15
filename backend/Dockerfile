@@ -33,5 +33,7 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8000/health || exit 1
 
-# Run uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run uvicorn with conditional workers based on environment
+# Development: --reload (single worker)
+# Production: --workers 4 (multi-worker)
+CMD sh -c "if [ \"$UVICORN_WORKERS\" ]; then uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers $UVICORN_WORKERS; else uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload; fi"
