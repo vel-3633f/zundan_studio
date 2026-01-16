@@ -96,7 +96,11 @@
 
 ## 表情・キャラクター設定
 
-- **visible_characters**: **必ず 2 人のみ**、`["zundamon", "metan"]`または`["zundamon", "tsumugi"]`
+- **visible_characters**: **必ず 2 人のみ**、話者を含む2人を指定
+  - ずんだもんが話す: `["zundamon", "metan"]`または`["zundamon", "tsumugi"]`
+  - めたんが話す: `["metan", "zundamon"]`
+  - つむぎが話す: `["tsumugi", "zundamon"]`
+  - **めたんとつむぎを同時に表示しない**（同じ位置に配置されるため重なります）
 - **character_expressions**: 全キャラの表情を指定（`normal`, `happy`, `sad`, `angry`, `surprised`, `thinking`, `worried`, `excited`）
 - **JSON 出力**: キーはローマ字（`speaker: "zundamon"`, `"metan"`, `"tsumugi"`, `"narrator"`）
 

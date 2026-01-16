@@ -109,13 +109,15 @@ export const useBatchVideoGeneration = () => {
           // WebSocket接続
           wsClient.connect();
 
-          // エラーハンドリング用のタイムアウト（10分）
+          // エラーハンドリング用のタイムアウト（1時間）
           setTimeout(() => {
             if (wsClientRef.current === wsClient) {
               wsClient.disconnect();
-              reject(new Error("タイムアウト: 動画生成に時間がかかりすぎています"));
+              reject(
+                new Error("タイムアウト: 動画生成に時間がかかりすぎています")
+              );
             }
-          }, 10 * 60 * 1000);
+          }, 60 * 60 * 1000);
         });
 
         // 5. 成功として記録（is_generatedフラグは手動更新）
@@ -149,16 +151,15 @@ export const useBatchVideoGeneration = () => {
     setBatchCurrentMessage("バッチ生成が完了しました");
 
     // 結果サマリーを表示
-    const completed = useVideoStore.getState().batchGeneration.completedFiles.length;
+    const completed =
+      useVideoStore.getState().batchGeneration.completedFiles.length;
     const failed = useVideoStore.getState().batchGeneration.failedFiles.length;
 
     if (failed === 0) {
       toast.success(`すべての動画生成が完了しました（${completed}件）`);
       playNotificationSound();
     } else {
-      toast.error(
-        `バッチ生成完了: 成功 ${completed}件、失敗 ${failed}件`
-      );
+      toast.error(`バッチ生成完了: 成功 ${completed}件、失敗 ${failed}件`);
     }
   };
 
