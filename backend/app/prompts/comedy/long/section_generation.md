@@ -122,28 +122,36 @@ JSON 出力時は `speaker: "tsumugi"` として指定
 `character_expressions`で全キャラの表情を指定してください。
 利用可能な表情: `normal`, `happy`, `sad`, `angry`, `surprised`, `thinking`, `worried`, `excited`
 
-**重要**: `visible_characters`は**必ず 2 人だけ**を指定してください。3 人にしてはいけません。
+## visible_characters の指定（絶対厳守）
+
+**重要**: `visible_characters`は**必ず 2 人を指定してください**。1 人だけの指定は禁止です。3 人にしてもいけません。
 
 **絶対厳守**:
 
 - **話者は必ず含めてください**
 - もう 1 人は**話者以外のキャラクター（めたん、つむぎ、ずんだもんのいずれか）**を指定してください
 - **めたんとつむぎを同時に表示しないでください**（同じ位置に配置されるため重なります）
-- 正しい例: 
+- ✅ 正しい例:
   - ずんだもんが話す場合: `["zundamon", "metan"]` または `["zundamon", "tsumugi"]`
   - めたんが話す場合: `["metan", "zundamon"]`
   - つむぎが話す場合: `["tsumugi", "zundamon"]`
-- 間違った例: `["metan", "tsumugi"]`（めたんとつむぎが重なる）、`["zundamon"]`（1 人しか指定されていない）、`["zundamon", "metan", "tsumugi"]`（3 人指定されている）
+- ❌ 間違った例:
+  - `["metan"]`（1 人だけ - 禁止）
+  - `["tsumugi"]`（1 人だけ - 禁止）
+  - `["zundamon"]`（1 人だけ - 禁止）
+  - `["metan", "tsumugi"]`（めたんとつむぎが重なる）
+  - `["zundamon", "metan", "tsumugi"]`（3 人指定されている）
 
 ## キャラクター名の指定方法（絶対厳守）
 
 **JSON 出力時、キーには必ずローマ字を使用してください。**
 
 - `speaker`: `"zundamon"`, `"metan"`, `"tsumugi"`, `"narrator"` のいずれか
-- `visible_characters`: **必ず話者を含む2人を指定してください**。めたんとつむぎを同時に表示しないでください
+- `visible_characters`: **必ず話者を含む 2 人を指定してください**（1 人だけは禁止）。めたんとつむぎを同時に表示しないでください
   - ずんだもんが話す: `["zundamon", "metan"]` または `["zundamon", "tsumugi"]`
   - めたんが話す: `["metan", "zundamon"]`
   - つむぎが話す: `["tsumugi", "zundamon"]`
+  - ❌ 禁止: `["metan"]`, `["tsumugi"]`, `["zundamon"]` のような 1 人だけの指定
 - `character_expressions`: `{"zundamon": "excited", "metan": "angry"}` のようにローマ字をキーに使用
 
 ## BGM 選択
@@ -173,9 +181,10 @@ JSON 形式で出力してください。`scene_background`は自動設定され
 ## 注意事項
 
 - **登場人物は 3 人（ずんだもん、めたん、つむぎ）のみ**
-- **`visible_characters`は必ず 2 人だけを指定してください**
+- **`visible_characters`は必ず 2 人を指定してください**（1 人だけは禁止）
 - **話者は必ず含めてください**
 - **めたんとつむぎを同時に表示しないでください**（同じ位置に配置されるため重なります）
+- **1 人だけの指定（例: `["metan"]`, `["zundamon"]`）は絶対に禁止です**
 - **特定の語尾（なのだ、だよ）は廃止し、芸人スタイルに合わせる**
 - **役割の宣言は絶対にしない**
 - **教育的要素は絶対に禁止**

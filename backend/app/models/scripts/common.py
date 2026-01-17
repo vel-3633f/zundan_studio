@@ -147,9 +147,23 @@ class ConversationSegment(BaseModel):
         
         # 4. 1人しか指定されていない場合の処理
         if len(cleaned) == 1:
-            # 締めくくりセクションなど、1人だけを表示したい場合があるため、1人でも許可
-            logger.info(f"1人のみが指定されました（1人表示を許可）: {cleaned}")
-            return cleaned
+            # 自動的にもう1人を追加
+            if speaker == "zundamon":
+                # ずんだもんが話す場合、めたんを追加（デフォルト）
+                cleaned.append("metan")
+                logger.info(f"1人のみが指定されたため、めたんを追加しました: {cleaned}")
+            elif speaker == "metan":
+                # めたんが話す場合、ずんだもんを追加
+                cleaned.insert(0, "zundamon")
+                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
+            elif speaker == "tsumugi":
+                # つむぎが話す場合、ずんだもんを追加
+                cleaned.insert(0, "zundamon")
+                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
+            else:
+                # その他の場合（ナレーター以外）、ずんだもんを追加
+                cleaned.insert(0, "zundamon")
+                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
         
         # 5. 最終的なバリデーション: 1人または2人であることを確認
         if len(cleaned) == 0:

@@ -96,11 +96,22 @@
 
 ## 表情・キャラクター設定
 
-- **visible_characters**: **必ず 2 人のみ**、話者を含む2人を指定
+## visible_characters の指定（絶対厳守）
+
+**重要**: `visible_characters`は**必ず 2 人を指定してください**。1 人だけの指定は禁止です。
+
+- **話者を必ず含めてください**
+- もう 1 人は話者以外のキャラクターを指定
+- ✅ 正しい例:
   - ずんだもんが話す: `["zundamon", "metan"]`または`["zundamon", "tsumugi"]`
   - めたんが話す: `["metan", "zundamon"]`
   - つむぎが話す: `["tsumugi", "zundamon"]`
-  - **めたんとつむぎを同時に表示しない**（同じ位置に配置されるため重なります）
+- ❌ 間違った例:
+  - `["metan"]`（1 人だけ - 禁止）
+  - `["tsumugi"]`（1 人だけ - 禁止）
+  - `["zundamon"]`（1 人だけ - 禁止）
+  - `["metan", "tsumugi"]`（めたんとつむぎが重なる）
+
 - **character_expressions**: 全キャラの表情を指定（`normal`, `happy`, `sad`, `angry`, `surprised`, `thinking`, `worried`, `excited`）
 - **JSON 出力**: キーはローマ字（`speaker: "zundamon"`, `"metan"`, `"tsumugi"`, `"narrator"`）
 
