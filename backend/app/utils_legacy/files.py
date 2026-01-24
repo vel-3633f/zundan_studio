@@ -156,3 +156,34 @@ class FileManager:
             logger.info(f"Cleaned up {deleted_count} audio file(s)")
         
         return deleted_count
+
+    @staticmethod
+    def create_video_output_path(title: Optional[str] = None) -> str:
+        """
+        タイトルから動画の出力パスを生成
+        
+        Args:
+            title: 動画のタイトル（省略時はデフォルトパス）
+        
+        Returns:
+            動画ファイルの完全パス
+        """
+        from app.utils_legacy.validators import TextValidator
+        
+        outputs_dir = Paths.get_outputs_dir()
+        
+        if title:
+            # タイトルをサニタイズしてフォルダ名として使用
+            safe_title = TextValidator.sanitize_filename(title)
+            if not safe_title or safe_title.strip() == "":
+                safe_title = "untitled"
+            
+            # タイトルフォルダを作成
+            title_dir = os.path.join(outputs_dir, safe_title)
+            os.makedirs(title_dir, exist_ok=True)
+            
+            logger.info(f"Video output directory created: {title_dir}")
+            return os.path.join(title_dir, "conversation_video.mp4")
+        else:
+            # タイトルが指定されていない場合は従来通り
+            return os.path.join(outputs_dir, "conversation_video.mp4")

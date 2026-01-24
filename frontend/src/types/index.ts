@@ -1,7 +1,10 @@
 // 共通型定義
 
 // === 生成モード ===
-export type ScriptMode = "comedy";
+export type ScriptMode = "comedy" | "short_comedy";
+
+// === 台本の長さ ===
+export type ScriptDuration = "short" | "long";
 
 export interface ConversationLine {
   speaker: string;
@@ -21,6 +24,7 @@ export interface ConversationLine {
 
 export interface VideoGenerationRequest {
   conversations: ConversationLine[];
+  title?: string;
   enable_subtitles?: boolean;
   conversation_mode?: string;
   sections?: VideoSection[];
@@ -242,6 +246,17 @@ export interface ScriptResponse {
   script: ComedyScript;
 }
 
+export interface ShortScriptRequest {
+  mode: ScriptMode;
+  title_data: ComedyTitle;
+  model?: string;
+  temperature?: number;
+}
+
+export interface ShortScriptResponse {
+  script: ComedyScript;
+}
+
 export interface FullScriptRequest {
   mode: ScriptMode;
   input_text: string;
@@ -251,6 +266,9 @@ export interface FullScriptRequest {
 
 export interface FullScriptResponse {
   script: ComedyScript;
+  title: ComedyTitle;
+  outline: ComedyOutline;
+  youtube_metadata?: YouTubeMetadata;
 }
 
 // === JSONファイル全体のデータ構造 ===

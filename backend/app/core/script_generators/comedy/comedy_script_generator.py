@@ -30,9 +30,9 @@ class ComedyScriptGenerator:
 
     def __init__(self):
         self.mode = ScriptMode.COMEDY
-        self.outline_prompt_file = Path("app/prompts/comedy/outline_generation.md")
+        self.outline_prompt_file = Path("app/prompts/comedy/long/outline_generation.md")
         self.youtube_metadata_prompt_file = Path(
-            "app/prompts/comedy/youtube_metadata_generation.md"
+            "app/prompts/comedy/long/youtube_metadata_generation.md"
         )
         self.mood_generator = ComedyMoodGenerator()
         self.title_generator = ComedyTitleGenerator()

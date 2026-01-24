@@ -1,5 +1,6 @@
 from app.models.scripts.base import (
     ScriptMode,
+    ScriptDuration,
     BaseTitleModel,
     BaseOutlineModel,
     BaseScriptModel,
@@ -22,6 +23,7 @@ from app.models.scripts.comedy import (
 
 __all__ = [
     "ScriptMode",
+    "ScriptDuration",
     "BaseTitleModel",
     "BaseOutlineModel",
     "BaseScriptModel",

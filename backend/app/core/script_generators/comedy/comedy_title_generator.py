@@ -25,9 +25,9 @@ class ComedyTitleGenerator:
 
     def __init__(self):
         self.title_batch_prompt_file = Path(
-            "app/prompts/comedy/title_batch_generation.md"
+            "app/prompts/comedy/long/title_batch_generation.md"
         )
-        self.theme_prompt_file = Path("app/prompts/comedy/theme_generation.md")
+        self.theme_prompt_file = Path("app/prompts/comedy/long/theme_generation.md")
 
     def load_prompt(self, file_path: Path) -> str:
         """プロンプトファイルを読み込む"""
@@ -193,10 +193,17 @@ class ComedyTitleGenerator:
 
             candidate = title_batch.titles[0]
 
+            # clickbait_elementsを候補から生成
+            clickbait_elements = [
+                candidate.hook_pattern,
+                candidate.situation,
+                candidate.chaos_element,
+            ]
+
             title = ComedyTitle(
                 title=candidate.title,
                 theme=theme,
-                clickbait_elements=[],
+                clickbait_elements=clickbait_elements,
                 mode=ScriptMode.COMEDY,
             )
 

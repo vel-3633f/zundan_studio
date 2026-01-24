@@ -8,15 +8,18 @@ interface ThemeSelectionSectionProps {
   themes: string[];
   selectedTheme: string | null;
   isGenerating: boolean;
+  isAutoMode?: boolean;
   onThemeSelect: (theme: string) => void;
   onGenerateThemes: () => void;
   onCustomThemeSubmit?: (theme: string) => void;
+  onAutoThemeSubmit?: (theme: string) => void; // 未使用だが互換性のため残す
 }
 
 const ThemeSelectionSection = ({
   themes,
   selectedTheme,
   isGenerating,
+  isAutoMode = false,
   onThemeSelect,
   onGenerateThemes,
   onCustomThemeSubmit,
@@ -26,6 +29,7 @@ const ThemeSelectionSection = ({
 
   const handleCustomSubmit = () => {
     if (customTheme.trim() && onCustomThemeSubmit) {
+      // 自動モードでもタイトル生成のみ行う（タイトル選択後に自動化される）
       onCustomThemeSubmit(customTheme.trim());
     }
   };
@@ -86,6 +90,14 @@ const ThemeSelectionSection = ({
                 🎯 テーマを選択すると、そのテーマに基づいたタイトルが生成されます。
                 <br />
                 気に入ったテーマをクリックしてください！
+                {isAutoMode && (
+                  <>
+                    <br />
+                    <span className="text-primary-700 dark:text-primary-300 font-medium">
+                      ✨ 自動モード: タイトル選択後、アウトライン→台本→保存まで自動実行されます
+                    </span>
+                  </>
+                )}
               </p>
             </div>
 
@@ -137,6 +149,14 @@ const ThemeSelectionSection = ({
                 ✍️ お好みのテーマを自由に入力してください。
                 <br />
                 例：「調味料の取り違え」「電車でのマナー」「早起きのコツ」など
+                {isAutoMode && (
+                  <>
+                    <br />
+                    <span className="text-blue-700 dark:text-blue-300 font-medium">
+                      ✨ 自動モード: タイトル選択後、アウトライン→台本→保存まで自動実行されます
+                    </span>
+                  </>
+                )}
               </p>
             </div>
 

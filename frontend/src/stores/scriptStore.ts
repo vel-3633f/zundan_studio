@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type {
   ScriptMode,
+  ScriptDuration,
   ComedyTitle,
   ComedyOutline,
   ComedyScript,
@@ -25,6 +26,7 @@ interface ScriptState {
   // === モードとステップ ===
   mode: ScriptMode;
   currentStep: ScriptStep;
+  durationType: ScriptDuration;
 
   // === モデル設定 ===
   availableModels: ModelConfig[];
@@ -46,6 +48,10 @@ interface ScriptState {
   referenceInfo: string;
   searchResults: Record<string, any>;
 
+  // === 自動生成モード ===
+  isAutoMode: boolean;
+  savedFilePath: string | null;
+
   // === 生成状態 ===
   isGenerating: boolean;
   progress: number;
@@ -55,6 +61,7 @@ interface ScriptState {
   // === アクション ===
   setMode: (mode: ScriptMode) => void;
   setCurrentStep: (step: ScriptStep) => void;
+  setDurationType: (type: ScriptDuration) => void;
   setInputText: (text: string) => void;
   setModel: (model: string) => void;
   setTemperature: (temp: number) => void;
@@ -71,6 +78,9 @@ interface ScriptState {
   setReferenceInfo: (info: string) => void;
   setSearchResults: (results: Record<string, any>) => void;
 
+  setAutoMode: (isAuto: boolean) => void;
+  setSavedFilePath: (path: string | null) => void;
+
   setGenerating: (generating: boolean) => void;
   setProgress: (progress: number) => void;
   setStatusMessage: (message: string) => void;
@@ -85,6 +95,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
   // === 初期状態 ===
   mode: "comedy",
   currentStep: "input",
+  durationType: "long",
 
   availableModels: [],
   defaultModelId: "",
@@ -102,6 +113,9 @@ export const useScriptStore = create<ScriptState>((set) => ({
   referenceInfo: "",
   searchResults: {},
 
+  isAutoMode: true,
+  savedFilePath: null,
+
   isGenerating: false,
   progress: 0,
   statusMessage: "",
@@ -111,6 +125,8 @@ export const useScriptStore = create<ScriptState>((set) => ({
   setMode: (mode) => set({ mode, currentStep: "input" }),
 
   setCurrentStep: (step) => set({ currentStep: step }),
+
+  setDurationType: (type) => set({ durationType: type }),
 
   setInputText: (text) => set({ inputText: text }),
 
@@ -136,6 +152,10 @@ export const useScriptStore = create<ScriptState>((set) => ({
 
   setSearchResults: (results) => set({ searchResults: results }),
 
+  setAutoMode: (isAuto) => set({ isAutoMode: isAuto }),
+
+  setSavedFilePath: (path) => set({ savedFilePath: path }),
+
   setGenerating: (generating) => set({ isGenerating: generating }),
 
   setProgress: (progress) => set({ progress }),
@@ -154,6 +174,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
       youtubeMetadata: null,
       referenceInfo: "",
       searchResults: {},
+      savedFilePath: null,
       isGenerating: false,
       progress: 0,
       statusMessage: "",
@@ -167,6 +188,7 @@ export const useScriptStore = create<ScriptState>((set) => ({
       generatedOutline: null,
       generatedScript: null,
       youtubeMetadata: null,
+      savedFilePath: null,
       isGenerating: false,
       progress: 0,
       statusMessage: "",

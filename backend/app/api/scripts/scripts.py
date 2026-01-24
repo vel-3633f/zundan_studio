@@ -13,6 +13,8 @@ from .scripts_models import (
     FullScriptResponse,
     ThemeBatchResponse,
     ThemeTitleRequest,
+    ShortScriptRequest,
+    ShortTitleRequest,
 )
 from .scripts_handlers import (
     handle_generate_title,
@@ -24,6 +26,8 @@ from .scripts_handlers import (
     handle_generate_theme_titles,
     handle_save_script_to_file,
     handle_get_available_models,
+    handle_generate_short_titles,
+    handle_generate_short_script,
 )
 
 router = APIRouter()
@@ -136,6 +140,44 @@ async def get_available_models():
         - recommended_model_id: 推奨モデルID
     """
     return await handle_get_available_models()
+
+
+@router.post("/comedy/short/titles", response_model=ComedyTitleBatch)
+async def generate_short_titles(request: ShortTitleRequest):
+    """
+    ショート動画タイトル生成
+    
+    テーマからショート動画向けのタイトルを20個生成
+    - タイトル長: 15-25文字程度
+    - 一瞬で状況が分かる
+    - クリックしたくなる引き
+    
+    Args:
+        request: ショート動画タイトル生成リクエスト
+    
+    Returns:
+        生成されたタイトル候補（20個）
+    """
+    return await handle_generate_short_titles(request)
+
+
+@router.post("/comedy/short/script", response_model=ScriptResponse)
+async def generate_short_script(request: ShortScriptRequest):
+    """
+    ショート動画台本生成（60秒）
+    
+    タイトルから直接台本を生成（アウトライン省略）
+    - 総セリフ数: 12-18
+    - セクション数: 1-2
+    - 推定時間: 約60秒
+    
+    Args:
+        request: ショート動画台本生成リクエスト
+    
+    Returns:
+        生成された60秒台本
+    """
+    return await handle_generate_short_script(request)
 
 
 @router.get("/health")

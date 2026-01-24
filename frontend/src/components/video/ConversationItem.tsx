@@ -11,7 +11,7 @@ interface ConversationItemProps {
   index: number;
   speakerColors: Record<string, string>;
   speakerTextColors: Record<string, string>;
-  onRemove: (index: number) => void;
+  onRemove?: (index: number) => void;
 }
 
 export const ConversationItem = ({
@@ -74,13 +74,15 @@ export const ConversationItem = ({
             )}
           </button>
         </div>
-        <IconButton
-          icon={<Trash2 className="h-4 w-4" />}
-          variant="danger"
-          size="sm"
-          onClick={() => onRemove(index)}
-          aria-label="削除"
-        />
+        {onRemove && (
+          <IconButton
+            icon={<Trash2 className="h-4 w-4" />}
+            variant="danger"
+            size="sm"
+            onClick={() => onRemove(index)}
+            aria-label="削除"
+          />
+        )}
       </div>
     </div>
   );

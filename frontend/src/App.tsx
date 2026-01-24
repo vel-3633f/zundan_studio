@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import Toaster from "./components/Toast";
 import HomePage from "./pages/HomePage";
 import ScriptGenerationPage from "./pages/ScriptGenerationPage";
+import ShortScriptGenerationPage from "./pages/ShortScriptGenerationPage";
 import ManagementPage from "./pages/ManagementPage";
 import { useScriptStore } from "./stores/scriptStore";
 
@@ -35,6 +36,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/scripts" element={<ScriptGenerationPage />} />
+          <Route path="/scripts/short" element={<ShortScriptGenerationPage />} />
           <Route path="/management" element={<ManagementPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

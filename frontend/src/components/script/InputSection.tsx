@@ -20,10 +20,13 @@ interface InputSectionProps {
   model: string;
   temperature: number;
   isGenerating: boolean;
+  isAutoMode?: boolean;
   onInputTextChange: (text: string) => void;
   onModelChange: (model: string) => void;
   onTemperatureChange: (temp: number) => void;
   onSubmit: () => void;
+  onAutoSubmit?: () => void; // 自動生成用（未使用だが互換性のため残す）
+  onAutoModeToggle?: (isAuto: boolean) => void; // 未使用だが互換性のため残す
   onRandomGenerate?: () => void; // お笑いモード専用
   // テーマ選択関連（お笑いモード専用）
   themes?: string[];
@@ -39,6 +42,7 @@ const InputSection = ({
   model,
   temperature,
   isGenerating,
+  isAutoMode = false,
   onInputTextChange,
   onModelChange,
   onTemperatureChange,
@@ -60,6 +64,7 @@ const InputSection = ({
         themes={themes}
         selectedTheme={selectedTheme}
         isGenerating={isGenerating}
+        isAutoMode={isAutoMode}
         onThemeSelect={onThemeSelect}
         onGenerateThemes={onGenerateThemes}
         onCustomThemeSubmit={onCustomThemeSubmit}
@@ -68,19 +73,39 @@ const InputSection = ({
   }
 
   return (
-    <Card
-      icon={<Sparkles className="h-6 w-6" />}
-      title="漫談タイトル生成"
-    >
+    <Card icon={<Sparkles className="h-6 w-6" />} title="漫談タイトル生成">
       <div className="space-y-6">
-        {/* 説明文 */}
-        <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
-          <p className="text-sm text-primary-900 dark:text-primary-100">
-            🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
-            <br />
-            5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
-          </p>
-        </div>
+        {/* テーマ入力（ランダム生成がない場合のみ表示） */}
+        {!onRandomGenerate && (
+          <div>
+            <Input
+              label="テーマ"
+              value={inputText}
+              onChange={(e) => onInputTextChange(e.target.value)}
+              placeholder="例: コンビニの店員、面接官、上司"
+              disabled={isGenerating}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              テーマを入力すると、そのテーマに関連したタイトル候補を生成します
+              {isAutoMode && (
+                <span className="block mt-1 text-primary-600 dark:text-primary-400">
+                  ✨ 自動モード: タイトル選択後、アウトライン→台本→保存まで自動実行されます
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* 説明文（ランダム生成がある場合のみ表示） */}
+        {onRandomGenerate && (
+          <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-700">
+            <p className="text-sm text-primary-900 dark:text-primary-100">
+              🎲 AIがランダムにバカバカしいタイトルを20-30個生成します。
+              <br />
+              5つのお笑いフックパターン別に表示されるので、気に入ったタイトルを選んで漫談台本を作成しましょう！
+            </p>
+          </div>
+        )}
 
         {/* 詳細設定 */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">

@@ -7,6 +7,8 @@ import TitleCandidatesSection from "@/components/script/TitleCandidatesSection";
 import SingleTitleCandidateSection from "@/components/script/SingleTitleCandidateSection";
 import OutlineSection from "@/components/script/OutlineSection";
 import ScriptSection from "@/components/script/ScriptSection";
+import ProcessHistorySection from "@/components/script/ProcessHistorySection";
+import AutoModeToggle from "@/components/script/AutoModeToggle";
 import TestModeButton from "@/components/script/TestModeButton";
 import { useScriptGeneration } from "@/hooks/useScriptGeneration";
 
@@ -47,6 +49,10 @@ const ScriptGenerationPage = () => {
     handleGenerateThemes,
     handleThemeSelect,
     handleCustomThemeSubmit,
+    isAutoMode,
+    savedFilePath,
+    setAutoMode,
+    handleAutoGenerateScript,
   } = useScriptGeneration();
 
   return (
@@ -55,7 +61,7 @@ const ScriptGenerationPage = () => {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              動画台本生成
+              長尺動画台本生成
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します
@@ -70,9 +76,16 @@ const ScriptGenerationPage = () => {
         </div>
       </div>
 
-      <ModeSelector />
-
       <StepIndicator currentStep={currentStep} />
+
+      {/* 自動モード切り替え - 常に表示 */}
+      {currentStep === "input" && (
+        <AutoModeToggle
+          isAutoMode={isAutoMode}
+          onToggle={setAutoMode}
+          disabled={isGenerating}
+        />
+      )}
 
       {currentStep === "input" && !titleCandidates && !singleTitleCandidate && (
         <InputSection
@@ -81,10 +94,13 @@ const ScriptGenerationPage = () => {
           model={model}
           temperature={temperature}
           isGenerating={isGenerating}
+          isAutoMode={isAutoMode}
           onInputTextChange={setInputText}
           onModelChange={setModel}
           onTemperatureChange={setTemperature}
           onSubmit={handleGenerateTitle}
+          onAutoSubmit={handleAutoGenerateScript}
+          onAutoModeToggle={setAutoMode}
           onRandomGenerate={
             mode === "comedy" ? handleGenerateRandomTitles : undefined
           }
@@ -154,7 +170,23 @@ const ScriptGenerationPage = () => {
       )}
 
       {currentStep === "script" && generatedScript && !isGenerating && (
-        <ScriptSection mode={mode} script={generatedScript} />
+        <>
+          {/* 自動モード時は過程を表示 */}
+          {isAutoMode && (
+            <ProcessHistorySection
+              title={generatedTitle}
+              outline={generatedOutline}
+              youtubeMetadata={youtubeMetadata}
+            />
+          )}
+          
+          <ScriptSection
+            mode={mode}
+            script={generatedScript}
+            savedFilePath={savedFilePath}
+            isAutoMode={isAutoMode}
+          />
+        </>
       )}
 
       {currentStep !== "input" && !isGenerating && (

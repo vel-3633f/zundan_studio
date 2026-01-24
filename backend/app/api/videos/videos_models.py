@@ -22,6 +22,7 @@ class VideoGenerationRequest(BaseModel):
     """動画生成リクエスト"""
 
     conversations: List[ConversationLine] = Field(..., description="会話リスト")
+    title: Optional[str] = Field(None, description="動画のタイトル（フォルダ名として使用）")
     enable_subtitles: bool = Field(default=True, description="字幕を有効にする")
     conversation_mode: str = Field(default="duo", description="会話モード")
     sections: Optional[List[VideoSection]] = Field(None, description="セクション情報")
