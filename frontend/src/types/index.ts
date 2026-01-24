@@ -1,7 +1,7 @@
 // 共通型定義
 
 // === 生成モード ===
-export type ScriptMode = "comedy" | "short_comedy";
+export type ScriptMode = "comedy" | "short_comedy" | "thought_experiment";
 
 // === 台本の長さ ===
 export type ScriptDuration = "short" | "long";

@@ -11,8 +11,11 @@ import ProcessHistorySection from "@/components/script/ProcessHistorySection";
 import AutoModeToggle from "@/components/script/AutoModeToggle";
 import TestModeButton from "@/components/script/TestModeButton";
 import { useScriptGeneration } from "@/hooks/useScriptGeneration";
+import { useScriptStore } from "@/stores/scriptStore";
+import Select from "@/components/Select";
 
 const ScriptGenerationPage = () => {
+  const { setMode } = useScriptStore();
   const {
     titleCandidates,
     singleTitleCandidate,
@@ -64,8 +67,28 @@ const ScriptGenerationPage = () => {
               長尺動画台本生成
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
-              ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します
+              {mode === "comedy"
+                ? "ずんだもん・めたん・つむぎの3人が、バカバカしい漫談を繰り広げる動画脚本を作成します"
+                : mode === "thought_experiment"
+                ? "ずんだもん・めたん・つむぎの3人が、「もしも系」思考実験バラエティ動画の脚本を作成します"
+                : "ずんだもん・めたん・つむぎの3人が、動画脚本を作成します"}
             </p>
+            {currentStep === "input" && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  生成モード
+                </label>
+                <Select
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value as "comedy" | "thought_experiment")}
+                  disabled={isGenerating}
+                  options={[
+                    { value: "comedy", label: "お笑いモード" },
+                    { value: "thought_experiment", label: "思考実験モード" },
+                  ]}
+                />
+              </div>
+            )}
           </div>
           <TestModeButton
             mode={mode}

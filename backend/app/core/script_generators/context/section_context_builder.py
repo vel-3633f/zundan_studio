@@ -18,7 +18,7 @@ def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
 - セリフ数範囲: {context.section_definition.min_lines}-{context.section_definition.max_lines}
 """
 
-    if mode == ScriptMode.COMEDY and context.character_moods:
+    if mode in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT] and context.character_moods:
         mood_descriptions = _get_mood_descriptions(context.character_moods)
         context_text += f"""
 ## キャラクター機嫌レベル

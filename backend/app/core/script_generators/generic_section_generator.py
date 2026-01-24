@@ -75,9 +75,24 @@ class GenericSectionGenerator:
             parser = PydanticOutputParser(pydantic_object=VideoSection)
             format_instructions = parser.get_format_instructions()
 
-            # Comedyモードの場合、BGM選択肢情報を追加
+            # THOUGHT_EXPERIMENTモードの場合、persona/theme情報をプロンプトに注入
+            if self.mode == ScriptMode.THOUGHT_EXPERIMENT:
+                from app.core.script_generators.thought_experiment.persona_theme_loader import (
+                    load_persona_info,
+                    load_theme_info,
+                )
+                persona_info = load_persona_info()
+                theme_info = load_theme_info()
+                section_prompt_template = section_prompt_template.replace(
+                    "{persona_info}", persona_info
+                )
+                section_prompt_template = section_prompt_template.replace(
+                    "{theme_info}", theme_info
+                )
+
+            # ComedyモードとTHOUGHT_EXPERIMENTモードの場合、BGM選択肢情報を追加
             bgm_info = ""
-            if self.mode == ScriptMode.COMEDY:
+            if self.mode in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT]:
                 bgm_choices = format_bgm_choices_for_prompt()
                 bgm_info = f"\n\n## {bgm_choices}\n"
 
@@ -97,8 +112,13 @@ class GenericSectionGenerator:
 {format_instructions}
 """
 
-            # システムメッセージ（Comedy専用）
-            system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
+            # システムメッセージ（モード別）
+            if self.mode == ScriptMode.COMEDY:
+                system_message = "あなたは、お笑い台本の脚本家です。バカバカしく面白い会話劇を生成するプロフェッショナルです。教育的要素は一切排除してください。"
+            elif self.mode == ScriptMode.THOUGHT_EXPERIMENT:
+                system_message = "あなたは、思考実験バラエティ動画の脚本家です。「もしも系」の思考実験を、ターゲット視聴者に刺さる形で会話劇として生成するプロフェッショナルです。科学的・論理的な分析を重視しつつ、エンタメ性も追求してください。"
+            else:
+                system_message = "あなたは、YouTube動画の脚本家です。視聴者を引きつける魅力的な会話劇を生成するプロフェッショナルです。"
 
             # LLMを直接呼び出す
             messages = [
@@ -156,8 +176,8 @@ class GenericSectionGenerator:
             section.section_key = context.section_definition.section_key
 
             # BGM設定
-            if self.mode == ScriptMode.COMEDY:
-                # Comedyモード: LLMが出力したBGMを使用（動的選択）
+            if self.mode in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT]:
+                # ComedyモードとTHOUGHT_EXPERIMENTモード: LLMが出力したBGMを使用（動的選択）
                 validated_bgm_id = validate_bgm_id(section.bgm_id)
                 section.bgm_id = validated_bgm_id
 
