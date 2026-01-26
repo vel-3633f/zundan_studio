@@ -15,7 +15,9 @@ from app.config.resource_config.bgm_library import (
     get_bgm_track,
 )
 from app.core.script_generators.section_context import SectionContext
-from app.core.script_generators.context.section_context_builder import build_context_text
+from app.core.script_generators.context.section_context_builder import (
+    build_context_text,
+)
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -75,12 +77,12 @@ class GenericSectionGenerator:
             parser = PydanticOutputParser(pydantic_object=VideoSection)
             format_instructions = parser.get_format_instructions()
 
-            # THOUGHT_EXPERIMENTモードの場合、persona/theme情報をプロンプトに注入
             if self.mode == ScriptMode.THOUGHT_EXPERIMENT:
                 from app.core.script_generators.thought_experiment.persona_theme_loader import (
                     load_persona_info,
                     load_theme_info,
                 )
+
                 persona_info = load_persona_info()
                 theme_info = load_theme_info()
                 section_prompt_template = section_prompt_template.replace(
@@ -90,7 +92,6 @@ class GenericSectionGenerator:
                     "{theme_info}", theme_info
                 )
 
-            # ComedyモードとTHOUGHT_EXPERIMENTモードの場合、BGM選択肢情報を追加
             bgm_info = ""
             if self.mode in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT]:
                 bgm_choices = format_bgm_choices_for_prompt()
@@ -151,8 +152,9 @@ class GenericSectionGenerator:
                     # バリデーションロジックが自動的に修正する
                     # Pydanticのバリデーションを再実行するため、一時的に値を再設定
                     from app.models.scripts.common import ConversationSegment
+
                     original_visible = segment.visible_characters.copy()
-                    
+
                     # 話者に応じて自動補正
                     if segment.speaker == "zundamon":
                         if "zundamon" not in segment.visible_characters:
@@ -169,8 +171,10 @@ class GenericSectionGenerator:
                             segment.visible_characters.insert(0, "tsumugi")
                         if len(segment.visible_characters) == 1:
                             segment.visible_characters.insert(0, "zundamon")
-                    
-                    logger.info(f"補正後: {original_visible} -> {segment.visible_characters}")
+
+                    logger.info(
+                        f"補正後: {original_visible} -> {segment.visible_characters}"
+                    )
 
             # セクションキーを設定
             section.section_key = context.section_definition.section_key
