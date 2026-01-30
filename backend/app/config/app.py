@@ -102,7 +102,6 @@ class Paths:
         ]
 
 
-# グローバル設定インスタンス
 APP_CONFIG = AppConfig()
 SUBTITLE_CONFIG = SubtitleConfig()
 

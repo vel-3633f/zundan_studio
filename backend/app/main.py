@@ -58,7 +58,6 @@ if os.path.exists(assets_dir):
     logger.info(f"Mounted assets directory: {assets_dir} at /assets")
 else:
     logger.warning(f"Assets directory not found: {assets_dir}")
-# Import and include routers
 from app.api import videos, scripts, voices, management, websocket
 
 app.include_router(videos.router, prefix="/api/videos", tags=["videos"])

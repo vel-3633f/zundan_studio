@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 class VideoGenerator:
     def __init__(self):
-        # 口パクデバッグ用: ログレベルを一時的にINFOに設定
         for logger_name in [
             "src.services.audio_combiner",
             "src.services.frame_generator",
@@ -39,7 +38,6 @@ class VideoGenerator:
         self.video_processor = VideoProcessor()
         self.fps = self.video_processor.fps
 
-        # 各処理クラスの初期化
         self.resource_manager = ResourceManager(self.video_processor)
         self.audio_combiner = AudioCombiner(self.audio_processor, self.fps)
         self.subtitle_generator = SubtitleGenerator()
@@ -134,14 +132,12 @@ class VideoGenerator:
 
             self.audio_combiner.cleanup_audio_clips(combined_audio, audio_clips)
 
-            # BGMキャッシュのクリア
             if sections:
                 self.bgm_mixer.clear_cache()
 
             if os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
 
-            # 音声ファイルのクリーンアップ
             FileManager.cleanup_audio_files(audio_file_list)
 
             logger.info(f"Conversation video generated: {final_output_path}")
@@ -149,23 +145,22 @@ class VideoGenerator:
 
         except Exception as e:
             logger.error(f"Video generation failed: {e}")
-            # エラー時もBGMキャッシュをクリア
             if sections:
                 try:
                     self.bgm_mixer.clear_cache()
                 except Exception:
                     pass
-            # エラー時も音声ファイルをクリーンアップ
             try:
                 FileManager.cleanup_audio_files(audio_file_list)
             except Exception as cleanup_error:
-                logger.warning(f"Failed to cleanup audio files on error: {cleanup_error}")
+                logger.warning(
+                    f"Failed to cleanup audio files on error: {cleanup_error}"
+                )
             return None
 
     def cleanup(self):
         """メモリリソースのクリーンアップ"""
         try:
-            # BGMキャッシュのクリア
             if hasattr(self, "bgm_mixer") and self.bgm_mixer:
                 self.bgm_mixer.clear_cache()
 

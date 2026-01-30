@@ -40,16 +40,20 @@ class SectionDefinition(BaseModel):
 
 
 class ConversationSegment(BaseModel):
-    speaker: str = Field(description="話者名（ローマ字で指定: zundamon, metan, tsumugi, narrator のいずれか）")
+    speaker: str = Field(
+        description="話者名（ローマ字で指定: zundamon, metan, tsumugi, narrator のいずれか）"
+    )
     text: str = Field(description="セリフ内容（字幕表示用・漢字カタカナ含む）")
     text_for_voicevox: str = Field(
         description="VOICEVOX読み上げ用テキスト（完全ひらがな）"
     )
     expression: str = Field(description="話者の表情名（後方互換性のため維持）")
-    visible_characters: List[str] = Field(description="表示するキャラクターのリスト（ローマ字で指定: zundamon, metan, tsumugi のいずれか）")
+    visible_characters: List[str] = Field(
+        description="表示するキャラクターのリスト（ローマ字で指定: zundamon, metan, tsumugi のいずれか）"
+    )
     character_expressions: Dict[str, str] = Field(
         default_factory=dict,
-        description="各キャラクターの表情を個別に指定 {キャラクター名（ローマ字）: 表情名}。例: {\"zundamon\": \"excited\", \"metan\": \"angry\"}",
+        description='各キャラクターの表情を個別に指定 {キャラクター名（ローマ字）: 表情名}。例: {"zundamon": "excited", "metan": "angry"}',
     )
 
     @field_validator("speaker", "text", "text_for_voicevox", "expression")
@@ -63,80 +67,84 @@ class ConversationSegment(BaseModel):
     @classmethod
     def validate_visible_characters(cls, v: List[str], info) -> List[str]:
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         speaker = info.data.get("speaker", "")
-        
-        # ナレーターの場合は空配列を許可（声のみ）、または最大2人までキャラクターを表示可能
+
         if speaker == "narrator":
             if not v:
                 return []
             cleaned = [char.strip() for char in v if char and char.strip()]
             if len(cleaned) > 2:
-                raise ValueError(f"ナレーターの場合、表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}")
-            
-            # めたんとつむぎが同時に含まれている場合、片方を削除
+                raise ValueError(
+                    f"ナレーターの場合、表示するキャラクターは2人までです。現在{len(cleaned)}人指定されています: {cleaned}"
+                )
+
             if "metan" in cleaned and "tsumugi" in cleaned:
-                # つむぎを削除（デフォルト）
                 cleaned.remove("tsumugi")
-                logger.warning(f"ナレーターの場合、めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {cleaned}")
-            
-            # 3人以上の場合、最初の2人に絞る（めたんとつむぎは同時に含まれない）
+                logger.warning(
+                    f"ナレーターの場合、めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {cleaned}"
+                )
+
             if len(cleaned) > 2:
                 result = cleaned[:2]
-                logger.info(f"ナレーターの場合、3人以上指定されていたため修正しました: {cleaned} -> {result}")
+                logger.info(
+                    f"ナレーターの場合、3人以上指定されていたため修正しました: {cleaned} -> {result}"
+                )
                 return result
-            
-            # 1人しか指定されていない場合、もう1人を追加
+
             if len(cleaned) == 1:
-                # ずんだもんをデフォルトで追加
                 if cleaned[0] != "zundamon":
                     cleaned.insert(0, "zundamon")
-                    logger.info(f"ナレーターの場合、1人しか指定されていなかったためずんだもんを追加しました: {cleaned}")
+                    logger.info(
+                        f"ナレーターの場合、1人しか指定されていなかったためずんだもんを追加しました: {cleaned}"
+                    )
                 else:
-                    # ずんだもんのみの場合、めたんを追加
                     cleaned.append("metan")
-                    logger.info(f"ナレーターの場合、1人しか指定されていなかったためめたんを追加しました: {cleaned}")
-            
+                    logger.info(
+                        f"ナレーターの場合、1人しか指定されていなかったためめたんを追加しました: {cleaned}"
+                    )
+
             return cleaned
-        
-        # それ以外のキャラクターは空配列を許可しない
+
         if not v:
             raise ValueError("表示するキャラクターリストは空にできません")
         cleaned = [char.strip() for char in v if char and char.strip()]
         if not cleaned:
             raise ValueError("有効な表示キャラクターが必要です")
-        
+
         original_cleaned = cleaned.copy()
-        
-        # 1. 話者が含まれていない場合、話者を追加
+
         if speaker not in cleaned:
             cleaned.insert(0, speaker)
-            logger.info(f"話者 {speaker} が含まれていなかったため追加しました: {original_cleaned} -> {cleaned}")
-        
-        # 2. めたんとつむぎが同時に含まれている場合、話者以外を削除
+            logger.info(
+                f"話者 {speaker} が含まれていなかったため追加しました: {original_cleaned} -> {cleaned}"
+            )
+
         if "metan" in cleaned and "tsumugi" in cleaned:
-            # 話者を残し、もう一方を削除
             if speaker == "metan":
                 cleaned.remove("tsumugi")
-                logger.warning(f"めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {original_cleaned} -> {cleaned}")
+                logger.warning(
+                    f"めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {original_cleaned} -> {cleaned}"
+                )
             elif speaker == "tsumugi":
                 cleaned.remove("metan")
-                logger.warning(f"めたんとつむぎが同時に指定されていたため、めたんを削除しました: {original_cleaned} -> {cleaned}")
+                logger.warning(
+                    f"めたんとつむぎが同時に指定されていたため、めたんを削除しました: {original_cleaned} -> {cleaned}"
+                )
             else:
-                # 話者がずんだもんの場合、めたんを残す（デフォルト）
                 cleaned.remove("tsumugi")
-                logger.warning(f"めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {original_cleaned} -> {cleaned}")
-        
-        # 3. 3人以上指定されている場合、話者 + もう1人に絞る
+                logger.warning(
+                    f"めたんとつむぎが同時に指定されていたため、つむぎを削除しました: {original_cleaned} -> {cleaned}"
+                )
+
         if len(cleaned) > 2:
             result = [speaker]
-            # 話者以外で最初に見つかったキャラクターを追加
             for char in cleaned:
                 if char != speaker and char in ["zundamon", "metan", "tsumugi"]:
                     result.append(char)
                     break
-            # もし誰も見つからなかった場合、ずんだもんをデフォルトで追加
             if len(result) == 1:
                 if speaker != "zundamon":
                     result.append("zundamon")
@@ -144,43 +152,48 @@ class ConversationSegment(BaseModel):
                     result.append("metan")
             logger.info(f"3人以上指定されていたため修正しました: {cleaned} -> {result}")
             cleaned = result
-        
-        # 4. 1人しか指定されていない場合の処理
+
         if len(cleaned) == 1:
-            # 自動的にもう1人を追加
             if speaker == "zundamon":
-                # ずんだもんが話す場合、めたんを追加（デフォルト）
                 cleaned.append("metan")
                 logger.info(f"1人のみが指定されたため、めたんを追加しました: {cleaned}")
             elif speaker == "metan":
-                # めたんが話す場合、ずんだもんを追加
                 cleaned.insert(0, "zundamon")
-                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
+                logger.info(
+                    f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}"
+                )
             elif speaker == "tsumugi":
-                # つむぎが話す場合、ずんだもんを追加
                 cleaned.insert(0, "zundamon")
-                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
+                logger.info(
+                    f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}"
+                )
             else:
-                # その他の場合（ナレーター以外）、ずんだもんを追加
                 cleaned.insert(0, "zundamon")
-                logger.info(f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}")
-        
-        # 5. 最終的なバリデーション: 1人または2人であることを確認
+                logger.info(
+                    f"1人のみが指定されたため、ずんだもんを追加しました: {cleaned}"
+                )
+
         if len(cleaned) == 0:
-            raise ValueError(f"表示するキャラクターは少なくとも1人必要です。現在{len(cleaned)}人: {cleaned}")
-        
+            raise ValueError(
+                f"表示するキャラクターは少なくとも1人必要です。現在{len(cleaned)}人: {cleaned}"
+            )
+
         if len(cleaned) > 2:
-            raise ValueError(f"表示するキャラクターは最大2人までです。現在{len(cleaned)}人: {cleaned}")
-        
-        # 6. 話者が含まれていることを確認
+            raise ValueError(
+                f"表示するキャラクターは最大2人までです。現在{len(cleaned)}人: {cleaned}"
+            )
+
         if speaker not in cleaned:
-            raise ValueError(f"話者 {speaker} は必ず含める必要があります。現在: {cleaned}")
-        
-        # 7. 2人の場合、めたんとつむぎが同時に含まれていないことを確認
+            raise ValueError(
+                f"話者 {speaker} は必ず含める必要があります。現在: {cleaned}"
+            )
+
         if len(cleaned) == 2:
             if "metan" in cleaned and "tsumugi" in cleaned:
-                raise ValueError(f"めたんとつむぎを同時に表示することはできません（同じ位置に配置されます）。現在: {cleaned}")
-        
+                raise ValueError(
+                    f"めたんとつむぎを同時に表示することはできません（同じ位置に配置されます）。現在: {cleaned}"
+                )
+
         return cleaned
 
 
@@ -219,4 +232,3 @@ class VideoSection(BaseModel):
         if not v:
             raise ValueError("セグメントリストは空にできません")
         return v
-

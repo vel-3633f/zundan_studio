@@ -10,8 +10,9 @@ class ScriptMode(str, Enum):
 
 class ScriptDuration(str, Enum):
     """台本の長さ"""
-    SHORT = "short"  # 60秒
-    LONG = "long"    # 5-10分
+
+    SHORT = "short"
+    LONG = "long"
 
 
 class BaseTitleModel(BaseModel):
@@ -28,5 +29,6 @@ class BaseScriptModel(BaseModel):
     title: str = Field(description="YouTubeタイトル")
     mode: ScriptMode = Field(description="生成モード")
     estimated_duration: str = Field(description="推定動画時間")
-    duration_type: Optional[ScriptDuration] = Field(None, description="台本の長さタイプ")
-
+    duration_type: Optional[ScriptDuration] = Field(
+        None, description="台本の長さタイプ"
+    )

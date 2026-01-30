@@ -29,7 +29,6 @@ class AudioCombiner:
         for audio_path in audio_file_list:
             if os.path.exists(audio_path):
                 clip = AudioFileClip(audio_path)
-                # キャラクター音声の音量を2倍に調整
                 clip = clip.with_volume_scaled(2.0)
                 audio_clips.append(clip)
                 audio_durations[audio_path] = clip.duration
@@ -50,12 +49,10 @@ class AudioCombiner:
 
         for audio_path in audio_file_list:
             if os.path.exists(audio_path):
-                # 実時間ベースの音声解析
-                intensities, actual_duration = self.audio_processor.analyze_audio_for_mouth_sync(
-                    audio_path
+                intensities, actual_duration = (
+                    self.audio_processor.analyze_audio_for_mouth_sync(audio_path)
                 )
                 if intensities and actual_duration > 0:
-                    # 強度値の統計情報をログ出力
                     max_intensity = max(intensities)
                     avg_intensity = sum(intensities) / len(intensities)
                     non_zero_count = sum(1 for i in intensities if i > 0.1)
@@ -64,11 +61,11 @@ class AudioCombiner:
                         AudioSegmentInfo(
                             start_time=current_time,
                             intensities=intensities,
-                            duration=actual_duration,  # 実際の音声時間を使用
-                            actual_frame_count=len(intensities)  # 実際のフレーム数
+                            duration=actual_duration,
+                            actual_frame_count=len(intensities),
                         )
                     )
-                    current_time += actual_duration  # 実時間で累積
+                    current_time += actual_duration
                 else:
                     logger.warning(f"Failed to analyze audio segment: {audio_path}")
 

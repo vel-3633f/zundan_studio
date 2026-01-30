@@ -85,9 +85,7 @@ class FileManager:
     def cleanup_all_generated_files() -> int:
         total_deleted = 0
 
-        temp_deleted = FileOperations.cleanup_directory(
-            Paths.get_temp_dir(), "temp"
-        )
+        temp_deleted = FileOperations.cleanup_directory(Paths.get_temp_dir(), "temp")
         total_deleted += temp_deleted
 
         output_deleted = FileOperations.cleanup_directory(
@@ -136,54 +134,51 @@ class FileManager:
     def cleanup_audio_files(audio_file_list: list[str]) -> int:
         """
         音声ファイルリストを安全に削除する
-        
+
         Args:
             audio_file_list: 削除する音声ファイルのパスリスト
-            
+
         Returns:
             削除に成功したファイル数
         """
         if not audio_file_list:
             return 0
-        
+
         deleted_count = 0
         for audio_path in audio_file_list:
             if audio_path and os.path.exists(audio_path):
                 if FileOperations.delete_file_safe(audio_path, "audio file"):
                     deleted_count += 1
-        
+
         if deleted_count > 0:
             logger.info(f"Cleaned up {deleted_count} audio file(s)")
-        
+
         return deleted_count
 
     @staticmethod
     def create_video_output_path(title: Optional[str] = None) -> str:
         """
         タイトルから動画の出力パスを生成
-        
+
         Args:
             title: 動画のタイトル（省略時はデフォルトパス）
-        
+
         Returns:
             動画ファイルの完全パス
         """
         from app.utils_legacy.validators import TextValidator
-        
+
         outputs_dir = Paths.get_outputs_dir()
-        
+
         if title:
-            # タイトルをサニタイズしてフォルダ名として使用
             safe_title = TextValidator.sanitize_filename(title)
             if not safe_title or safe_title.strip() == "":
                 safe_title = "untitled"
-            
-            # タイトルフォルダを作成
+
             title_dir = os.path.join(outputs_dir, safe_title)
             os.makedirs(title_dir, exist_ok=True)
-            
+
             logger.info(f"Video output directory created: {title_dir}")
             return os.path.join(title_dir, "conversation_video.mp4")
         else:
-            # タイトルが指定されていない場合は従来通り
             return os.path.join(outputs_dir, "conversation_video.mp4")

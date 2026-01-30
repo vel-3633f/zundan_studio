@@ -44,12 +44,11 @@ class SubtitleGenerator:
             if not text:
                 continue
 
-            # duration取得（キャッシュがあればそれを使用）
             if audio_durations and audio_path in audio_durations:
                 duration = audio_durations[audio_path]
             elif os.path.exists(audio_path):
-                # フォールバック：AudioFileClipで読み込み
                 from moviepy import AudioFileClip
+
                 audio_clip = AudioFileClip(audio_path)
                 duration = audio_clip.duration
                 audio_clip.close()
@@ -60,7 +59,6 @@ class SubtitleGenerator:
             speaker = conv.get("speaker", "zundamon")
             background_name = conv.get("background", "default")
 
-            # 背景名が有効かチェック
             if background_name not in backgrounds:
                 background_name = "default"
 
@@ -77,4 +75,3 @@ class SubtitleGenerator:
             current_time += duration
 
         return subtitle_lines
-

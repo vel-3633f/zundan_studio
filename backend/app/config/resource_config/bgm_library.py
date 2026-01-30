@@ -22,7 +22,6 @@ class BGMTrack:
     description: str
 
 
-# BGMライブラリ
 BGM_LIBRARY: Dict[str, BGMTrack] = {
     "none": BGMTrack(
         id="none",
@@ -137,7 +136,6 @@ def get_bgm_file_path(bgm_id: str) -> Optional[str]:
         return None
 
     assets_dir = Paths.get_assets_dir()
-    # track.file_path は "assets/bgm/..." なので、"bgm/..." 部分を抽出
     bgm_relative_path = track.file_path.replace("assets/", "", 1)
     full_path = os.path.join(assets_dir, bgm_relative_path)
 
@@ -175,14 +173,12 @@ def get_section_bgm(section_type: str) -> Dict[str, any]:
     Returns:
         Dict[str, any]: BGM設定 (bgm_id と volume)、存在しない場合はデフォルト
     """
-    # 全てのセクションでoikakekko_kyahhaを使用（音量0.05）
     bgm_id = "oikakekko_kyahha"
     track = get_bgm_track(bgm_id)
 
     if track:
         return {"bgm_id": bgm_id, "volume": 0.05}
     else:
-        # フォールバック: 元のロジックを使用
         bgm_id = SECTION_BGM_MAP.get(section_type, "none")
         track = get_bgm_track(bgm_id)
         if track:

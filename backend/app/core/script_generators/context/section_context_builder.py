@@ -1,10 +1,7 @@
 """セクションコンテキスト構築ユーティリティ"""
-
 from typing import Dict, List, Any
 from app.models.script_models import ScriptMode
 from app.core.script_generators.section_context import SectionContext
-
-
 def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
     """コンテキスト情報をテキスト化する"""
     context_text = f"""
@@ -17,7 +14,6 @@ def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
 - 内容: {context.section_definition.content_summary}
 - セリフ数範囲: {context.section_definition.min_lines}-{context.section_definition.max_lines}
 """
-
     if mode in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT] and context.character_moods:
         mood_descriptions = _get_mood_descriptions(context.character_moods)
         context_text += f"""
@@ -33,7 +29,6 @@ def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
 強制終了タイプ「{context.forced_ending_type}」で唐突に終わらせてください。
 話が盛り上がっている最中に終了し、誰も成長せず、何も解決しません。
 """
-
     if context.previous_sections:
         context_text += "\n## 前のセクションまでの展開\n"
         for prev in context.previous_sections:
@@ -43,10 +38,7 @@ def build_context_text(context: SectionContext, mode: ScriptMode) -> str:
 - 最後のセリフ: {prev['last_text']}
 - 要約: {prev['summary']}
 """
-
     return context_text
-
-
 def _get_mood_descriptions(moods: Dict[str, int]) -> Dict[str, str]:
     """機嫌レベルから説明文を生成する"""
     descriptions = {}
@@ -56,21 +48,20 @@ def _get_mood_descriptions(moods: Dict[str, int]) -> Dict[str, str]:
                 descriptions[char] = "傲慢で攻撃的、自信満々"
             elif char == "metan":
                 descriptions[char] = "冷静で論理的、的確なツッコミ"
-            else:  # tsumugi
+            else:
                 descriptions[char] = "陽気に煽る、積極的に話をややこしくする"
         elif mood >= 30:
             if char == "zundamon":
                 descriptions[char] = "標準的な傲慢さ"
             elif char == "metan":
                 descriptions[char] = "普通のツッコミ、適度なイライラ"
-            else:  # tsumugi
+            else:
                 descriptions[char] = "普通の煽り、適度に話をかき回す"
         else:
             if char == "zundamon":
                 descriptions[char] = "言い訳がましい、被害者面"
             elif char == "metan":
                 descriptions[char] = "感情的、容赦ないキレ方、塩対応"
-            else:  # tsumugi
+            else:
                 descriptions[char] = "無関心、塩対応、やる気なし"
     return descriptions
-

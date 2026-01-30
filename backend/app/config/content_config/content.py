@@ -56,7 +56,7 @@ class Backgrounds:
 
         for bg_name in background_names:
             if bg_name == "default":
-                continue  # デフォルトは既にある
+                continue
 
             config = BackgroundConfig(
                 name=bg_name,

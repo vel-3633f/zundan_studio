@@ -17,4 +17,9 @@ __all__ = [
     "ComedyScript",
     "YouTubeMetadata",
     "ThemeBatch",
+    "ThoughtExperimentTitleCandidate",
+    "ThoughtExperimentTitleBatch",
+    "ThoughtExperimentTitle",
+    "ThoughtExperimentOutline",
+    "ThoughtExperimentScript",
 ]

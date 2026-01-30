@@ -14,6 +14,46 @@ from app.models.scripts.comedy import CharacterMood, YouTubeMetadata
 logger = logging.getLogger(__name__)
 
 
+class ThoughtExperimentTitleCandidate(BaseModel):
+    """思考実験タイトル候補"""
+    
+    id: int = Field(description="候補ID")
+    title: str = Field(description="タイトル（50文字以内）")
+    theme: str = Field(description="思考実験のテーマ")
+    category: str = Field(description="テーマのカテゴリ（社会リセット・崩壊、SF・オタク妄想、極限状態・科学）")
+    hook_type: str = Field(description="使用した思考実験フックタイプ（極限状態、パラドックス、世界観崩壊、倫理的ジレンマなど）")
+    expected_discussion: str = Field(description="予想される議論の方向性")
+    
+    @field_validator("title")
+    @classmethod
+    def validate_title_length(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("タイトルは空にできません")
+        cleaned = v.strip()
+        if len(cleaned) > 50:
+            logger.warning(
+                f"タイトルが50文字を超えています（現在: {len(cleaned)}文字）: {cleaned[:50]}..."
+            )
+        return cleaned
+
+
+class ThoughtExperimentTitleBatch(BaseModel):
+    """思考実験タイトル候補バッチ"""
+    
+    titles: List[ThoughtExperimentTitleCandidate] = Field(
+        description="生成されたタイトル候補リスト（20個）"
+    )
+    
+    @field_validator("titles")
+    @classmethod
+    def validate_titles_count(
+        cls, v: List[ThoughtExperimentTitleCandidate]
+    ) -> List[ThoughtExperimentTitleCandidate]:
+        if len(v) < 15 or len(v) > 25:
+            raise ValueError("タイトルは15-25個生成する必要があります")
+        return v
+
+
 class ThoughtExperimentTitle(BaseTitleModel):
     """思考実験モード用タイトル"""
     

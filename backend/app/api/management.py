@@ -34,20 +34,16 @@ async def list_backgrounds():
             return []
 
         backgrounds = []
-        # ディレクトリ内のファイルをスキャン
         for filename in os.listdir(backgrounds_dir):
             file_path = os.path.join(backgrounds_dir, filename)
             if not os.path.isfile(file_path):
                 continue
 
-            # 拡張子をチェック
             _, ext = os.path.splitext(filename)
             if ext.lower() not in supported_extensions:
                 continue
 
-            # ファイル名から拡張子を除いた部分をIDと名前として使用
             name_without_ext = os.path.splitext(filename)[0]
-            # 相対パスを作成（assets/backgrounds/filename.png）
             relative_path = f"assets/backgrounds/{filename}"
 
             backgrounds.append(
@@ -58,7 +54,6 @@ async def list_backgrounds():
                 )
             )
 
-        # 名前でソート
         backgrounds.sort(key=lambda x: x.name)
         return backgrounds
 
@@ -193,9 +188,7 @@ async def generate_backgrounds_from_json(
         raise
     except Exception as e:
         logger.error(f"JSONから背景生成エラー: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"背景生成に失敗しました: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"背景生成に失敗しました: {str(e)}")
 
 
 class Item(BaseModel):
@@ -267,7 +260,6 @@ async def check_backgrounds(request: BackgroundCheckRequest):
 
         if not os.path.exists(backgrounds_dir):
             logger.warning(f"Background directory not found: {backgrounds_dir}")
-            # すべての背景画像が存在しないとして返す
             files = [
                 BackgroundCheckFile(name=name, exists=False)
                 for name in request.background_names
@@ -283,14 +275,11 @@ async def check_backgrounds(request: BackgroundCheckRequest):
         available_count = 0
         missing_count = 0
 
-        # 指定された背景画像名を確認
         for bg_name in request.background_names:
             exists = False
             file_path = None
 
-            # サポートされている拡張子でファイルを探す
             for ext in supported_extensions:
-                # 拡張子にドットが含まれている場合と含まれていない場合の両方を確認
                 ext_without_dot = ext.lstrip(".")
                 possible_filenames = [
                     f"{bg_name}{ext}",
@@ -300,7 +289,6 @@ async def check_backgrounds(request: BackgroundCheckRequest):
                 for filename in possible_filenames:
                     file_path = os.path.join(backgrounds_dir, filename)
                     if os.path.exists(file_path) and os.path.isfile(file_path):
-                        # ファイルが実際に読み込めるか確認
                         try:
                             import cv2
 
@@ -375,7 +363,6 @@ async def delete_backgrounds(request: BackgroundDeleteRequest):
 
         for bg_id in request.ids:
             try:
-                # サポートされている拡張子でファイルを探す
                 found = False
                 for ext in supported_extensions:
                     ext_without_dot = ext.lstrip(".")
@@ -387,7 +374,6 @@ async def delete_backgrounds(request: BackgroundDeleteRequest):
                     for filename in possible_filenames:
                         file_path = os.path.join(backgrounds_dir, filename)
                         if os.path.exists(file_path) and os.path.isfile(file_path):
-                            # ファイルを削除
                             os.remove(file_path)
                             deleted_count += 1
                             found = True
@@ -442,7 +428,6 @@ async def get_background_image(filename: str):
                 status_code=404, detail=f"画像が見つかりません: {filename}"
             )
 
-        # メディアタイプを判定
         if filename.lower().endswith(".png"):
             media_type = "image/png"
         elif filename.lower().endswith((".jpg", ".jpeg")):
@@ -464,7 +449,9 @@ async def get_background_image(filename: str):
 class BackgroundRenameRequest(BaseModel):
     """背景画像ファイル名変更リクエスト"""
 
-    new_name: str = Field(..., description="新しいファイル名（拡張子なし）", min_length=1, max_length=255)
+    new_name: str = Field(
+        ..., description="新しいファイル名（拡張子なし）", min_length=1, max_length=255
+    )
 
 
 class BackgroundRenameResponse(BaseModel):
@@ -492,12 +479,10 @@ async def rename_background(id: str, request: BackgroundRenameRequest):
                 status_code=404, detail="背景画像ディレクトリが見つかりません"
             )
 
-        # 新しいファイル名のバリデーション
         new_name = request.new_name.strip()
         if not new_name:
             raise HTTPException(status_code=400, detail="ファイル名が空です")
 
-        # 無効な文字をチェック
         invalid_chars = Constants.INVALID_FILENAME_CHARS
         for char in invalid_chars:
             if char in new_name:
@@ -506,7 +491,6 @@ async def rename_background(id: str, request: BackgroundRenameRequest):
                     detail=f"ファイル名に無効な文字が含まれています: {char}",
                 )
 
-        # 既存ファイルを検索
         old_file_path = None
         old_extension = None
         found = False
@@ -534,7 +518,6 @@ async def rename_background(id: str, request: BackgroundRenameRequest):
                 status_code=404, detail=f"背景画像が見つかりません: {id}"
             )
 
-        # 新しいファイル名が既に存在するかチェック
         ext_without_dot = old_extension.lstrip(".")
         new_possible_filenames = [
             f"{new_name}{old_extension}",
@@ -549,7 +532,6 @@ async def rename_background(id: str, request: BackgroundRenameRequest):
                     detail=f"ファイル名「{new_name}」は既に存在します",
                 )
 
-        # ファイル名を変更
         new_filename = f"{new_name}{old_extension}"
         new_file_path = os.path.join(backgrounds_dir, new_filename)
 
@@ -557,7 +539,6 @@ async def rename_background(id: str, request: BackgroundRenameRequest):
             shutil.move(old_file_path, new_file_path)
             logger.info(f"Renamed background image: {old_file_path} -> {new_file_path}")
 
-            # 相対パスを作成
             old_relative_path = f"assets/backgrounds/{os.path.basename(old_file_path)}"
             new_relative_path = f"assets/backgrounds/{new_filename}"
 

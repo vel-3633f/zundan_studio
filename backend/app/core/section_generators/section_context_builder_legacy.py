@@ -1,9 +1,6 @@
 """レガシーセクションコンテキスト構築ユーティリティ"""
-
 from typing import Dict, List, Any
 from app.core.section_generators.base import SectionContext
-
-
 def build_context_text(context: SectionContext) -> str:
     """コンテキスト情報をテキスト化する（8セクション構造対応）"""
     context_text = f"""
@@ -21,7 +18,6 @@ def build_context_text(context: SectionContext) -> str:
 7. 真相解明: {context.outline.learning_content}
 8. 回復: {context.outline.recovery_content}
 """
-
     if context.previous_sections:
         context_text += "\n## 前のセクションまでの流れ\n"
         for prev in context.previous_sections:
@@ -31,10 +27,7 @@ def build_context_text(context: SectionContext) -> str:
 - 最後のセリフ: {prev['last_text']}
 - 要約: {prev['summary']}
 """
-
     return context_text
-
-
 def replace_outline_variables(
     prompt_text: str, context: SectionContext
 ) -> str:
@@ -53,10 +46,7 @@ def replace_outline_variables(
         "{{outline_learning_content}}": context.outline.learning_content,
         "{{outline_recovery_content}}": context.outline.recovery_content,
     }
-
     result = prompt_text
     for var, value in replacements.items():
         result = result.replace(var, value)
-
     return result
-

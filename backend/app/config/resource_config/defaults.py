@@ -66,30 +66,26 @@ class DefaultConversations:
 class UIConfig:
     """UI設定"""
 
-    # スライダー設定
     speed_range: Tuple[float, float, float, float] = (
         0.5,
         2.0,
         1.0,
         0.1,
-    )  # min, max, default, step
+    )
     pitch_range: Tuple[float, float, float, float] = (-0.15, 0.15, 0.0, 0.01)
     intonation_range: Tuple[float, float, float, float] = (0.0, 2.0, 1.0, 0.1)
 
-    # テキストエリア設定
     text_area_height: int = 80
 
-    # カラム設定
     input_columns: List[int] = [
         1,
         3,
         1,
         1,
         2,
-    ]  # 話者、テキスト、背景、表情、表示キャラ
+    ]
     button_columns: List[int] = [1, 1, 1]
     generate_columns: List[int] = [1, 2, 1]
 
 
-# グローバル設定インスタンス
 UI_CONFIG = UIConfig()

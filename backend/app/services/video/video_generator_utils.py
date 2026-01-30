@@ -46,11 +46,12 @@ def calculate_section_durations(
 ) -> List[float]:
     """各セクションの長さを計算する"""
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     section_durations = []
     current_segment_index = 0
-    
+
     total_segments = sum(len(section.segments) for section in sections)
     logger.info(
         f"calculate_section_durations: "
@@ -69,19 +70,17 @@ def calculate_section_durations(
                 f"segment_count={segment_count}, "
                 f"audio_file_list長さ={len(audio_file_list)})"
             )
-            # 残りの音声ファイルをすべて使用
             section_audio_files = audio_file_list[current_segment_index:]
         else:
             section_audio_files = audio_file_list[
                 current_segment_index : current_segment_index + segment_count
             ]
-        
-        # 各音声ファイルの長さを詳細に記録
+
         file_durations = []
         for audio_path in section_audio_files:
             duration = audio_durations.get(audio_path, 0.0)
             file_durations.append(duration)
-        
+
         section_duration = sum(file_durations)
         section_durations.append(section_duration)
         logger.info(
@@ -102,4 +101,3 @@ def calculate_section_durations(
     )
 
     return section_durations
-

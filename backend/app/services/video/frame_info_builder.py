@@ -38,9 +38,8 @@ class FrameInfoBuilder:
         active_speakers = {}
         current_background = backgrounds["default"]
         current_conversation = None
-        intensity = 0.0  # 強度値を初期化
+        intensity = 0.0
 
-        # 現在の話者と強度、背景、表情を特定
         for i, (conv, audio_path) in enumerate(zip(conversations, audio_file_list)):
             if i < len(segment_audio_intensities):
                 segment = segment_audio_intensities[i]
@@ -51,15 +50,12 @@ class FrameInfoBuilder:
                     current_conversation = conv
                     local_time = current_time - segment_start
 
-                    # より精密なフレーム番号計算（線形補間使用）
                     if segment.intensities and segment.duration > 0:
-                        # 相対的な進行度を計算
                         frame_progress = local_time / segment.duration
                         exact_frame_index = frame_progress * (
                             len(segment.intensities) - 1
                         )
 
-                        # 線形補間でintensityを計算
                         lower_idx = max(0, int(exact_frame_index))
                         upper_idx = min(lower_idx + 1, len(segment.intensities) - 1)
 
@@ -81,19 +77,19 @@ class FrameInfoBuilder:
                     expression = conv.get("expression", "normal")
                     character_expressions = conv.get("character_expressions", {})
 
-                    # 現在のセリフの背景を取得
                     background_name = conv.get("background", "default")
                     if background_name in backgrounds:
                         current_background = backgrounds[background_name]
 
                     break
 
-        # 表示するキャラクターを決定
         if current_conversation:
             speaker = current_conversation.get("speaker", "zundamon")
             speaker = CHARACTER_NAME_MAP.get(speaker, speaker)
             expression = current_conversation.get("expression", "normal")
-            character_expressions = current_conversation.get("character_expressions", {})
+            character_expressions = current_conversation.get(
+                "character_expressions", {}
+            )
             visible_chars_raw = current_conversation.get(
                 "visible_characters", [speaker, "zundamon"]
             )
@@ -105,18 +101,15 @@ class FrameInfoBuilder:
                 for k, v in character_expressions.items()
             }
 
-            # ナレーターの場合、話者自体は表示しない
             if speaker == "narrator":
-                # visible_charactersに指定されたキャラクターのみ表示
                 for char_name in visible_chars:
                     if (
                         char_name in self.video_processor.characters
                         and char_name != "narrator"
                     ):
-                        # character_expressionsから表情を取得、なければnormal
                         char_expression = character_expressions.get(char_name, "normal")
                         active_speakers[char_name] = {
-                            "intensity": 0,  # ナレーション中なので動きなし
+                            "intensity": 0,
                             "expression": char_expression,
                         }
             else:
@@ -127,12 +120,9 @@ class FrameInfoBuilder:
                         char_name in self.video_processor.characters
                         and char_name != "narrator"
                     ):
-                        # character_expressionsから表情を取得
-                        # 優先順位: character_expressions > expression(話者の場合) > normal
                         if char_name in character_expressions:
                             char_expression = character_expressions[char_name]
                         elif char_name == speaker:
-                            # 後方互換性: character_expressionsがない場合、話者はexpressionを使用
                             char_expression = expression
                         else:
                             char_expression = "normal"
@@ -175,10 +165,8 @@ class FrameInfoBuilder:
     ) -> bool:
         """タイミングの整合性をチェック"""
         try:
-            # セグメント時間の合計を計算
             total_segment_duration = sum(segment.duration for segment in segments)
 
-            # 実際の音声ファイル時間の合計を計算
             total_actual_duration = 0.0
             for audio_path in audio_files:
                 if os.path.exists(audio_path):
@@ -186,7 +174,6 @@ class FrameInfoBuilder:
                     total_actual_duration += audio_clip.duration
                     audio_clip.close()
 
-            # 許容誤差（1秒）
             tolerance = 1.0
             time_diff = abs(total_segment_duration - total_actual_duration)
 
@@ -205,4 +192,3 @@ class FrameInfoBuilder:
         except Exception as e:
             logger.error(f"Timing validation failed: {e}")
             return False
-

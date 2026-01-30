@@ -58,26 +58,26 @@ class ResourceManager:
             logger.warning(f"Item directory not found: {item_base_dir}")
             return items
 
-        # assets/items/ 配下の全てのPNGファイルを再帰的に検索
         for root, dirs, files in os.walk(item_base_dir):
             for file in files:
-                if file.lower().endswith('.png'):
-                    # ファイル名（拡張子なし）をアイテムIDとして使用
+                if file.lower().endswith(".png"):
                     item_id = os.path.splitext(file)[0]
                     file_path = os.path.join(root, file)
 
-                    # 画像を読み込み
                     img = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
                     if img is not None:
                         items[item_id] = img
-                        # 相対パスを表示
                         rel_path = os.path.relpath(file_path, item_base_dir)
-                        logger.info(f"Loaded item image: '{item_id}' from items/{rel_path}")
+                        logger.info(
+                            f"Loaded item image: '{item_id}' from items/{rel_path}"
+                        )
                     else:
                         logger.warning(f"Failed to load item image: {file_path}")
 
         logger.info(f"Total item images loaded: {len(items)} from {item_base_dir}")
         if len(items) == 0:
-            logger.info(f"No item images found. Place PNG files in {item_base_dir}/ to use them.")
+            logger.info(
+                f"No item images found. Place PNG files in {item_base_dir}/ to use them."
+            )
 
         return items

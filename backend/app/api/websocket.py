@@ -24,10 +24,8 @@ async def websocket_progress(websocket: WebSocket, task_id: str):
 
     try:
         while True:
-            # タスクの状態を取得
             task = AsyncResult(task_id, app=celery_app)
 
-            # 状態に応じたレスポンスを作成
             if task.state == "PENDING":
                 response = {
                     "task_id": task_id,
@@ -69,20 +67,16 @@ async def websocket_progress(websocket: WebSocket, task_id: str):
                     "message": f"状態: {task.state}",
                 }
 
-            # クライアントに送信
             await websocket.send_json(response)
 
-            # タスクが完了または失敗した場合は接続を閉じる
             if task.state in ["SUCCESS", "FAILURE", "REVOKED"]:
                 logger.info(
                     f"タスク完了、WebSocket接続を閉じます: task_id={task_id}, state={task.state}"
                 )
                 break
 
-            # 0.5秒待機
             await asyncio.sleep(0.5)
 
-        # 正常終了時は接続を閉じる
         await websocket.close()
 
     except WebSocketDisconnect:
@@ -115,11 +109,9 @@ async def websocket_notifications(websocket: WebSocket):
 
     try:
         while True:
-            # クライアントからのメッセージを受信
             data = await websocket.receive_text()
             message = json.loads(data)
 
-            # エコーバック（実装例）
             await websocket.send_json(
                 {"type": "notification", "message": f"受信しました: {message}"}
             )

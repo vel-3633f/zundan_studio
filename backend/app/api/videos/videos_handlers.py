@@ -20,13 +20,15 @@ from .videos_models import (
 logger = logging.getLogger(__name__)
 
 
-async def handle_generate_video(request: VideoGenerationRequest) -> VideoGenerationResponse:
+async def handle_generate_video(
+    request: VideoGenerationRequest,
+) -> VideoGenerationResponse:
     """会話動画を生成する"""
     try:
         logger.info(f"動画生成リクエスト: {len(request.conversations)}会話")
 
         conversations_dict = [conv.model_dump() for conv in request.conversations]
-        
+
         sections_dict = None
         if request.sections:
             sections_dict = [section.model_dump() for section in request.sections]
@@ -39,7 +41,7 @@ async def handle_generate_video(request: VideoGenerationRequest) -> VideoGenerat
             sections=sections_dict,
             speed=request.speed,
             pitch=request.pitch,
-            intonation=request.intonation
+            intonation=request.intonation,
         )
 
         logger.info(f"動画生成タスク開始: task_id={task.id}")
@@ -86,12 +88,20 @@ async def handle_get_video_status(task_id: str) -> VideoStatusResponse:
             )
         elif task_result.state == "FAILURE":
             info = task_result.info or {}
-            error_msg = str(info.get("error", task_result.info)) if isinstance(task_result.info, dict) else str(task_result.info)
+            error_msg = (
+                str(info.get("error", task_result.info))
+                if isinstance(task_result.info, dict)
+                else str(task_result.info)
+            )
             response = VideoStatusResponse(
                 task_id=task_id,
                 status="failed",
                 progress=0.0,
-                message=info.get("message", "タスクが失敗しました") if isinstance(info, dict) else "タスクが失敗しました",
+                message=(
+                    info.get("message", "タスクが失敗しました")
+                    if isinstance(info, dict)
+                    else "タスクが失敗しました"
+                ),
                 error=error_msg,
             )
         else:
@@ -130,13 +140,11 @@ async def handle_list_json_files() -> List[JsonFileInfo]:
         for file_path in json_dir.glob("*.json"):
             is_generated = False
             try:
-                # JSONファイルを読み込んでis_generatedフラグを取得
                 with open(file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     is_generated = data.get("is_generated", False)
             except Exception as e:
                 logger.warning(f"JSONファイル読み込みエラー ({file_path.name}): {e}")
-                # 読み込みエラーが発生した場合はFalseとして扱う
 
             json_files.append(
                 JsonFileInfo(
@@ -205,14 +213,11 @@ async def handle_update_json_file_status(
 
         import json
 
-        # JSONファイルを読み込む
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # is_generatedフラグを更新
         data["is_generated"] = status_update.is_generated
 
-        # JSONファイルに書き戻す
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
@@ -248,7 +253,6 @@ async def handle_delete_json_file(filename: str) -> Dict[str, Any]:
         if not file_path.suffix == ".json":
             raise HTTPException(status_code=400, detail="JSONファイルではありません")
 
-        # ファイルを削除
         file_path.unlink()
 
         logger.info(f"JSONファイル削除: {filename}")
@@ -260,4 +264,3 @@ async def handle_delete_json_file(filename: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"JSONファイル削除エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-

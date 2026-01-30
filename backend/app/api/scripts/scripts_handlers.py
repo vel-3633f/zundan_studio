@@ -25,7 +25,9 @@ logger = logging.getLogger(__name__)
 async def handle_generate_title(request: TitleRequest) -> TitleResponse:
     """タイトル生成ハンドラー"""
     try:
-        logger.info(f"タイトル生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}")
+        logger.info(
+            f"タイトル生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}"
+        )
 
         generator = UnifiedScriptGenerator(request.mode)
 
@@ -53,7 +55,9 @@ async def handle_generate_title(request: TitleRequest) -> TitleResponse:
 async def handle_generate_outline(request: OutlineRequest) -> OutlineResponse:
     """アウトライン生成ハンドラー"""
     try:
-        logger.info(f"アウトライン生成リクエスト: タイトル={request.title_data.title}, モード={request.mode.value}")
+        logger.info(
+            f"アウトライン生成リクエスト: タイトル={request.title_data.title}, モード={request.mode.value}"
+        )
 
         generator = UnifiedScriptGenerator(request.mode)
 
@@ -81,7 +85,9 @@ async def handle_generate_outline(request: OutlineRequest) -> OutlineResponse:
 async def handle_generate_script(request: ScriptRequest) -> ScriptResponse:
     """台本生成ハンドラー"""
     try:
-        logger.info(f"台本生成リクエスト: タイトル={request.outline_data.title}, モード={request.mode.value}")
+        logger.info(
+            f"台本生成リクエスト: タイトル={request.outline_data.title}, モード={request.mode.value}"
+        )
 
         generator = UnifiedScriptGenerator(request.mode)
 
@@ -104,18 +110,18 @@ async def handle_generate_script(request: ScriptRequest) -> ScriptResponse:
 async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptResponse:
     """完全台本生成ハンドラー"""
     try:
-        logger.info(f"完全台本生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}")
+        logger.info(
+            f"完全台本生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}"
+        )
 
         generator = UnifiedScriptGenerator(request.mode)
 
-        # 1. タイトル生成
         title, reference_info, model_info = generator.generate_title(
             input_text=request.input_text,
             model=request.model,
             temperature=request.temperature,
         )
 
-        # 2. アウトライン生成
         outline, youtube_metadata, _ = generator.generate_outline(
             title_data=title,
             reference_info=reference_info,
@@ -123,7 +129,6 @@ async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptR
             temperature=request.temperature,
         )
 
-        # 3. 台本生成
         script, _ = generator.generate_script(
             outline_data=outline,
             reference_info=reference_info,
@@ -135,7 +140,7 @@ async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptR
             script=script,
             title=title,
             outline=outline,
-            youtube_metadata=youtube_metadata
+            youtube_metadata=youtube_metadata,
         )
 
     except HTTPException:
@@ -156,14 +161,12 @@ async def handle_generate_comedy_titles_batch() -> ComedyTitleBatch:
 
         generator = ComedyScriptGenerator()
 
-        # モデル設定（お笑いモードは高temperature推奨）
         model_config = get_default_model_config()
         model = model_config["id"]
-        temperature = 0.9  # お笑いモードは高めに固定
+        temperature = 0.9
 
         llm = create_llm_instance(model, temperature, model_config)
 
-        # タイトル量産
         title_batch = generator.generate_title_batch(llm)
 
         return title_batch
@@ -186,38 +189,28 @@ async def handle_save_script_to_file(request: dict) -> Dict[str, Any]:
         if not script_data:
             raise HTTPException(status_code=400, detail="台本データが必要です")
 
-        # ファイル名生成（指定がない場合は自動生成）
         filename = request.get("filename")
         if not filename:
-            # タイトルから安全なファイル名を生成
             title = script_data.get("title", "script")
-            # 日本語を削除し、英数字のみに
             safe_title = "".join(c for c in title if c.isalnum() or c in ("-", "_"))
             if not safe_title:
                 safe_title = "script"
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{safe_title}_{timestamp}.json"
 
-        # 拡張子確認
         if not filename.endswith(".json"):
             filename += ".json"
 
-        # 保存先ディレクトリ
         output_dir = Path("outputs/json")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # ファイル保存
         file_path = output_dir / filename
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(script_data, f, ensure_ascii=False, indent=2)
 
         logger.info(f"台本を保存しました: {file_path}")
 
-        return {
-            "success": True,
-            "file_path": str(file_path),
-            "filename": filename
-        }
+        return {"success": True, "file_path": str(file_path), "filename": filename}
 
     except HTTPException:
         raise
@@ -308,20 +301,20 @@ async def handle_generate_short_titles(request) -> ComedyTitleBatch:
     try:
         logger.info(f"ショート動画タイトル生成リクエスト: テーマ={request.theme}")
 
-        from app.core.script_generators.comedy.comedy_short_generator import ComedyShortGenerator
+        from app.core.script_generators.comedy.comedy_short_generator import (
+            ComedyShortGenerator,
+        )
         from app.core.script_generators.generate_food_over import create_llm_instance
         from app.config.models import get_default_model_config
 
         generator = ComedyShortGenerator()
 
-        # モデル設定
         model_config = get_default_model_config()
         model = request.model or model_config["id"]
         temperature = request.temperature if request.temperature is not None else 0.9
 
         llm = create_llm_instance(model, temperature, model_config)
 
-        # ショートタイトル生成
         title_batch = generator.generate_short_titles(
             theme=request.theme,
             llm=llm,
@@ -339,31 +332,32 @@ async def handle_generate_short_titles(request) -> ComedyTitleBatch:
 async def handle_generate_short_script(request) -> ScriptResponse:
     """ショート動画台本生成ハンドラー（60秒）"""
     try:
-        logger.info(f"ショート動画台本生成リクエスト: タイトル={request.title_data.title}")
+        logger.info(
+            f"ショート動画台本生成リクエスト: タイトル={request.title_data.title}"
+        )
 
-        from app.core.script_generators.comedy.comedy_short_generator import ComedyShortGenerator
+        from app.core.script_generators.comedy.comedy_short_generator import (
+            ComedyShortGenerator,
+        )
         from app.core.script_generators.generate_food_over import create_llm_instance
         from app.config.models import get_default_model_config
 
         generator = ComedyShortGenerator()
 
-        # モデル設定
         model_config = get_default_model_config()
         model = request.model or model_config["id"]
         temperature = request.temperature if request.temperature is not None else 0.9
 
         llm = create_llm_instance(model, temperature, model_config)
 
-        # ショート台本生成
         script = generator.generate_short_script(
             title=request.title_data,
             llm=llm,
         )
 
-        # 60秒チェック
         total_segments = len(script.all_segments)
         estimated_seconds = total_segments * 4
-        
+
         if estimated_seconds < 45:
             logger.warning(f"推定時間が短すぎます: {estimated_seconds}秒")
         elif estimated_seconds > 75:
@@ -378,4 +372,3 @@ async def handle_generate_short_script(request) -> ScriptResponse:
     except Exception as e:
         logger.error(f"ショート動画台本生成エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-

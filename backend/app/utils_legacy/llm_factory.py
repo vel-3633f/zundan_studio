@@ -29,7 +29,6 @@ def create_bedrock_llm(
     Raises:
         ValueError: AWS認証情報またはリージョンが設定されていない場合
     """
-    # AWS認証情報の確認
     aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
     aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
 
@@ -39,7 +38,6 @@ def create_bedrock_llm(
             "AWS_ACCESS_KEY_ID と AWS_SECRET_ACCESS_KEY を .env ファイルに設定してください。"
         )
 
-    # リージョンの取得
     if region_name is None:
         region_name = os.getenv("AWS_DEFAULT_REGION")
 
@@ -49,7 +47,6 @@ def create_bedrock_llm(
             "AWS_DEFAULT_REGION を .env ファイルに設定してください（例: us-east-1）"
         )
 
-    # boto3 Configを使用してタイムアウトを設定
     config = Config(
         read_timeout=request_timeout,
         connect_timeout=10,

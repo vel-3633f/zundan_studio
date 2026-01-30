@@ -21,6 +21,8 @@ from app.models.scripts.comedy import (
     YouTubeMetadata,
 )
 from app.models.scripts.thought_experiment import (
+    ThoughtExperimentTitleCandidate,
+    ThoughtExperimentTitleBatch,
     ThoughtExperimentTitle,
     ThoughtExperimentOutline,
     ThoughtExperimentScript,
@@ -43,6 +45,8 @@ __all__ = [
     "ComedyOutline",
     "ComedyScript",
     "YouTubeMetadata",
+    "ThoughtExperimentTitleCandidate",
+    "ThoughtExperimentTitleBatch",
     "ThoughtExperimentTitle",
     "ThoughtExperimentOutline",
     "ThoughtExperimentScript",
