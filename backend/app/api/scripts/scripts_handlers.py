@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 async def handle_generate_title(request: TitleRequest) -> TitleResponse:
     """タイトル生成ハンドラー"""
     try:
-        logger.info(f"タイトル生成リクエスト: テーマ={request.input_text}")
+        logger.info(f"タイトル生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}")
 
-        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
+        generator = UnifiedScriptGenerator(request.mode)
 
         title, reference_info, model_info = generator.generate_title(
             input_text=request.input_text,
@@ -53,9 +53,9 @@ async def handle_generate_title(request: TitleRequest) -> TitleResponse:
 async def handle_generate_outline(request: OutlineRequest) -> OutlineResponse:
     """アウトライン生成ハンドラー"""
     try:
-        logger.info(f"アウトライン生成リクエスト: タイトル={request.title_data.title}")
+        logger.info(f"アウトライン生成リクエスト: タイトル={request.title_data.title}, モード={request.mode.value}")
 
-        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
+        generator = UnifiedScriptGenerator(request.mode)
 
         outline, youtube_metadata, model_info = generator.generate_outline(
             title_data=request.title_data,
@@ -81,9 +81,9 @@ async def handle_generate_outline(request: OutlineRequest) -> OutlineResponse:
 async def handle_generate_script(request: ScriptRequest) -> ScriptResponse:
     """台本生成ハンドラー"""
     try:
-        logger.info(f"台本生成リクエスト: タイトル={request.outline_data.title}")
+        logger.info(f"台本生成リクエスト: タイトル={request.outline_data.title}, モード={request.mode.value}")
 
-        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
+        generator = UnifiedScriptGenerator(request.mode)
 
         script, model_info = generator.generate_script(
             outline_data=request.outline_data,
@@ -104,9 +104,9 @@ async def handle_generate_script(request: ScriptRequest) -> ScriptResponse:
 async def handle_generate_full_script(request: FullScriptRequest) -> FullScriptResponse:
     """完全台本生成ハンドラー"""
     try:
-        logger.info(f"完全台本生成リクエスト: テーマ={request.input_text}")
+        logger.info(f"完全台本生成リクエスト: テーマ={request.input_text}, モード={request.mode.value}")
 
-        generator = UnifiedScriptGenerator(ScriptMode.COMEDY)
+        generator = UnifiedScriptGenerator(request.mode)
 
         # 1. タイトル生成
         title, reference_info, model_info = generator.generate_title(

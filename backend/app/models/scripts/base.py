@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class ScriptMode(str, Enum):
     COMEDY = "comedy"
+    THOUGHT_EXPERIMENT = "thought_experiment"
 
 
 class ScriptDuration(str, Enum):

@@ -20,6 +20,11 @@ from app.models.scripts.comedy import (
     ComedyScript,
     YouTubeMetadata,
 )
+from app.models.scripts.thought_experiment import (
+    ThoughtExperimentTitle,
+    ThoughtExperimentOutline,
+    ThoughtExperimentScript,
+)
 
 __all__ = [
     "ScriptMode",
@@ -38,5 +43,8 @@ __all__ = [
     "ComedyOutline",
     "ComedyScript",
     "YouTubeMetadata",
+    "ThoughtExperimentTitle",
+    "ThoughtExperimentOutline",
+    "ThoughtExperimentScript",
 ]
 

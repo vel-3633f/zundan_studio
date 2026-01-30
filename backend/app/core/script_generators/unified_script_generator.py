@@ -5,9 +5,13 @@ from app.models.script_models import (
     ComedyTitle,
     ComedyOutline,
     ComedyScript,
+    ThoughtExperimentTitle,
+    ThoughtExperimentOutline,
+    ThoughtExperimentScript,
     YouTubeMetadata,
 )
 from app.core.script_generators.comedy import ComedyScriptGenerator
+from app.core.script_generators.thought_experiment import ThoughtExperimentScriptGenerator
 from app.core.script_generators.generate_food_over import create_llm_instance
 from app.config.models import get_model_config, get_default_model_config
 from app.utils.logger import get_logger
@@ -16,18 +20,21 @@ logger = get_logger(__name__)
 
 
 class UnifiedScriptGenerator:
-    """統合台本生成エンジン（Comedy専用）"""
+    """統合台本生成エンジン（ComedyとThoughtExperiment対応）"""
 
     def __init__(self, mode: ScriptMode = ScriptMode.COMEDY):
         """
         Args:
-            mode: 生成モード（COMEDYのみ対応）
+            mode: 生成モード（COMEDY or THOUGHT_EXPERIMENT）
         """
-        if mode != ScriptMode.COMEDY:
-            raise ValueError("このシステムはComedyモードのみ対応しています")
+        if mode not in [ScriptMode.COMEDY, ScriptMode.THOUGHT_EXPERIMENT]:
+            raise ValueError(f"このシステムはComedyモードとThoughtExperimentモードのみ対応しています（指定: {mode.value}）")
         
         self.mode = mode
-        self.generator = ComedyScriptGenerator()
+        if mode == ScriptMode.COMEDY:
+            self.generator = ComedyScriptGenerator()
+        elif mode == ScriptMode.THOUGHT_EXPERIMENT:
+            self.generator = ThoughtExperimentScriptGenerator()
 
     def generate_title(
         self,
@@ -35,7 +42,7 @@ class UnifiedScriptGenerator:
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> Tuple[ComedyTitle, str, Dict[str, Any]]:
+    ) -> Tuple[Any, str, Dict[str, Any]]:
         """タイトル生成
 
         Args:
@@ -59,10 +66,15 @@ class UnifiedScriptGenerator:
             if temperature is None:
                 temperature = model_config["default_temperature"]
 
-            # お笑いモードはtemperatureを高めに調整
-            if temperature < 0.8:
-                temperature = 0.8
-                logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            # モードに応じてtemperatureを調整
+            if self.mode == ScriptMode.COMEDY:
+                if temperature < 0.8:
+                    temperature = 0.8
+                    logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            elif self.mode == ScriptMode.THOUGHT_EXPERIMENT:
+                if temperature < 0.7:
+                    temperature = 0.7
+                    logger.info(f"思考実験モードのためtemperatureを{temperature}に調整")
 
             llm = create_llm_instance(model, temperature, model_config)
 
@@ -85,12 +97,12 @@ class UnifiedScriptGenerator:
 
     def generate_outline(
         self,
-        title_data: ComedyTitle,
+        title_data: Any,
         reference_info: str = "",
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> Tuple[ComedyOutline, Optional[YouTubeMetadata], Dict[str, Any]]:
+    ) -> Tuple[Any, Optional[YouTubeMetadata], Dict[str, Any]]:
         """アウトライン生成
 
         Args:
@@ -115,10 +127,15 @@ class UnifiedScriptGenerator:
             if temperature is None:
                 temperature = model_config["default_temperature"]
 
-            # お笑いモードはtemperatureを高めに調整
-            if temperature < 0.8:
-                temperature = 0.8
-                logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            # モードに応じてtemperatureを調整
+            if self.mode == ScriptMode.COMEDY:
+                if temperature < 0.8:
+                    temperature = 0.8
+                    logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            elif self.mode == ScriptMode.THOUGHT_EXPERIMENT:
+                if temperature < 0.7:
+                    temperature = 0.7
+                    logger.info(f"思考実験モードのためtemperatureを{temperature}に調整")
 
             llm = create_llm_instance(model, temperature, model_config)
 
@@ -143,12 +160,12 @@ class UnifiedScriptGenerator:
 
     def generate_script(
         self,
-        outline_data: ComedyOutline,
+        outline_data: Any,
         reference_info: str = "",
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         progress_callback: Optional[Callable[[str, float], None]] = None,
-    ) -> Tuple[ComedyScript, Dict[str, Any]]:
+    ) -> Tuple[Any, Dict[str, Any]]:
         """台本生成
 
         Args:
@@ -173,10 +190,15 @@ class UnifiedScriptGenerator:
             if temperature is None:
                 temperature = model_config["default_temperature"]
 
-            # お笑いモードはtemperatureを高めに調整
-            if temperature < 0.8:
-                temperature = 0.8
-                logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            # モードに応じてtemperatureを調整
+            if self.mode == ScriptMode.COMEDY:
+                if temperature < 0.8:
+                    temperature = 0.8
+                    logger.info(f"お笑いモードのためtemperatureを{temperature}に調整")
+            elif self.mode == ScriptMode.THOUGHT_EXPERIMENT:
+                if temperature < 0.7:
+                    temperature = 0.7
+                    logger.info(f"思考実験モードのためtemperatureを{temperature}に調整")
 
             llm = create_llm_instance(model, temperature, model_config)
 

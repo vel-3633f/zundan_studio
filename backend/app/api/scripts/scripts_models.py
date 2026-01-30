@@ -17,7 +17,7 @@ from app.models.script_models import (
 class TitleRequest(BaseModel):
     """タイトル生成リクエスト"""
 
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
     input_text: str = Field(..., description="漫談のテーマ")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
@@ -36,7 +36,7 @@ class TitleResponse(BaseModel):
 class OutlineRequest(BaseModel):
     """アウトライン生成リクエスト"""
 
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
     title_data: ComedyTitle = Field(..., description="生成されたタイトル")
     reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
@@ -57,7 +57,7 @@ class OutlineResponse(BaseModel):
 class ScriptRequest(BaseModel):
     """台本生成リクエスト"""
 
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
     outline_data: ComedyOutline = Field(..., description="生成されたアウトライン")
     reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
@@ -73,7 +73,7 @@ class ScriptResponse(BaseModel):
 class FullScriptRequest(BaseModel):
     """完全台本生成リクエスト（3段階一括）"""
 
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
     input_text: str = Field(..., description="漫談のテーマ")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
@@ -107,7 +107,7 @@ class ThemeTitleRequest(BaseModel):
 class ShortScriptRequest(BaseModel):
     """ショート動画台本生成リクエスト（60秒）"""
 
-    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedyのみ）")
+    mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
     title_data: ComedyTitle = Field(..., description="生成されたタイトル")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
