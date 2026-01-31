@@ -1,11 +1,15 @@
 """台本生成APIのエンドポイントハンドラー"""
 
 from fastapi import HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, AsyncGenerator
 import logging
+import asyncio
+import json
+from celery.result import AsyncResult
 
 from app.models.script_models import ScriptMode, ComedyTitleBatch
 from app.core.script_generators.unified_script_generator import UnifiedScriptGenerator
+from app.tasks.celery_app import celery_app
 from .scripts_models import (
     TitleRequest,
     TitleResponse,
@@ -372,3 +376,151 @@ async def handle_generate_short_script(request) -> ScriptResponse:
     except Exception as e:
         logger.error(f"ショート動画台本生成エラー: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_generate_full_script_stream(request: FullScriptRequest) -> Dict[str, str]:
+    """完全台本生成（SSE用）ハンドラー"""
+    try:
+        logger.info(
+            f"完全台本生成（SSE）リクエスト: テーマ={request.input_text}, モード={request.mode.value}"
+        )
+        
+        from app.tasks.script_tasks import generate_unified_full_script_async
+        
+        # Celeryタスクを非同期で開始
+        task = generate_unified_full_script_async.apply_async(
+            kwargs={
+                "mode": request.mode.value,
+                "input_text": request.input_text,
+                "model": request.model,
+                "temperature": request.temperature,
+            }
+        )
+        
+        logger.info(f"Celeryタスク開始: task_id={task.id}")
+        
+        return {"task_id": task.id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"完全台本生成（SSE）エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_generate_script_stream(request: ScriptRequest) -> Dict[str, str]:
+    """台本生成（SSE用）ハンドラー"""
+    try:
+        logger.info(
+            f"台本生成（SSE）リクエスト: タイトル={request.outline_data.title}, モード={request.mode.value}"
+        )
+        
+        from app.tasks.script_tasks import generate_unified_script_only_async
+        
+        # アウトラインをdictに変換
+        outline_dict = (
+            request.outline_data.model_dump() 
+            if hasattr(request.outline_data, 'model_dump') 
+            else request.outline_data.dict()
+        )
+        
+        # Celeryタスクを非同期で開始
+        task = generate_unified_script_only_async.apply_async(
+            kwargs={
+                "mode": request.mode.value,
+                "outline_data": outline_dict,
+                "reference_info": request.reference_info or "",
+                "model": request.model,
+                "temperature": request.temperature,
+            }
+        )
+        
+        logger.info(f"Celeryタスク開始: task_id={task.id}")
+        
+        return {"task_id": task.id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"台本生成（SSE）エラー: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def handle_stream_progress(task_id: str) -> AsyncGenerator[str, None]:
+    """タスクの進捗をSSEでストリーミング配信"""
+    try:
+        logger.info(f"SSEストリーム開始: task_id={task_id}")
+        
+        task = AsyncResult(task_id, app=celery_app)
+        
+        while True:
+            if task.state == "PENDING":
+                data = {
+                    "task_id": task_id,
+                    "status": "pending",
+                    "progress": 0.0,
+                    "message": "タスクは待機中です",
+                }
+                yield json.dumps(data, ensure_ascii=False)
+                
+            elif task.state == "PROGRESS":
+                info = task.info or {}
+                data = {
+                    "task_id": task_id,
+                    "status": "processing",
+                    "progress": info.get("progress", 0.0),
+                    "message": info.get("message", "処理中..."),
+                }
+                yield json.dumps(data, ensure_ascii=False)
+                
+            elif task.state == "SUCCESS":
+                result = task.result or {}
+                data = {
+                    "task_id": task_id,
+                    "status": "completed",
+                    "progress": 1.0,
+                    "message": result.get("message", "完了しました"),
+                    "result": result,
+                }
+                yield json.dumps(data, ensure_ascii=False)
+                logger.info(f"SSEストリーム完了: task_id={task_id}")
+                break
+                
+            elif task.state == "FAILURE":
+                info = task.info or {}
+                error_message = str(info.get("error", task.info)) if info else "タスクが失敗しました"
+                data = {
+                    "task_id": task_id,
+                    "status": "failed",
+                    "progress": 0.0,
+                    "message": info.get("message", "タスクが失敗しました"),
+                    "error": error_message,
+                }
+                yield json.dumps(data, ensure_ascii=False)
+                logger.error(f"SSEストリーム失敗: task_id={task_id}, error={error_message}")
+                break
+                
+            else:
+                data = {
+                    "task_id": task_id,
+                    "status": task.state.lower(),
+                    "progress": 0.0,
+                    "message": f"状態: {task.state}",
+                }
+                yield json.dumps(data, ensure_ascii=False)
+            
+            # 終了状態でなければ待機
+            if task.state not in ["SUCCESS", "FAILURE", "REVOKED"]:
+                await asyncio.sleep(0.5)
+            else:
+                break
+                
+    except Exception as e:
+        logger.error(f"SSEストリームエラー: task_id={task_id}, error={str(e)}", exc_info=True)
+        error_data = {
+            "task_id": task_id,
+            "status": "error",
+            "message": "サーバーエラーが発生しました",
+            "error": str(e),
+        }
+        yield json.dumps(error_data, ensure_ascii=False)

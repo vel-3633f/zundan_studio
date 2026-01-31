@@ -1,6 +1,7 @@
 """お笑い漫談台本生成API（Comedy専用）"""
 
 from fastapi import APIRouter
+from sse_starlette.sse import EventSourceResponse
 from app.models.script_models import ComedyTitleBatch
 from .scripts_models import (
     TitleRequest,
@@ -28,6 +29,9 @@ from .scripts_handlers import (
     handle_get_available_models,
     handle_generate_short_titles,
     handle_generate_short_script,
+    handle_generate_full_script_stream,
+    handle_generate_script_stream,
+    handle_stream_progress,
 )
 
 router = APIRouter()
@@ -178,6 +182,52 @@ async def generate_short_script(request: ShortScriptRequest):
         生成された60秒台本
     """
     return await handle_generate_short_script(request)
+
+
+@router.post("/full/stream")
+async def generate_full_script_stream(request: FullScriptRequest):
+    """
+    完全台本生成（SSE用・非同期）
+    
+    タスクIDを返却し、進捗は /scripts/stream/{task_id} で取得
+    
+    Args:
+        request: 完全台本生成リクエスト
+    
+    Returns:
+        task_id: Celeryタスクのタスク ID
+    """
+    return await handle_generate_full_script_stream(request)
+
+
+@router.post("/script/stream")
+async def generate_script_stream(request: ScriptRequest):
+    """
+    台本生成（SSE用・非同期）
+    
+    タスクIDを返却し、進捗は /scripts/stream/{task_id} で取得
+    
+    Args:
+        request: 台本生成リクエスト
+    
+    Returns:
+        task_id: Celeryタスクのタスク ID
+    """
+    return await handle_generate_script_stream(request)
+
+
+@router.get("/stream/{task_id}")
+async def stream_progress(task_id: str):
+    """
+    タスクの進捗をSSEでストリーミング配信
+    
+    Args:
+        task_id: Celeryタスクのタスク ID
+    
+    Returns:
+        SSEストリーム
+    """
+    return EventSourceResponse(handle_stream_progress(task_id))
 
 
 @router.get("/health")

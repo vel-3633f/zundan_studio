@@ -7,12 +7,22 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   helperText?: string;
   leftIcon?: ReactNode;
+  options?: Array<{ value: string; label: string }>;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   (
-    { className, label, error, helperText, leftIcon, children, ...props },
-    ref
+    {
+      className,
+      label,
+      error,
+      helperText,
+      leftIcon,
+      options,
+      children,
+      ...props
+    },
+    ref,
   ) => {
     return (
       <div className="w-full">
@@ -39,11 +49,17 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               "bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
               leftIcon && "pl-10",
               "pr-10",
-              className
+              className,
             )}
             {...props}
           >
-            {children}
+            {children ||
+              (options &&
+                options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                )))}
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
         </div>
@@ -59,7 +75,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 Select.displayName = "Select";

@@ -26,7 +26,7 @@ export const scriptApi = {
   generateTitle: async (data: TitleRequest): Promise<TitleResponse> => {
     const response = await apiClient.post<TitleResponse>(
       "/scripts/title",
-      data
+      data,
     );
     return response.data;
   },
@@ -35,11 +35,11 @@ export const scriptApi = {
    * アウトラインを生成（統合API）
    */
   generateOutline: async (
-    data: UnifiedOutlineRequest
+    data: UnifiedOutlineRequest,
   ): Promise<UnifiedOutlineResponse> => {
     const response = await apiClient.post<UnifiedOutlineResponse>(
       "/scripts/outline",
-      data
+      data,
     );
     return response.data;
   },
@@ -50,7 +50,7 @@ export const scriptApi = {
   generateScript: async (data: ScriptRequest): Promise<ScriptResponse> => {
     const response = await apiClient.post<ScriptResponse>(
       "/scripts/script",
-      data
+      data,
     );
     return response.data;
   },
@@ -59,11 +59,11 @@ export const scriptApi = {
    * 完全台本を生成（3段階一括）
    */
   generateFullScript: async (
-    data: FullScriptRequest
+    data: FullScriptRequest,
   ): Promise<FullScriptResponse> => {
     const response = await apiClient.post<FullScriptResponse>(
       "/scripts/full",
-      data
+      data,
     );
     return response.data;
   },
@@ -73,7 +73,7 @@ export const scriptApi = {
    */
   generateComedyTitlesBatch: async (): Promise<ComedyTitleBatch> => {
     const response = await apiClient.post<ComedyTitleBatch>(
-      "/scripts/comedy/titles/batch"
+      "/scripts/comedy/titles/batch",
     );
     return response.data;
   },
@@ -83,7 +83,7 @@ export const scriptApi = {
    */
   generateThemeBatch: async (): Promise<ThemeBatch> => {
     const response = await apiClient.post<ThemeBatch>(
-      "/scripts/comedy/themes/batch"
+      "/scripts/comedy/themes/batch",
     );
     return response.data;
   },
@@ -94,7 +94,7 @@ export const scriptApi = {
   generateTitlesFromTheme: async (
     theme: string,
     model?: string,
-    temperature?: number
+    temperature?: number,
   ): Promise<ComedyTitleBatch> => {
     const response = await apiClient.post<ComedyTitleBatch>(
       "/scripts/comedy/titles/from-theme",
@@ -102,7 +102,7 @@ export const scriptApi = {
         theme,
         model,
         temperature,
-      }
+      },
     );
     return response.data;
   },
@@ -156,7 +156,7 @@ export const scriptApi = {
   generateShortTitles: async (
     theme: string,
     model?: string,
-    temperature?: number
+    temperature?: number,
   ): Promise<ComedyTitleBatch> => {
     const response = await apiClient.post<ComedyTitleBatch>(
       "/scripts/comedy/short/titles",
@@ -164,7 +164,7 @@ export const scriptApi = {
         theme,
         model,
         temperature,
-      }
+      },
     );
     return response.data;
   },
@@ -173,11 +173,11 @@ export const scriptApi = {
    * ショート動画台本を生成（60秒）
    */
   generateShortScript: async (
-    data: ShortScriptRequest
+    data: ShortScriptRequest,
   ): Promise<ShortScriptResponse> => {
     const response = await apiClient.post<ShortScriptResponse>(
       "/scripts/comedy/short/script",
-      data
+      data,
     );
     return response.data;
   },
@@ -186,11 +186,11 @@ export const scriptApi = {
    * 完全台本を非同期生成（SSE用）
    */
   generateFullScriptStream: async (
-    data: FullScriptRequest
+    data: FullScriptRequest,
   ): Promise<{ task_id: string }> => {
     const response = await apiClient.post<{ task_id: string }>(
       "/scripts/full/stream",
-      data
+      data,
     );
     return response.data;
   },
@@ -199,11 +199,11 @@ export const scriptApi = {
    * 台本を非同期生成（SSE用）
    */
   generateScriptStream: async (
-    data: ScriptRequest
+    data: ScriptRequest,
   ): Promise<{ task_id: string }> => {
     const response = await apiClient.post<{ task_id: string }>(
       "/scripts/script/stream",
-      data
+      data,
     );
     return response.data;
   },
@@ -214,11 +214,11 @@ export const scriptApi = {
    * @deprecated 新しいgenerateOutlineを使用してください
    */
   generateOutlineOld: async (
-    data: OutlineRequest
+    data: OutlineRequest,
   ): Promise<OutlineResponse> => {
     const response = await apiClient.post<OutlineResponse>(
       "/scripts/outline",
-      data
+      data,
     );
     return response.data;
   },
@@ -228,11 +228,11 @@ export const scriptApi = {
    * @deprecated 新しいgenerateScriptを使用してください
    */
   generateSections: async (
-    data: SectionRequest
+    data: SectionRequest,
   ): Promise<FoodOverconsumptionScript> => {
     const response = await apiClient.post<FoodOverconsumptionScript>(
       "/scripts/sections",
-      data
+      data,
     );
     return response.data;
   },
