@@ -182,6 +182,32 @@ export const scriptApi = {
     return response.data;
   },
 
+  /**
+   * 完全台本を非同期生成（SSE用）
+   */
+  generateFullScriptStream: async (
+    data: FullScriptRequest
+  ): Promise<{ task_id: string }> => {
+    const response = await apiClient.post<{ task_id: string }>(
+      "/scripts/full/stream",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * 台本を非同期生成（SSE用）
+   */
+  generateScriptStream: async (
+    data: ScriptRequest
+  ): Promise<{ task_id: string }> => {
+    const response = await apiClient.post<{ task_id: string }>(
+      "/scripts/script/stream",
+      data
+    );
+    return response.data;
+  },
+
   // === 旧API（後方互換性のため保持） ===
   /**
    * アウトラインを生成（旧API）
