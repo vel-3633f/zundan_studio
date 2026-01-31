@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { InternalAxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -12,7 +13,7 @@ export const apiClient = axios.create({
 
 // リクエストインターセプター
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     // 必要に応じて認証トークンを追加
     // const token = localStorage.getItem('token')
     // if (token) {
@@ -20,15 +21,15 @@ apiClient.interceptors.request.use(
     // }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
 // レスポンスインターセプター
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     if (error.response) {
       // サーバーからエラーレスポンスが返ってきた場合
       console.error("API Error:", error.response.data);

@@ -17,7 +17,7 @@ export const useAutoScriptGeneration = (
   setYoutubeMetadata: (metadata: YouTubeMetadata | null) => void,
   setSavedFilePath: (path: string | null) => void,
   setCurrentStep: (step: "input" | "title" | "outline" | "script") => void,
-  mode: "comedy" | "thought_experiment",
+  mode: "comedy" | "thought_experiment" | "short_comedy",
   inputText: string,
   model: string,
   temperature: number

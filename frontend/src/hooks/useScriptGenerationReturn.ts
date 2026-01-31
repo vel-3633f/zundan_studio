@@ -8,7 +8,7 @@ export const createScriptGenerationReturn = (
     searchResults: Record<string, any>;
   } | null,
   generatingAction: "approve" | "regenerate" | null,
-  mode: "comedy",
+  mode: "comedy" | "thought_experiment" | "short_comedy",
   currentStep: "input" | "title" | "outline" | "script",
   inputText: string,
   model: string,

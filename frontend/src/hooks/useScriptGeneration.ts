@@ -151,7 +151,7 @@ export const useScriptGeneration = () => {
     resetToInput();
   };
 
-  // タイトル選択時の処理（常に手動）
+  // タイトル選択時の処理
   const handleSelectTitleCandidateWithAuto = async (candidateId: number) => {
     if (!titleCandidates) return;
 
@@ -173,13 +173,21 @@ export const useScriptGeneration = () => {
     setInputText(selected.situation);
     setTitleCandidates(null);
 
-    // タイトル選択は常に手動で、タイトル確認画面へ遷移
+    // タイトル確認画面へ遷移
     setCurrentStep("title");
     toast.success("タイトルを選択しました！");
+
+    // 自動生成モードの場合は、自動的にアウトライン生成を開始
+    if (isAutoMode) {
+      // 少し待ってから自動生成を開始（UIの更新を確実にするため）
+      setTimeout(() => {
+        handleAutoGenerateFromTitle(comedyTitle, "");
+      }, 500);
+    }
   };
 
-  // 自由入力からのタイトル選択時の処理（常に手動）
-  const handleSelectSingleTitleWithAuto = () => {
+  // 自由入力からのタイトル選択時の処理
+  const handleSelectSingleTitleWithAuto = async () => {
     if (!singleTitleCandidate) return;
 
     setGeneratedTitle(singleTitleCandidate.title);
@@ -187,9 +195,17 @@ export const useScriptGeneration = () => {
     setSearchResults(singleTitleCandidate.searchResults);
     setSingleTitleCandidate(null);
 
-    // タイトル選択は常に手動で、タイトル確認画面へ遷移
+    // タイトル確認画面へ遷移
     setCurrentStep("title");
     toast.success("タイトルを選択しました！");
+
+    // 自動生成モードの場合は、自動的にアウトライン生成を開始
+    if (isAutoMode) {
+      // 少し待ってから自動生成を開始（UIの更新を確実にするため）
+      setTimeout(() => {
+        handleAutoGenerateFromTitle(singleTitleCandidate.title, singleTitleCandidate.referenceInfo);
+      }, 500);
+    }
   };
 
   const handleGenerateThemes = async () => {

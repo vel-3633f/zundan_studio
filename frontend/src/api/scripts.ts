@@ -15,8 +15,8 @@ import type {
   // 旧型定義（後方互換性）
   OutlineRequest,
   OutlineResponse,
-  SectionRequest,
-  FoodOverconsumptionScript,
+  // SectionRequest,
+  // FoodOverconsumptionScript,
 } from "@/types";
 
 export const scriptApi = {
@@ -227,13 +227,13 @@ export const scriptApi = {
    * セクションを生成（旧API）
    * @deprecated 新しいgenerateScriptを使用してください
    */
-  generateSections: async (
-    data: SectionRequest,
-  ): Promise<FoodOverconsumptionScript> => {
-    const response = await apiClient.post<FoodOverconsumptionScript>(
-      "/scripts/sections",
-      data,
-    );
-    return response.data;
-  },
+  // generateSections: async (
+  //   data: SectionRequest,
+  // ): Promise<FoodOverconsumptionScript> => {
+  //   const response = await apiClient.post<FoodOverconsumptionScript>(
+  //     "/scripts/sections",
+  //     data,
+  //   );
+  //   return response.data;
+  // },
 };

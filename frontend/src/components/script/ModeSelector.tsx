@@ -1,4 +1,4 @@
-import { Laugh, Clock, Zap } from "lucide-react";
+import { Clock, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const ModeSelector = () => {

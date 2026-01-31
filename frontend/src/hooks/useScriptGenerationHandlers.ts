@@ -17,7 +17,7 @@ export const useScriptGenerationHandlers = (
   setGeneratingAction: (action: "approve" | "regenerate" | null) => void,
   setYoutubeMetadata: (metadata: YouTubeMetadata | null) => void,
   setSavedFilePath: (path: string | null) => void,
-  mode: "comedy" | "thought_experiment",
+  mode: "comedy" | "thought_experiment" | "short_comedy",
   generatedTitle: ComedyTitle | null,
   generatedOutline: ComedyOutline | null,
   referenceInfo: string,

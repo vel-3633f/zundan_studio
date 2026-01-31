@@ -1,5 +1,5 @@
 import ProgressBar from "@/components/ProgressBar";
-import ModeSelector from "@/components/script/ModeSelector";
+// import ModeSelector from "@/components/script/ModeSelector";
 import StepIndicator from "@/components/script/StepIndicator";
 import InputSection from "@/components/script/InputSection";
 import TitleSection from "@/components/script/TitleSection";

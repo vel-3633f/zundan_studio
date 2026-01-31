@@ -9,7 +9,7 @@ interface TestModeButtonProps {
 }
 
 const TestModeButton = ({
-  mode,
+  // mode,
   currentStep,
   disabled = false,
   onLoadTestData,

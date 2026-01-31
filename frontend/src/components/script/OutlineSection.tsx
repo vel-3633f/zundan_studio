@@ -217,13 +217,12 @@ const OutlineSection = ({
                     タグ ({youtubeMetadata.tags.length}個)
                   </label>
                   <IconButton
+                    icon={<Copy className="h-4 w-4" />}
                     onClick={handleCopyTags}
                     variant="ghost"
                     size="sm"
                     aria-label="タグをコピー"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </IconButton>
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {youtubeMetadata.tags.map((tag, index) => (
@@ -242,17 +241,23 @@ const OutlineSection = ({
                   </label>
                   <div className="flex items-center gap-2">
                     <IconButton
+                      icon={<Copy className="h-4 w-4" />}
                       onClick={() =>
                         handleCopy(youtubeMetadata.description, "説明文")
                       }
                       variant="ghost"
                       size="sm"
                       aria-label="説明文をコピー"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </IconButton>
+                    />
                     {youtubeMetadata.description.length > 200 && (
                       <IconButton
+                        icon={
+                          isDescriptionExpanded ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )
+                        }
                         onClick={() =>
                           setIsDescriptionExpanded(!isDescriptionExpanded)
                         }
@@ -263,13 +268,7 @@ const OutlineSection = ({
                             ? "説明文を折りたたむ"
                             : "説明文を展開"
                         }
-                      >
-                        {isDescriptionExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </IconButton>
+                      />
                     )}
                   </div>
                 </div>

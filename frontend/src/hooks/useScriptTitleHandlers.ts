@@ -19,7 +19,7 @@ export const useScriptTitleHandlers = (
   setCurrentStep: (step: "input" | "title" | "outline" | "script") => void,
   setInputText: (text: string) => void,
   setStatusMessage: (message: string) => void,
-  mode: "comedy",
+  mode: "comedy" | "thought_experiment" | "short_comedy",
   inputText: string,
   model: string,
   temperature: number,
@@ -91,13 +91,14 @@ export const useScriptTitleHandlers = (
         temperature,
       });
 
+      // 自動生成モードでも、タイトル候補として保存してユーザーに選択させる
       setSingleTitleCandidate({
         title: result.title,
         referenceInfo: result.reference_info,
         searchResults: result.search_results,
       });
 
-      toast.success("タイトルを生成しました！選択して次へ進んでください");
+      toast.success("タイトルを生成しました！確認して次へ進んでください");
       playNotificationSound();
     } catch (err: any) {
       const errorMsg = extractErrorMessage(err);

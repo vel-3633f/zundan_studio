@@ -2,7 +2,7 @@ import ProgressBar from "@/components/ProgressBar";
 import StepIndicator from "@/components/script/StepIndicator";
 import InputSection from "@/components/script/InputSection";
 import TitleCandidatesSection from "@/components/script/TitleCandidatesSection";
-import TitleSection from "@/components/script/TitleSection";
+// import TitleSection from "@/components/script/TitleSection";
 import ScriptSection from "@/components/script/ScriptSection";
 import { useShortScriptGeneration } from "@/hooks/useShortScriptGeneration";
 import { Zap } from "lucide-react";
@@ -14,7 +14,7 @@ const ShortScriptGenerationPage = () => {
     model,
     temperature,
     titleCandidates,
-    generatedTitle,
+    // generatedTitle,
     generatedScript,
     isGenerating,
     progress,

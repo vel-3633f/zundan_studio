@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useScriptStore } from "@/stores/scriptStore";
 import { scriptApi } from "@/api/scripts";
-import type { ComedyTitle, ComedyScript, ComedyTitleBatch } from "@/types";
+import type { ComedyTitle, ComedyTitleBatch } from "@/types";
 
 export const useShortScriptGeneration = () => {
   const [titleCandidates, setTitleCandidates] = useState<ComedyTitleBatch | null>(null);

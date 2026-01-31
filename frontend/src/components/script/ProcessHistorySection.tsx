@@ -134,7 +134,7 @@ const ProcessHistorySection = ({
                           <div className="font-medium text-sm text-gray-900 dark:text-white">
                             {idx + 1}. {section.section_name}
                           </div>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="default" className="text-xs">
                             {section.min_lines}-{section.max_lines}セリフ
                           </Badge>
                         </div>
@@ -165,7 +165,7 @@ const ProcessHistorySection = ({
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {youtubeMetadata.tags.map((tag, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
+                            <Badge key={idx} variant="default" className="text-xs">
                               {tag}
                             </Badge>
                           ))}

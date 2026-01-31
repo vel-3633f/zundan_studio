@@ -14,7 +14,7 @@ export const useAutoFromTitleGeneration = (
   setYoutubeMetadata: (metadata: YouTubeMetadata | null) => void,
   setSavedFilePath: (path: string | null) => void,
   setCurrentStep: (step: "input" | "title" | "outline" | "script") => void,
-  mode: "comedy",
+  mode: "comedy" | "thought_experiment" | "short_comedy",
   model: string,
   temperature: number
 ) => {
