@@ -1,7 +1,7 @@
 """台本生成APIのリクエスト/レスポンスモデル"""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 
 from app.models.script_models import (
     ScriptMode,
@@ -11,6 +11,9 @@ from app.models.script_models import (
     ComedyScript,
     YouTubeMetadata,
     ThemeBatch,
+    ThoughtExperimentTitle,
+    ThoughtExperimentOutline,
+    ThoughtExperimentScript,
 )
 
 
@@ -26,7 +29,7 @@ class TitleRequest(BaseModel):
 class TitleResponse(BaseModel):
     """タイトル生成レスポンス"""
 
-    title: ComedyTitle
+    title: Union[ComedyTitle, ThoughtExperimentTitle]
     reference_info: str = Field(default="", description="参照情報（常に空文字）")
     search_results: Dict[str, Any] = Field(default_factory=dict, description="検索結果（常に空）")
     model: str
@@ -37,7 +40,7 @@ class OutlineRequest(BaseModel):
     """アウトライン生成リクエスト"""
 
     mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
-    title_data: ComedyTitle = Field(..., description="生成されたタイトル")
+    title_data: Union[ComedyTitle, ThoughtExperimentTitle] = Field(..., description="生成されたタイトル")
     reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
@@ -46,7 +49,7 @@ class OutlineRequest(BaseModel):
 class OutlineResponse(BaseModel):
     """アウトライン生成レスポンス"""
 
-    outline: ComedyOutline
+    outline: Union[ComedyOutline, ThoughtExperimentOutline]
     youtube_metadata: Optional[YouTubeMetadata] = Field(
         default=None, description="YouTubeメタデータ（生成失敗時はNone）"
     )
@@ -58,7 +61,7 @@ class ScriptRequest(BaseModel):
     """台本生成リクエスト"""
 
     mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
-    outline_data: ComedyOutline = Field(..., description="生成されたアウトライン")
+    outline_data: Union[ComedyOutline, ThoughtExperimentOutline] = Field(..., description="生成されたアウトライン")
     reference_info: Optional[str] = Field(None, description="参照情報（使用されない）")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
@@ -67,7 +70,7 @@ class ScriptRequest(BaseModel):
 class ScriptResponse(BaseModel):
     """台本生成レスポンス"""
 
-    script: ComedyScript
+    script: Union[ComedyScript, ThoughtExperimentScript]
 
 
 class FullScriptRequest(BaseModel):
@@ -82,9 +85,9 @@ class FullScriptRequest(BaseModel):
 class FullScriptResponse(BaseModel):
     """完全台本生成レスポンス"""
 
-    script: ComedyScript
-    title: ComedyTitle = Field(..., description="生成されたタイトル")
-    outline: ComedyOutline = Field(..., description="生成されたアウトライン")
+    script: Union[ComedyScript, ThoughtExperimentScript]
+    title: Union[ComedyTitle, ThoughtExperimentTitle] = Field(..., description="生成されたタイトル")
+    outline: Union[ComedyOutline, ThoughtExperimentOutline] = Field(..., description="生成されたアウトライン")
     youtube_metadata: Optional[YouTubeMetadata] = Field(
         default=None, description="YouTubeメタデータ（生成失敗時はNone）"
     )
@@ -108,7 +111,7 @@ class ShortScriptRequest(BaseModel):
     """ショート動画台本生成リクエスト（60秒）"""
 
     mode: ScriptMode = Field(default=ScriptMode.COMEDY, description="生成モード（comedy or thought_experiment）")
-    title_data: ComedyTitle = Field(..., description="生成されたタイトル")
+    title_data: Union[ComedyTitle, ThoughtExperimentTitle] = Field(..., description="生成されたタイトル")
     model: Optional[str] = Field(None, description="使用するLLMモデルID")
     temperature: Optional[float] = Field(None, description="生成温度")
 
